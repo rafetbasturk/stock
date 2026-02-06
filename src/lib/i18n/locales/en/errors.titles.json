@@ -1,0 +1,13 @@
+{
+  "AUTH_ERROR": "Login failed",
+  "SESSION_EXPIRED": "Session expired",
+  "UNAUTHORIZED": "Unauthorized",
+  "FORBIDDEN": "Access denied",
+  "NETWORK_ERROR": "Connection error",
+  "VALIDATION_ERROR": "Invalid data",
+  "SYSTEM_ERROR": "System error",
+  "METRICS_FETCH_FAILED": "System error",
+  "ORDERS_STATUS_FETCH_FAILED": "System error",
+  "MONTHLY_ORDERS_FETCH_FAILED": "System error",
+  "UNKNOWN_ERROR": "Error"
+}

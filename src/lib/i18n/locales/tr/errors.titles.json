@@ -1,0 +1,13 @@
+{
+  "AUTH_ERROR": "Giriş başarısız",
+  "SESSION_EXPIRED": "Oturum süresi doldu",
+  "UNAUTHORIZED": "Yetkisiz işlem",
+  "FORBIDDEN": "Erişim engellendi",
+  "NETWORK_ERROR": "Bağlantı hatası",
+  "VALIDATION_ERROR": "Geçersiz veri",
+  "SYSTEM_ERROR": "Sistem hatası",
+  "METRICS_FETCH_FAILED": "Sistem hatası",
+  "ORDERS_STATUS_FETCH_FAILED": "Sistem hatası",
+  "MONTHLY_ORDERS_FETCH_FAILED": "Sistem hatası",
+  "UNKNOWN_ERROR": "Hata"
+}

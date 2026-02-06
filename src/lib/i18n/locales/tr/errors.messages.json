@@ -1,0 +1,22 @@
+{
+  "FETCH_FAILED": "Veriler yüklenemedi.",
+  "SAVE_FAILED": "Değişiklikler kaydedilemedi.",
+  "DELETE_FAILED": "Kayıt silinemedi.",
+
+  "NOT_FOUND": "İstenen veri bulunamadı.",
+  "ALREADY_EXISTS": "Bu kayıt zaten mevcut.",
+
+  "ORDER_LOCKED": "Bu sipariş artık değiştirilemez.",
+  "INSUFFICIENT_STOCK": "Yetersiz stok.",
+
+  "VALIDATION_ERROR": "Bazı alanlarda geçersiz değerler var.",
+
+  "INVALID_CREDENTIALS": "Kullanıcı adı veya şifre hatalı.",
+  "SESSION_INVALID": "Oturum süresi doldu.",
+  "UNAUTHORIZED": "Bu işlem için yetkiniz yok.",
+  "FORBIDDEN": "Bu kaynağa erişim izniniz yok.",
+
+  "NETWORK_ERROR": "Ağ bağlantısı kurulamadı.",
+  "INTERNAL_ERROR": "Dahili bir sistem hatası oluştu.",
+  "UNKNOWN_ERROR": "Beklenmeyen bir hata oluştu."
+}

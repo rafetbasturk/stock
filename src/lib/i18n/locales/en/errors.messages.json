@@ -1,0 +1,22 @@
+{
+  "FETCH_FAILED": "Failed to load data.",
+  "SAVE_FAILED": "Failed to save changes.",
+  "DELETE_FAILED": "Failed to delete item.",
+
+  "NOT_FOUND": "Requested data was not found.",
+  "ALREADY_EXISTS": "This record already exists.",
+
+  "ORDER_LOCKED": "This order can no longer be modified.",
+  "INSUFFICIENT_STOCK": "Insufficient stock available.",
+
+  "VALIDATION_ERROR": "Some fields contain invalid values.",
+
+  "INVALID_CREDENTIALS": "Invalid username or password.",
+  "SESSION_INVALID": "Your session has expired.",
+  "UNAUTHORIZED": "You are not authorized to perform this action.",
+  "FORBIDDEN": "You do not have permission to access this resource.",
+
+  "NETWORK_ERROR": "Network connection failed.",
+  "INTERNAL_ERROR": "An internal system error occurred.",
+  "UNKNOWN_ERROR": "An unexpected error occurred."
+}

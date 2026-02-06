@@ -1,0 +1,8 @@
+{
+  "required": "Bu alan zorunludur",
+  "min_length": "En az {{min}} karakter olmalıdır",
+  "max_length": "En fazla {{max}} karakter olmalıdır",
+  "invalid_format": "Geçersiz format",
+  "not_multiple_of": "{{multiple}} katı olmalıdır",
+  "invalid": "Geçersiz değer"
+}

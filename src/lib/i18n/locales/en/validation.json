@@ -1,0 +1,8 @@
+{
+  "required": "This field is required",
+  "min_length": "Must be at least {{min}} characters",
+  "max_length": "Must be at most {{max}} characters",
+  "invalid_format": "Invalid format",
+  "not_multiple_of": "Must be a multiple of {{multiple}}",
+  "invalid": "Invalid value"
+}

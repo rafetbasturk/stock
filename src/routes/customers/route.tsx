@@ -1,0 +1,25 @@
+import { fetchCustomers } from '@/lib/queries/customers'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { LucideFactory } from 'lucide-react'
+
+export const Route = createFileRoute('/customers')({
+  component: RouteComponent,
+  loader: async ({ context }) => {
+    return await context.queryClient.ensureQueryData(fetchCustomers)
+  },
+  staticData: {
+    sidebar: {
+      label: 'Müşteriler',
+      icon: LucideFactory,
+      order: 40,
+    },
+  },
+})
+
+function RouteComponent() {
+  return (
+    <div className="p-2 md:p-6">
+      <Outlet />
+    </div>
+  )
+}
