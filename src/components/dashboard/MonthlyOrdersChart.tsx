@@ -1,23 +1,25 @@
 import {
   Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Line,
   ComposedChart,
   Legend,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts'
+import { useSearch } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import { ErrorMessage } from '../error/ErrorMessage'
 import { Skeleton } from '../ui/skeleton'
-import { useSearch } from '@tanstack/react-router'
-import { useFetchMonthlyOrders } from '@/lib/queries/metrics'
 import { LoadingSpinner } from '../LoadingSpinner'
+import { useFetchMonthlyOrders } from '@/lib/queries/metrics'
 import { useExchangeRatesStore } from '@/stores/exchangeRatesStore'
 import { convertToCurrencyFormat } from '@/lib/currency'
 import { useMounted } from '@/hooks/useMounted'
 
 export default function MonthlyOrdersChart() {
+  const { t } = useTranslation('dashboard')
   const mounted = useMounted()
   const search = useSearch({ from: '/' })
   const rates = useExchangeRatesStore((s) => s.rates)
@@ -38,8 +40,8 @@ export default function MonthlyOrdersChart() {
   if (error) {
     return (
       <ErrorMessage
-        title="Aylık siparişler yüklenirken hata oluştu"
-        message={error?.message || 'Aylık sipariş durumu bulunamadı.'}
+        title={t('monthly_orders.load_error_title')}
+        message={error.message || t('monthly_orders.load_error_message')}
         onRetry={refetch}
       />
     )
@@ -68,7 +70,7 @@ export default function MonthlyOrdersChart() {
               tickLine={false}
               axisLine={false}
               label={{
-                value: 'Sipariş',
+                value: t('monthly_orders.orders_axis'),
                 angle: -90,
                 position: 'insideLeft',
                 fontSize: 10,
@@ -88,27 +90,27 @@ export default function MonthlyOrdersChart() {
                 })
               }
               label={{
-                value: 'Tutar',
+                value: t('monthly_orders.amount_axis'),
                 angle: 90,
                 position: 'insideRight',
                 fontSize: 10,
               }}
             />
             <Tooltip
-              content={({ active, payload, label }) => {
-                if (active && payload && payload.length) {
+              content={({ active, payload = [], label }) => {
+                if (active && payload.length) {
                   return (
                     <div className="bg-background border border-border p-2 rounded-md shadow-sm text-sm">
                       <p className="font-medium mb-1">{label}</p>
                       <div className="space-y-1">
                         <p className="text-primary flex justify-between gap-4">
-                          <span>Sipariş Sayısı:</span>
+                          <span>{t('monthly_orders.orders_count_label')}</span>
                           <span className="font-semibold">
                             {payload[0].value}
                           </span>
                         </p>
                         <p className="text-green-600 flex justify-between gap-4">
-                          <span>Toplam Tutar:</span>
+                          <span>{t('monthly_orders.total_amount_label')}</span>
                           <span className="font-semibold text-right">
                             {convertToCurrencyFormat({
                               cents: payload[1].value as number,
@@ -127,7 +129,7 @@ export default function MonthlyOrdersChart() {
             <Bar
               yAxisId="left"
               dataKey="orders"
-              name="Sipariş Sayısı"
+              name={t('monthly_orders.orders_count')}
               fill="#0ea5e9"
               radius={[2, 2, 0, 0]}
               barSize={20}
@@ -136,7 +138,7 @@ export default function MonthlyOrdersChart() {
               yAxisId="right"
               type="monotone"
               dataKey="revenue"
-              name="Toplam Tutar"
+              name={t('monthly_orders.total_amount')}
               stroke="#22c55e"
               strokeWidth={2}
               dot={{ r: 4, fill: '#22c55e' }}

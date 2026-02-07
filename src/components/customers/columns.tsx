@@ -5,15 +5,16 @@ import type { ActionMenuItem, Customer } from '@/types'
 export const getColumns = (
   onEdit: (customer: Customer) => void,
   onDelete: (id: number) => void,
+  t: (key: string) => string,
 ): Array<ColumnDef<Customer>> => {
   const customerActions: Array<ActionMenuItem<Customer>> = [
     {
-      label: 'Düzenle',
+      label: t('actions.edit'),
       action: (customer) => onEdit(customer),
       separatorAfter: true,
     },
     {
-      label: 'Sil',
+      label: t('actions.delete'),
       action: (customer) => onDelete(customer.id),
       isDestructive: true,
     },
@@ -31,7 +32,7 @@ export const getColumns = (
     },
     {
       accessorKey: 'code',
-      header: 'Müşteri Kodu',
+      header: t('customers.columns.code'),
       size: 120,
       cell: ({ row }) => (
         <div className="font-medium truncate">{row.getValue('code')}</div>
@@ -40,7 +41,7 @@ export const getColumns = (
     },
     {
       accessorKey: 'name',
-      header: 'Müşteri Adı',
+      header: t('customers.columns.name'),
       minSize: 200,
       size: 250,
       cell: ({ row }) => <div className="truncate">{row.getValue('name')}</div>,
@@ -48,7 +49,7 @@ export const getColumns = (
     },
     {
       accessorKey: 'email',
-      header: 'Email',
+      header: t('customers.columns.email'),
       size: 200,
       cell: ({ row }) => (
         <div className="truncate">{row.getValue('email')}</div>
@@ -56,7 +57,7 @@ export const getColumns = (
     },
     {
       accessorKey: 'phone',
-      header: 'Phone',
+      header: t('customers.columns.phone'),
       size: 160,
       cell: ({ row }) => (
         <div className="truncate">{row.getValue('phone')}</div>
@@ -64,7 +65,7 @@ export const getColumns = (
     },
     {
       accessorKey: 'address',
-      header: 'Address',
+      header: t('customers.columns.address'),
       minSize: 200,
       cell: ({ row }) => (
         <div className="truncate">{row.getValue('address')}</div>

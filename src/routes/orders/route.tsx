@@ -9,7 +9,7 @@ export const Route = createFileRoute('/orders')({
   },
   staticData: {
     sidebar: {
-      label: 'Siparişler',
+      label: 'nav.orders',
       icon: TerminalSquareIcon,
       order: 20,
     },

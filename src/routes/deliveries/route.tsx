@@ -1,11 +1,11 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { Outlet, createFileRoute } from '@tanstack/react-router'
 import { PackageMinusIcon } from 'lucide-react'
 
 export const Route = createFileRoute('/deliveries')({
   component: RouteComponent,
   staticData: {
     sidebar: {
-      label: "Sevkler",
+      label: "nav.deliveries",
       icon: PackageMinusIcon,
       order: 50,
     },

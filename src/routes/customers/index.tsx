@@ -2,7 +2,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import type { CustomersSearch } from '@/lib/types'
 import type { Customer } from '@/types'
 import { CustomerDeleteDialog } from '@/components/customers/CustomerDeleteDialog'
@@ -23,12 +23,11 @@ export const Route = createFileRoute('/customers/')({
     return await context.queryClient.ensureQueryData(customersQuery(deps))
   },
   component: CustomerList,
-  pendingComponent: () => (
-    <LoadingSpinner variant="full-page" text="Loading customers..." />
-  ),
+  pendingComponent: CustomersPending,
 })
 
 function CustomerList() {
+  const { t } = useTranslation('entities')
   const navigate = useNavigate({ from: Route.fullPath })
   const search = Route.useSearch()
 
@@ -47,12 +46,6 @@ function CustomerList() {
   )
 
   const deleteMutation = useDeleteCustomerMutation()
-
-  useEffect(() => {
-    if (deleteMutation.isError) {
-      toast.error('Failed to delete customer')
-    }
-  }, [deleteMutation.isError])
 
   const customersQ = useSuspenseQuery(customersQuery(search))
   const { data: customers, total, pageIndex, pageSize } = customersQ.data
@@ -91,7 +84,7 @@ function CustomerList() {
 
   const deleteCustomerLabel = pendingDeleteCustomer
     ? `${pendingDeleteCustomer.code} - ${pendingDeleteCustomer.name}`
-    : 'Bu müşteri'
+    : t('customers.fallback_label')
 
   const isDeleteDialogOpen = pendingDeleteId !== null
 
@@ -131,8 +124,8 @@ function CustomerList() {
   }, [debouncedSearchChange])
 
   const columns = useMemo(
-    () => getColumns(openEditModal, handleDeleteCustomer),
-    [handleDeleteCustomer, openEditModal],
+    () => getColumns(openEditModal, handleDeleteCustomer, t),
+    [handleDeleteCustomer, openEditModal, t],
   )
 
   return (
@@ -177,4 +170,9 @@ function CustomerList() {
       />
     </>
   )
+}
+
+function CustomersPending() {
+  const { t } = useTranslation('entities')
+  return <LoadingSpinner variant="full-page" text={t('customers.loading')} />
 }

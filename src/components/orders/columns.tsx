@@ -7,15 +7,16 @@ import { DataTableRowActions } from '@/components/DataTableRowActions'
 export const getColumns = (
   onEdit: (order: OrderListRow) => void,
   onDelete: (id: number) => void,
+  t: (key: string) => string,
 ): Array<ColumnDef<OrderListRow>> => {
   const orderActions: Array<ActionMenuItem<OrderListRow>> = [
     {
-      label: 'Düzenle',
+      label: t('actions.edit'),
       action: (order) => onEdit(order),
       separatorAfter: true,
     },
     {
-      label: 'Sil',
+      label: t('actions.delete'),
       action: (order) => onDelete(order.id),
       isDestructive: true,
     },
@@ -52,14 +53,14 @@ export const getColumns = (
     },
     {
       accessorKey: 'order_number',
-      header: 'Sipariş No',
+      header: t('orders.columns.order_number'),
       cell: ({ row }) => (
         <div className="truncate">{row.getValue('order_number')}</div>
       ),
     },
     {
       accessorKey: 'order_date',
-      header: 'Sipariş Tarihi',
+      header: t('orders.columns.order_date'),
       cell: ({ row }) => (
         <div className="font-medium truncate">
           {new Date(row.getValue('order_date')).toLocaleDateString('tr-TR')}
@@ -69,7 +70,7 @@ export const getColumns = (
     {
       id: 'customer_name',
       accessorFn: (row) => row.customer.name,
-      header: 'Müşteri',
+      header: t('orders.columns.customer'),
       cell: ({ row }) => (
         <div className="font-medium truncate">
           {row.original.customer.name}
@@ -94,7 +95,7 @@ export const getColumns = (
     },
     {
       accessorKey: 'delivery_address',
-      header: 'Teslimat Adresi',
+      header: t('orders.columns.delivery_address'),
       cell: ({ row }) => (
         <div className="font-medium truncate">
           {row.getValue('delivery_address')}
@@ -103,7 +104,7 @@ export const getColumns = (
     },
     {
       accessorKey: 'status',
-      header: 'Sipariş Durumu',
+      header: t('orders.columns.status'),
       size: 110,
       cell: ({ row }) => {
         const status = row.original.status
@@ -144,9 +145,9 @@ export const getColumns = (
     {
       accessorKey: 'total_amount',
       meta: {
-        filterTitle: 'Toplam Tutar',
+        filterTitle: t('orders.columns.total_amount'),
       },
-      header: () => <div className="ml-auto">Toplam Tutar</div>,
+      header: () => <div className="ml-auto">{t('orders.columns.total_amount')}</div>,
       cell: ({ row }) => {
         const totalAmount = Number(row.getValue('total_amount'))
         const formatted = new Intl.NumberFormat('tr', {

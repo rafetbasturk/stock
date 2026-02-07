@@ -1,0 +1,9 @@
+{
+  "app_title": "Stock-Order Tracking App",
+  "pending": "Loading...",
+  "not_found": {
+    "code": "404",
+    "message": "The page you are looking for could not be found.",
+    "go_home": "Go to Home"
+  }
+}

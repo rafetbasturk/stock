@@ -2,6 +2,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Calendar, Edit, ListTodo, MapPin, ReceiptText, UserRound } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { ElementType } from 'react'
 import OrderForm from '@/components/orders/OrderForm'
@@ -31,6 +32,7 @@ export const Route = createFileRoute('/orders/$id')({
 })
 
 function RouteComponent() {
+  const { t, i18n } = useTranslation('details')
   const { id } = Route.useParams()
   const orderId = parseOrderId(id)
 
@@ -63,7 +65,7 @@ function RouteComponent() {
 
   const handleEditSuccess = () => {
     setIsEditing(false)
-    toast.success('Sipariş güncellendi')
+    toast.success(t('orders.updated_success'))
   }
 
   return (
@@ -74,26 +76,26 @@ function RouteComponent() {
         actions={
           <Button size="sm" onClick={() => setIsEditing(true)} className="gap-2">
             <Edit className="size-4" />
-            Düzenle
+            {t('actions.edit')}
           </Button>
         }
       />
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Sipariş Bilgileri</CardTitle>
+          <CardTitle className="text-lg">{t('orders.card_title')}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-5 sm:grid-cols-2">
-          <DetailItem icon={ReceiptText} label="Sipariş No" value={order.order_number} />
-          <DetailItem icon={UserRound} label="Müşteri" value={order.customer.name} />
-          <DetailItem icon={ListTodo} label="Durum" value={order.status} />
-          <DetailItem icon={ReceiptText} label="Para Birimi" value={order.currency} />
+          <DetailItem icon={ReceiptText} label={t('orders.fields.order_number')} value={order.order_number} />
+          <DetailItem icon={UserRound} label={t('orders.fields.customer')} value={order.customer.name} />
+          <DetailItem icon={ListTodo} label={t('orders.fields.status')} value={order.status} />
+          <DetailItem icon={ReceiptText} label={t('orders.fields.currency')} value={order.currency} />
           <DetailItem
             icon={Calendar}
-            label="Sipariş Tarihi"
-            value={new Date(order.order_date).toLocaleDateString('tr-TR')}
+            label={t('orders.fields.order_date')}
+            value={new Date(order.order_date).toLocaleDateString(i18n.language)}
           />
-          <DetailItem icon={MapPin} label="Teslimat Adresi" value={order.delivery_address} />
+          <DetailItem icon={MapPin} label={t('orders.fields.delivery_address')} value={order.delivery_address} />
         </CardContent>
       </Card>
 

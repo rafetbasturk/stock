@@ -1,0 +1,18 @@
+{
+  "titles": {
+    "bad_request": "Geçersiz istek",
+    "unauthorized": "Yetkisiz erişim",
+    "forbidden": "Erişim engellendi",
+    "not_found": "Sayfa bulunamadı",
+    "internal_server_error": "Sunucu hatası",
+    "unexpected": "Bir hata oluştu"
+  },
+  "messages": {
+    "unexpected": "Beklenmeyen bir hata meydana geldi."
+  },
+  "actions": {
+    "back": "Geri Dön",
+    "retry": "Tekrar Dene",
+    "retrying": "Tekrar Deneniyor..."
+  }
+}

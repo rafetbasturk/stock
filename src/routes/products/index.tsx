@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { zodValidator } from '@tanstack/zod-adapter'
-import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 import type { ProductListRow } from '@/types'
 import type { DataTableFilter } from '@/components/DataTable'
@@ -32,12 +32,11 @@ export const Route = createFileRoute('/products/')({
     ])
   },
   component: ProductList,
-  pendingComponent: () => (
-    <LoadingSpinner variant="full-page" text="Loading products..." />
-  ),
+  pendingComponent: ProductsPending,
 })
 
 function ProductList() {
+  const { t } = useTranslation('entities')
   const navigate = useNavigate({ from: Route.fullPath })
   const search = Route.useSearch()
 
@@ -57,13 +56,6 @@ function ProductList() {
   )
 
   const deleteMutation = useDeleteProductMutation()
-
-  // Error handling for delete mutation
-  useEffect(() => {
-    if (deleteMutation.isError) {
-      toast.error('Failed to delete product')
-    }
-  }, [deleteMutation.isError])
 
   const { data: filterOptions } = useSuspenseQuery(getFilterOptions())
 
@@ -103,7 +95,7 @@ function ProductList() {
 
   const deleteProductLabel = pendingDeleteProduct
     ? `${pendingDeleteProduct.code} - ${pendingDeleteProduct.name}`
-    : 'Bu ürün'
+    : t('products.fallback_label')
 
   const isDeleteDialogOpen = pendingDeleteId !== null
 
@@ -114,8 +106,8 @@ function ProductList() {
   }, [pendingDeleteId, pendingDeleteProduct])
 
   const columns = useMemo(
-    () => getColumns(openEditModal, handleDeleteProduct),
-    [handleDeleteProduct, openEditModal],
+    () => getColumns(openEditModal, handleDeleteProduct, t),
+    [handleDeleteProduct, openEditModal, t],
   )
 
   // Memoize customFilters with filtered empty materials
@@ -123,7 +115,7 @@ function ProductList() {
     () => [
       {
         columnId: 'customer',
-        label: 'Müşteri',
+        label: t('products.filters.customer'),
         type: 'select',
         options: filterOptions.customers.map((c) => ({
           value: String(c.id),
@@ -132,7 +124,7 @@ function ProductList() {
       },
       {
         columnId: 'material',
-        label: 'Malzeme',
+        label: t('products.filters.material'),
         type: 'select',
         options: filterOptions.materials
           .filter((m) => m && m.trim().length > 0)
@@ -142,7 +134,7 @@ function ProductList() {
           })),
       },
     ],
-    [filterOptions.customers, filterOptions.materials],
+    [filterOptions.customers, filterOptions.materials, t],
   )
 
   // Handle search changes with proper type safety
@@ -217,4 +209,9 @@ function ProductList() {
       />
     </>
   )
+}
+
+function ProductsPending() {
+  const { t } = useTranslation('entities')
+  return <LoadingSpinner variant="full-page" text={t('products.loading')} />
 }

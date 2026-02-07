@@ -1,11 +1,11 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { Outlet, createFileRoute } from '@tanstack/react-router'
 import { LucideFactory } from 'lucide-react'
 
 export const Route = createFileRoute('/customers')({
   component: RouteComponent,
   staticData: {
     sidebar: {
-      label: 'Müşteriler',
+      label: 'nav.customers',
       icon: LucideFactory,
       order: 40,
     },

@@ -1,0 +1,9 @@
+{
+  "app_title": "Stok-Sipariş Takip Uygulaması",
+  "pending": "Yükleniyor...",
+  "not_found": {
+    "code": "404",
+    "message": "Aradığınız sayfa bulunamadı.",
+    "go_home": "Ana Sayfaya Dön"
+  }
+}

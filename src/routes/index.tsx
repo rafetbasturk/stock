@@ -1,6 +1,8 @@
 // src/routes/index.tsx
 import { createFileRoute } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 
+import { LucideLayoutDashboard } from "lucide-react";
 import type { HomeSearch } from "@/lib/types/types.search";
 import { generateYearOptions } from "@/lib/utils";
 import { yearRangeQuery } from "@/lib/queries/orders";
@@ -13,7 +15,6 @@ import {
   OrdersByStatusChart,
 } from "@/components/dashboard";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { LucideLayoutDashboard } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>): HomeSearch => {
@@ -40,10 +41,10 @@ export const Route = createFileRoute("/")({
     return generateYearOptions(years.minYear, years.maxYear);
   },
   component: Dashboard,
-  pendingComponent: () => <LoadingSpinner variant="full-page" text="/index" />,
+  pendingComponent: DashboardPending,
   staticData: {
     sidebar: {
-      label: "Panel",
+      label: "nav.dashboard",
       icon: LucideLayoutDashboard,
       order: 10,
     },
@@ -51,6 +52,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Dashboard() {
+  const { t } = useTranslation("dashboard");
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const years = Route.useLoaderData();
@@ -76,7 +78,7 @@ function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Sipariş Durumları</CardTitle>
+            <CardTitle>{t("sections.status_chart")}</CardTitle>
           </CardHeader>
           <CardContent>
             <OrdersByStatusChart search={search} />
@@ -85,7 +87,7 @@ function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Aylık Sipariş Sayıları</CardTitle>
+            <CardTitle>{t("sections.monthly_chart")}</CardTitle>
           </CardHeader>
           <CardContent>
             <MonthlyOrdersChart />
@@ -94,4 +96,9 @@ function Dashboard() {
       </div>
     </div>
   );
+}
+
+function DashboardPending() {
+  const { t } = useTranslation("dashboard");
+  return <LoadingSpinner variant="full-page" text={t("pending")} />;
 }

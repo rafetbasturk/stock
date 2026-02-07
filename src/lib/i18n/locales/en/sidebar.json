@@ -1,0 +1,13 @@
+{
+  "title": "Order Management",
+  "theme_switch": "Toggle Theme",
+  "logout": "Log Out",
+  "logout_pending": "Logging out...",
+  "nav": {
+    "dashboard": "Dashboard",
+    "orders": "Orders",
+    "products": "Products",
+    "customers": "Customers",
+    "deliveries": "Deliveries"
+  }
+}

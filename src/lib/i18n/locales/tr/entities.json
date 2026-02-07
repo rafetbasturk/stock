@@ -1,0 +1,59 @@
+{
+  "actions": {
+    "edit": "Düzenle",
+    "delete": "Sil",
+    "add_customer_aria": "Müşteri ekle",
+    "add_product_aria": "Ürün ekle",
+    "add_order_aria": "Sipariş ekle"
+  },
+  "customers": {
+    "list_title": "Müşteri Listesi",
+    "fallback_label": "Bu müşteri",
+    "loading": "Müşteriler yükleniyor...",
+    "all": "Tümü",
+    "all_customers": "Tüm müşteriler",
+    "columns": {
+      "code": "Müşteri Kodu",
+      "name": "Müşteri Adı",
+      "email": "E-posta",
+      "phone": "Telefon",
+      "address": "Adres"
+    }
+  },
+  "products": {
+    "list_title": "Ürün Listesi",
+    "fallback_label": "Bu ürün",
+    "loading": "Ürünler yükleniyor...",
+    "filters": {
+      "customer": "Müşteri",
+      "material": "Malzeme"
+    },
+    "columns": {
+      "code": "Ürün Kodu",
+      "name": "Ürün Adı",
+      "price": "Fiyat",
+      "stock_quantity": "Stok Adedi",
+      "other_codes": "Diğer Kod",
+      "material": "Malzeme Cinsi",
+      "post_process": "Üretim Sonrası",
+      "coating": "Kaplama",
+      "specs": "Ölçü (Paylı)",
+      "specs_net": "Net Ölçü",
+      "notes": "Açıklama",
+      "customer": "Müşteri Adı"
+    }
+  },
+  "orders": {
+    "list_title": "Sipariş Listesi",
+    "fallback_label": "Bu sipariş",
+    "loading": "Siparişler yükleniyor...",
+    "columns": {
+      "order_number": "Sipariş No",
+      "order_date": "Sipariş Tarihi",
+      "customer": "Müşteri",
+      "delivery_address": "Teslimat Adresi",
+      "status": "Sipariş Durumu",
+      "total_amount": "Toplam Tutar"
+    }
+  }
+}

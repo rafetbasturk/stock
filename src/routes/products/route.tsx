@@ -1,16 +1,15 @@
 // src/routes/products/route.tsx
-import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { Outlet, createFileRoute } from '@tanstack/react-router'
 import { LucideListOrdered } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
 
 export const Route = createFileRoute('/products')({
   component: ProductsLayout,
-  pendingComponent: () => (
-    <LoadingSpinner variant="full-page" text="Loading products..." />
-  ),
+  pendingComponent: ProductsLayoutPending,
   staticData: {
     sidebar: {
-      label: 'Ürünler',
+      label: 'nav.products',
       icon: LucideListOrdered,
       order: 30,
     },
@@ -23,4 +22,9 @@ function ProductsLayout() {
       <Outlet />
     </div>
   )
+}
+
+function ProductsLayoutPending() {
+  const { t } = useTranslation('entities')
+  return <LoadingSpinner variant="full-page" text={t('products.loading')} />
 }

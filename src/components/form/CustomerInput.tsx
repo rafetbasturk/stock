@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import EntitySelect from "./EntitySelect";
 import type { I18nErrorMessage } from "@/lib/error/core/errorTransport";
 import type { FieldErrors } from "@/lib/error/utils/formErrors";
@@ -25,6 +26,7 @@ export default function CustomerInput({
   includeAllOption = false,
   filterIds,
 }: Props) {
+  const { t } = useTranslation("entities");
   const { data: customers, isLoading } = useFetchCustomers();
 
   const filtered = useMemo(() => {
@@ -49,7 +51,7 @@ export default function CustomerInput({
     ? [
         {
           id: "all",
-          label: "Tümü",
+          label: t("customers.all"),
           value: "all",
           returnValue: null,
         },
@@ -61,7 +63,7 @@ export default function CustomerInput({
     <EntitySelect
       name="customer_id"
       label={label}
-      placeholder="Tüm müşteriler"
+      placeholder={t("customers.all_customers")}
       value={value}
       onValueChange={onValueChange}
       error={error}

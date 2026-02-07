@@ -1,7 +1,8 @@
 // src/components/error/ErrorComponent.tsx
+import { useRouter } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { ErrorMessage } from "@/components/error/ErrorMessage";
 import { AppError } from "@/lib/error/core/AppError";
-import { useRouter } from "@tanstack/react-router";
 
 interface ErrorComponentProps {
   error: unknown;
@@ -14,19 +15,21 @@ interface ErrorComponentProps {
  */
 export function ErrorComponent({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
+  const { t } = useTranslation("errors");
   const appError = AppError.from(error);
 
-  /** Map common HTTP statuses to localized friendly titles */
-  const titleByStatus: Record<number, string> = {
-    400: "Geçersiz istek",
-    401: "Yetkisiz erişim",
-    403: "Erişim engellendi",
-    404: "Sayfa bulunamadı",
-    500: "Sunucu hatası",
+  const titleKeyByStatus: Record<number, string> = {
+    400: "titles.bad_request",
+    401: "titles.unauthorized",
+    403: "titles.forbidden",
+    404: "titles.not_found",
+    500: "titles.internal_server_error",
   };
 
-  const title = titleByStatus[appError.status] ?? "Bir hata oluştu";
-  const message = appError.message || "Beklenmeyen bir hata meydana geldi.";
+  const title = t(
+    titleKeyByStatus[appError.status] ?? "titles.unexpected"
+  );
+  const message = appError.message || t("messages.unexpected");
 
   function handleReset() {
     if (reset) {

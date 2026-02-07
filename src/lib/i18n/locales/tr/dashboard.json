@@ -1,0 +1,40 @@
+{
+  "pending": "Yükleniyor...",
+  "sidebar_label": "Panel",
+  "sections": {
+    "status_chart": "Sipariş Durumları",
+    "monthly_chart": "Aylık Sipariş Sayıları"
+  },
+  "filters": {
+    "all": "Tümü",
+    "all_years": "Tüm yıllar",
+    "clear": "Temizle"
+  },
+  "metrics": {
+    "load_error_title": "Veriler yüklenirken hata oluştu",
+    "load_error_message": "Veriler alınamadı.",
+    "total_order_amount": "Toplam Sipariş Tutarı",
+    "delivered_order_amount": "Teslim Edilen Sipariş Tutarı",
+    "open_order_amount": "Açık Sipariş Tutarı",
+    "total_order_count": "Toplam Sipariş Sayısı",
+    "order_count_this_month": "Sipariş Sayısı (Bu Ay)",
+    "open_order_count": "Açık Sipariş Sayısı"
+  },
+  "monthly_orders": {
+    "load_error_title": "Aylık siparişler yüklenirken hata oluştu",
+    "load_error_message": "Aylık sipariş durumu bulunamadı.",
+    "orders_axis": "Sipariş",
+    "amount_axis": "Tutar",
+    "orders_count": "Sipariş Sayısı",
+    "total_amount": "Toplam Tutar",
+    "orders_count_label": "Sipariş Sayısı:",
+    "total_amount_label": "Toplam Tutar:"
+  },
+  "status_chart": {
+    "load_error_title": "Sipariş durumu yüklenirken hata oluştu",
+    "load_error_message": "Sipariş durumu bulunamadı.",
+    "no_data": "Gösterilecek sipariş verisi yok",
+    "total_orders": "Toplam Sipariş",
+    "order_suffix": "sipariş"
+  }
+}

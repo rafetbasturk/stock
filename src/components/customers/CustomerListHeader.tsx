@@ -1,4 +1,5 @@
 import { Plus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import PageHeader from '@/components/PageHeader'
 
@@ -7,12 +8,14 @@ interface CustomerListHeaderProps {
 }
 
 export function CustomerListHeader({ onAdd }: CustomerListHeaderProps) {
+  const { t } = useTranslation('entities')
+
   return (
     <PageHeader
-      title="Müşteri Listesi"
+      title={t('customers.list_title')}
       actions={
         <Button
-          aria-label="Add customer"
+          aria-label={t('actions.add_customer_aria')}
           className="w-12 rounded-md"
           onClick={onAdd}
         >

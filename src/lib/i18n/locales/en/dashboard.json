@@ -1,0 +1,40 @@
+{
+  "pending": "Loading...",
+  "sidebar_label": "Dashboard",
+  "sections": {
+    "status_chart": "Order Statuses",
+    "monthly_chart": "Monthly Order Counts"
+  },
+  "filters": {
+    "all": "All",
+    "all_years": "All years",
+    "clear": "Clear"
+  },
+  "metrics": {
+    "load_error_title": "Failed to load metrics",
+    "load_error_message": "Metrics could not be loaded.",
+    "total_order_amount": "Total Order Amount",
+    "delivered_order_amount": "Delivered Order Amount",
+    "open_order_amount": "Open Order Amount",
+    "total_order_count": "Total Order Count",
+    "order_count_this_month": "Order Count (This Month)",
+    "open_order_count": "Open Order Count"
+  },
+  "monthly_orders": {
+    "load_error_title": "Failed to load monthly orders",
+    "load_error_message": "Monthly order data was not found.",
+    "orders_axis": "Orders",
+    "amount_axis": "Amount",
+    "orders_count": "Order Count",
+    "total_amount": "Total Amount",
+    "orders_count_label": "Order Count:",
+    "total_amount_label": "Total Amount:"
+  },
+  "status_chart": {
+    "load_error_title": "Failed to load order statuses",
+    "load_error_message": "Order status data was not found.",
+    "no_data": "No order data to display",
+    "total_orders": "Total Orders",
+    "order_suffix": "orders"
+  }
+}

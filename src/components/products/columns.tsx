@@ -4,16 +4,17 @@ import type { ActionMenuItem, ProductListRow } from "@/types";
 
 export const getColumns = (
   onEdit: (product: ProductListRow) => void,
-  onDelete: (id: number) => void
+  onDelete: (id: number) => void,
+  t: (key: string) => string
 ): Array<ColumnDef<ProductListRow>> => {
   const productActions: Array<ActionMenuItem<ProductListRow>> = [
     {
-      label: "Düzenle",
+      label: t('actions.edit'),
       action: (product) => onEdit(product),
       separatorAfter: true,
     },
     {
-      label: "Sil",
+      label: t('actions.delete'),
       action: (product) => onDelete(product.id),
       isDestructive: true,
     },
@@ -31,7 +32,7 @@ export const getColumns = (
     },
     {
       accessorKey: "code",
-      header: "Ürün Kodu",
+      header: t('products.columns.code'),
       size: 150,
       cell: ({ row }) => (
         <div className="font-medium truncate">{row.getValue("code")}</div>
@@ -40,7 +41,7 @@ export const getColumns = (
     },
     {
       accessorKey: "name",
-      header: "Ürün Adı",
+      header: t('products.columns.name'),
       minSize: 200,
       size: 300,
       cell: ({ row }) => <div className="truncate">{row.getValue("name")}</div>,
@@ -48,8 +49,8 @@ export const getColumns = (
     },
     {
       accessorKey: "price",
-      header: () => <div className="ml-auto">Fiyat</div>,
-      meta: { filterTitle: "Fiyat" },
+      header: () => <div className="ml-auto">{t('products.columns.price')}</div>,
+      meta: { filterTitle: t('products.columns.price') },
       size: 120,
       enableGlobalFilter: false,
       cell: ({ row }) => {
@@ -64,8 +65,8 @@ export const getColumns = (
     },
     {
       accessorKey: "stock_quantity",
-      header: () => <div className="m-auto">Stok Adedi</div>,
-      meta: { filterTitle: "Stok Adedi" },
+      header: () => <div className="m-auto">{t('products.columns.stock_quantity')}</div>,
+      meta: { filterTitle: t('products.columns.stock_quantity') },
       enableGlobalFilter: false,
       size: 120,
       cell: ({ row }) => {
@@ -86,7 +87,7 @@ export const getColumns = (
     },
     {
       accessorKey: "other_codes",
-      header: "Diğer Kod",
+      header: t('products.columns.other_codes'),
       size: 150,
       cell: ({ row }) => (
         <div className="text-muted-foreground truncate">
@@ -96,7 +97,7 @@ export const getColumns = (
     },
     {
       accessorKey: "material",
-      header: "Malzeme Cinsi",
+      header: t('products.columns.material'),
       size: 150,
       enableSorting: true,
       cell: ({ row }) => (
@@ -107,7 +108,7 @@ export const getColumns = (
     },
     {
       accessorKey: "post_process",
-      header: "Üretim Sonrası",
+      header: t('products.columns.post_process'),
       size: 150,
       cell: ({ row }) => (
         <div className="text-muted-foreground truncate">
@@ -117,7 +118,7 @@ export const getColumns = (
     },
     {
       accessorKey: "coating",
-      header: "Kaplama",
+      header: t('products.columns.coating'),
       size: 150,
       cell: ({ row }) => (
         <div className="text-muted-foreground truncate">
@@ -127,7 +128,7 @@ export const getColumns = (
     },
     {
       accessorKey: "specs",
-      header: "Ölçü (Paylı)",
+      header: t('products.columns.specs'),
       size: 120,
       cell: ({ row }) => (
         <div className="text-muted-foreground truncate">
@@ -138,7 +139,7 @@ export const getColumns = (
     },
     {
       accessorKey: "specs_net",
-      header: "Net Ölçü",
+      header: t('products.columns.specs_net'),
       size: 120,
       cell: ({ row }) => (
         <div className="text-muted-foreground truncate">
@@ -149,7 +150,7 @@ export const getColumns = (
     },
     {
       accessorKey: "notes",
-      header: "Açıklama",
+      header: t('products.columns.notes'),
       minSize: 200,
       size: 250,
       cell: ({ row }) => (
@@ -161,7 +162,7 @@ export const getColumns = (
     },
     {
       accessorKey: "customer",
-      header: "Müşteri Adı",
+      header: t('products.columns.customer'),
       size: 150,
       cell: ({ row }) => {
         return (

@@ -1,0 +1,54 @@
+{
+  "actions": {
+    "edit": "Düzenle"
+  },
+  "common": {
+    "last_update": "Son Güncelleme",
+    "empty": "—"
+  },
+  "customers": {
+    "updated_success": "Müşteri güncellendi",
+    "card_title": "Müşteri Bilgileri",
+    "fields": {
+      "code": "Müşteri Kodu",
+      "name": "Müşteri Adı",
+      "email": "E-posta",
+      "phone": "Telefon",
+      "address": "Adres"
+    }
+  },
+  "products": {
+    "updated_success": "Ürün güncellendi",
+    "sections": {
+      "tech_specs": "Teknik Özellikler",
+      "customer_info": "Müşteri Bilgileri",
+      "notes": "Notlar",
+      "stock_status": "Stok Durumu",
+      "pricing": "Fiyatlandırma"
+    },
+    "fields": {
+      "material": "Malzeme",
+      "coating": "Kaplama",
+      "post_process": "Son İşlem",
+      "specs": "Ölçü",
+      "specs_net": "Net Ölçü",
+      "other_codes": "Diğer Kod",
+      "customer_name": "Müşteri Adı",
+      "critical_stock_level": "Kritik Stok Seviyesi ({{value}})",
+      "minimum_stock": "Minimum Stok",
+      "unit_price": "Birim Fiyat"
+    }
+  },
+  "orders": {
+    "updated_success": "Sipariş güncellendi",
+    "card_title": "Sipariş Bilgileri",
+    "fields": {
+      "order_number": "Sipariş No",
+      "customer": "Müşteri",
+      "status": "Durum",
+      "currency": "Para Birimi",
+      "order_date": "Sipariş Tarihi",
+      "delivery_address": "Teslimat Adresi"
+    }
+  }
+}

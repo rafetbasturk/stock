@@ -1,9 +1,10 @@
-import { PieChart, Pie, Tooltip, ResponsiveContainer } from 'recharts'
+import { Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+import { useTranslation } from 'react-i18next'
 import { ErrorMessage } from '../error/ErrorMessage'
 import { Skeleton } from '../ui/skeleton'
 import { LoadingSpinner } from '../LoadingSpinner'
-import { useFetchOrdersByStatus } from '@/lib/queries/metrics'
 import type { HomeSearch } from '@/lib/types/types.search'
+import { useFetchOrdersByStatus } from '@/lib/queries/metrics'
 import { useMounted } from '@/hooks/useMounted'
 
 export type OrderStatus = {
@@ -23,7 +24,15 @@ const STATUS_COLORS: Record<string, string> = {
   İPTAL: '#2A2524',
 }
 
-function CustomTooltip({ active, payload }: any) {
+function CustomTooltip({
+  active,
+  payload,
+  orderSuffix,
+}: {
+  active?: boolean
+  payload?: Array<{ name: string; value: number }>
+  orderSuffix: string
+}) {
   if (!active || !payload?.length) return null
 
   const { name, value } = payload[0]
@@ -31,21 +40,24 @@ function CustomTooltip({ active, payload }: any) {
   return (
     <div className="rounded-lg border bg-background px-3 py-2 text-sm shadow-md text-center">
       <span className="font-medium capitalize">{name}</span>
-      <div className="mt-1 text-muted-foreground">{value} sipariş</div>
+      <div className="mt-1 text-muted-foreground">
+        {value} {orderSuffix}
+      </div>
     </div>
   )
 }
 
-function CenterLabel({ total }: { total: number }) {
+function CenterLabel({ total, label }: { total: number; label: string }) {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
       <span className="text-2xl font-semibold">{total}</span>
-      <span className="text-xs text-muted-foreground">Toplam Sipariş</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
     </div>
   )
 }
 
 export default function OrdersByStatusChart({ search }: Props) {
+  const { t } = useTranslation('dashboard')
   const mounted = useMounted()
 
   const {
@@ -65,8 +77,8 @@ export default function OrdersByStatusChart({ search }: Props) {
   if (error) {
     return (
       <ErrorMessage
-        title="Sipariş durumu yüklenirken hata oluştu"
-        message={error?.message || 'Sipariş durumu bulunamadı.'}
+        title={t('status_chart.load_error_title')}
+        message={error.message || t('status_chart.load_error_message')}
         onRetry={refetch}
       />
     )
@@ -75,7 +87,7 @@ export default function OrdersByStatusChart({ search }: Props) {
   if (!data.length) {
     return (
       <div className="flex h-62.5 items-center justify-center rounded-xl border text-sm text-muted-foreground">
-        Gösterilecek sipariş verisi yok
+        {t('status_chart.no_data')}
       </div>
     )
   }
@@ -89,7 +101,7 @@ export default function OrdersByStatusChart({ search }: Props) {
       )}
       {mounted ? (
         <>
-          <CenterLabel total={total} />
+          <CenterLabel total={total} label={t('status_chart.total_orders')} />
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -108,7 +120,11 @@ export default function OrdersByStatusChart({ search }: Props) {
                 dataKey="value"
                 label
               ></Pie>
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip
+                content={
+                  <CustomTooltip orderSuffix={t('status_chart.order_suffix')} />
+                }
+              />
             </PieChart>
           </ResponsiveContainer>
         </>

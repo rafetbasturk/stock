@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "../ui/card";
 import CustomerInput from "../form/CustomerInput";
 import EntitySelect from "../form/EntitySelect";
@@ -15,10 +16,11 @@ export default function DashboardFilters({
   filters,
   onSearchChange,
 }: Props) {
+  const { t } = useTranslation("dashboard");
   const { customerId, year } = filters;
 
   const yearOptions = [
-    { id: "all", label: "Tümü", value: "" },
+    { id: "all", label: t("filters.all"), value: "" },
     ...years.map((y) => ({
       id: String(y),
       label: String(y),
@@ -58,7 +60,7 @@ export default function DashboardFilters({
               }
             }}
             options={yearOptions}
-            placeholder="Tüm yıllar"
+            placeholder={t("filters.all_years")}
           />
 
           <Button
@@ -66,7 +68,7 @@ export default function DashboardFilters({
             onClick={handleClear}
             className="w-full md:w-48 border-muted bg-background hover:bg-accent font-normal text-muted-foreground"
           >
-            Temizle
+            {t("filters.clear")}
           </Button>
         </div>
       </CardContent>

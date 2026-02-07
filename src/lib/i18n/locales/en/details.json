@@ -1,0 +1,54 @@
+{
+  "actions": {
+    "edit": "Edit"
+  },
+  "common": {
+    "last_update": "Last Updated",
+    "empty": "—"
+  },
+  "customers": {
+    "updated_success": "Customer updated",
+    "card_title": "Customer Details",
+    "fields": {
+      "code": "Customer Code",
+      "name": "Customer Name",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address"
+    }
+  },
+  "products": {
+    "updated_success": "Product updated",
+    "sections": {
+      "tech_specs": "Technical Specifications",
+      "customer_info": "Customer Information",
+      "notes": "Notes",
+      "stock_status": "Stock Status",
+      "pricing": "Pricing"
+    },
+    "fields": {
+      "material": "Material",
+      "coating": "Coating",
+      "post_process": "Post Process",
+      "specs": "Specs",
+      "specs_net": "Net Specs",
+      "other_codes": "Other Codes",
+      "customer_name": "Customer Name",
+      "critical_stock_level": "Critical Stock Level ({{value}})",
+      "minimum_stock": "Minimum Stock",
+      "unit_price": "Unit Price"
+    }
+  },
+  "orders": {
+    "updated_success": "Order updated",
+    "card_title": "Order Details",
+    "fields": {
+      "order_number": "Order No",
+      "customer": "Customer",
+      "status": "Status",
+      "currency": "Currency",
+      "order_date": "Order Date",
+      "delivery_address": "Delivery Address"
+    }
+  }
+}

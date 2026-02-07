@@ -2,6 +2,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Calendar, Edit, Mail, MapPin, Phone, UserRound } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { ElementType } from 'react'
 import CustomerForm from '@/components/customers/CustomerForm'
@@ -31,6 +32,7 @@ export const Route = createFileRoute('/customers/$id')({
 })
 
 function RouteComponent() {
+  const { t, i18n } = useTranslation('details')
   const { id } = Route.useParams()
   const customerId = parseCustomerId(id)
 
@@ -63,7 +65,7 @@ function RouteComponent() {
 
   const handleEditSuccess = () => {
     setIsEditing(false)
-    toast.success('Müşteri güncellendi')
+    toast.success(t('customers.updated_success'))
   }
 
   return (
@@ -74,25 +76,25 @@ function RouteComponent() {
         actions={
           <Button size="sm" onClick={() => setIsEditing(true)} className="gap-2">
             <Edit className="size-4" />
-            Düzenle
+            {t('actions.edit')}
           </Button>
         }
       />
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Müşteri Bilgileri</CardTitle>
+          <CardTitle className="text-lg">{t('customers.card_title')}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-5 sm:grid-cols-2">
-          <DetailItem icon={UserRound} label="Müşteri Kodu" value={customer.code} />
-          <DetailItem icon={UserRound} label="Müşteri Adı" value={customer.name} />
-          <DetailItem icon={Mail} label="Email" value={customer.email} />
-          <DetailItem icon={Phone} label="Telefon" value={customer.phone} />
-          <DetailItem icon={MapPin} label="Adres" value={customer.address} />
+          <DetailItem icon={UserRound} label={t('customers.fields.code')} value={customer.code} />
+          <DetailItem icon={UserRound} label={t('customers.fields.name')} value={customer.name} />
+          <DetailItem icon={Mail} label={t('customers.fields.email')} value={customer.email} />
+          <DetailItem icon={Phone} label={t('customers.fields.phone')} value={customer.phone} />
+          <DetailItem icon={MapPin} label={t('customers.fields.address')} value={customer.address} />
           <DetailItem
             icon={Calendar}
-            label="Son Güncelleme"
-            value={new Date(customer.updated_at).toLocaleDateString('tr-TR')}
+            label={t('common.last_update')}
+            value={new Date(customer.updated_at).toLocaleDateString(i18n.language)}
           />
         </CardContent>
       </Card>
@@ -133,7 +135,7 @@ function DetailItem({
           {label}
         </p>
         <p className="text-sm font-medium text-foreground">
-          {value || <span className="text-muted-foreground/40">—</span>}
+          {value || <span className="text-muted-foreground/40">-</span>}
         </p>
       </div>
     </div>

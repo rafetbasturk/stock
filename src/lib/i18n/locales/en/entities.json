@@ -1,0 +1,59 @@
+{
+  "actions": {
+    "edit": "Edit",
+    "delete": "Delete",
+    "add_customer_aria": "Add customer",
+    "add_product_aria": "Add product",
+    "add_order_aria": "Add order"
+  },
+  "customers": {
+    "list_title": "Customer List",
+    "fallback_label": "This customer",
+    "loading": "Loading customers...",
+    "all": "All",
+    "all_customers": "All customers",
+    "columns": {
+      "code": "Customer Code",
+      "name": "Customer Name",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address"
+    }
+  },
+  "products": {
+    "list_title": "Product List",
+    "fallback_label": "This product",
+    "loading": "Loading products...",
+    "filters": {
+      "customer": "Customer",
+      "material": "Material"
+    },
+    "columns": {
+      "code": "Product Code",
+      "name": "Product Name",
+      "price": "Price",
+      "stock_quantity": "Stock Quantity",
+      "other_codes": "Other Codes",
+      "material": "Material",
+      "post_process": "Post Process",
+      "coating": "Coating",
+      "specs": "Specs (Gross)",
+      "specs_net": "Specs (Net)",
+      "notes": "Notes",
+      "customer": "Customer Name"
+    }
+  },
+  "orders": {
+    "list_title": "Order List",
+    "fallback_label": "This order",
+    "loading": "Loading orders...",
+    "columns": {
+      "order_number": "Order No",
+      "order_date": "Order Date",
+      "customer": "Customer",
+      "delivery_address": "Delivery Address",
+      "status": "Order Status",
+      "total_amount": "Total Amount"
+    }
+  }
+}

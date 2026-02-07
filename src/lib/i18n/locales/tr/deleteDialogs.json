@@ -1,0 +1,17 @@
+{
+  "common": {
+    "description": "kalıcı olarak silinecek. Bu işlem geri alınamaz.",
+    "cancel": "Vazgeç",
+    "confirm": "Evet, sil",
+    "confirming": "Siliniyor..."
+  },
+  "customer": {
+    "title": "Müşteriyi silmek istediğine emin misin?"
+  },
+  "product": {
+    "title": "Ürünü silmek istediğine emin misin?"
+  },
+  "order": {
+    "title": "Siparişi silmek istediğine emin misin?"
+  }
+}

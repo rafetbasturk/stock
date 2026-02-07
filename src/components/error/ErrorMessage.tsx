@@ -1,7 +1,8 @@
 // src/components/error/ErrorMessage.tsx
 import { useState } from "react";
 import { useRouter } from "@tanstack/react-router";
-import { AlertCircle, RotateCcw, ArrowLeft } from "lucide-react";
+import { AlertCircle, ArrowLeft, RotateCcw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ export function ErrorMessage({
   className,
 }: ErrorMessageProps) {
   const router = useRouter();
+  const { t } = useTranslation("errors");
   const [isRetrying, setIsRetrying] = useState(false);
 
   async function handleRetry() {
@@ -66,10 +68,10 @@ export function ErrorMessage({
             onClick={() => router.history.back()}
             className="flex items-center gap-2"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Geri Dön
-          </Button>
-        )}
+                <ArrowLeft className="w-4 h-4" />
+                {t("actions.back")}
+              </Button>
+            )}
         {(onRetry || onRouterReset) && (
           <Button
             variant="destructive"
@@ -78,10 +80,10 @@ export function ErrorMessage({
             disabled={isRetrying}
             className="flex items-center gap-2"
           >
-            <RotateCcw className="w-4 h-4" />
-            {isRetrying ? "Tekrar Deneniyor..." : "Tekrar Dene"}
-          </Button>
-        )}
+              <RotateCcw className="w-4 h-4" />
+              {isRetrying ? t("actions.retrying") : t("actions.retry")}
+            </Button>
+          )}
       </div>
     </div>
   );

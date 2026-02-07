@@ -1,6 +1,7 @@
 // src/components/AppSidebar.tsx
 import { Link, useRouterState } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   HandCoinsIcon,
   LanguagesIcon,
@@ -41,6 +42,7 @@ function normalizePath(path: string) {
 }
 
 export function AppSidebar({ settings }: { settings: AppSettings }) {
+  const { t } = useTranslation('sidebar')
   const { toggleSidebar, open } = useSidebar()
   const { lang } = settings
   const { toggleTheme } = useThemeToggle()
@@ -89,7 +91,7 @@ export function AppSidebar({ settings }: { settings: AppSettings }) {
         <SidebarGroup>
           <SidebarGroupLabel className="text-lg font-semibold mb-4">
             <Package className="inline-block mr-2" />
-            Sipariş Yönetimi
+            {t('title')}
           </SidebarGroupLabel>
 
           <SidebarGroupContent>
@@ -114,7 +116,7 @@ export function AppSidebar({ settings }: { settings: AppSettings }) {
                     >
                       <Link to={route.to}>
                         <route.icon className="h-4 w-4" />
-                        <span>{route.label}</span>
+                        <span>{t(route.label, { defaultValue: route.label })}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -205,7 +207,7 @@ export function AppSidebar({ settings }: { settings: AppSettings }) {
                       <Moon className="h-4 w-4" />
                     )
                   })()}
-                  <span>Tema Değiştir</span>
+                  <span>{t('theme_switch')}</span>
                 </div>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -226,8 +228,8 @@ export function AppSidebar({ settings }: { settings: AppSettings }) {
                   <LucideLogOut className="h-4 w-4" />
                   <span>
                     {logoutMutation.isPending
-                      ? 'Çıkış yapılıyor...'
-                      : 'Çıkış Yap'}
+                      ? t('logout_pending')
+                      : t('logout')}
                   </span>
                 </button>
               </SidebarMenuButton>

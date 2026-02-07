@@ -24,7 +24,7 @@ export function createI18n(lang: string) {
       lng: lang,
       fallbackLng: 'en',
       interpolation: { escapeValue: false },
-      ns: ['auth', 'validation', 'formErrors', 'orders'],
+      ns: ['auth', 'validation', 'formErrors', 'orders', 'errors', 'deleteDialogs', 'entities', 'root', 'dashboard', 'sidebar', 'details'],
       react: { useSuspense: true },
       debug: false,
     })

@@ -1,8 +1,8 @@
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import z from 'zod'
 import { useForm } from '@tanstack/react-form'
+import { AlertCircle, Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   Field,
   FieldError,
@@ -11,12 +11,8 @@ import {
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 
-import {
-  // AlertCircle,
-  Loader2,
-  AlertCircle,
-} from 'lucide-react'
-import { useTranslation } from 'react-i18next'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { useLoginMutation } from '@/lib/mutations/auth'
 import { useFormErrors } from '@/hooks/useFormErrors'
 import { useFormErrorMessage } from '@/hooks/useFormErrorMessage'
@@ -86,7 +82,7 @@ function RouteComponent() {
                 const hasError = isInvalid || !!fieldError
                 return (
                   <Field data-invalid={hasError}>
-                    <FieldLabel htmlFor={field.name}>Username</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>{t('username')}</FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
@@ -97,7 +93,7 @@ function RouteComponent() {
                         formErrors.clearField('username')
                       }}
                       aria-invalid={hasError}
-                      placeholder="username"
+                      placeholder={t('username')}
                       autoComplete="username"
                     />
                     {hasError && (
@@ -125,7 +121,7 @@ function RouteComponent() {
                 const hasError = isInvalid || !!fieldError
                 return (
                   <Field data-invalid={hasError}>
-                    <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>{t('password')}</FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
@@ -136,7 +132,7 @@ function RouteComponent() {
                         formErrors.clearField('password')
                       }}
                       aria-invalid={hasError}
-                      placeholder="password"
+                      placeholder={t('password')}
                       autoComplete="password"
                       type="password"
                     />
@@ -164,7 +160,7 @@ function RouteComponent() {
               {loginMutation.isPending ? (
                 <span className="flex items-center justify-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Logging in...
+                  {t('logging_in')}
                 </span>
               ) : (
                 t('login')
@@ -174,13 +170,13 @@ function RouteComponent() {
         </form>
 
         <p className="text-center text-sm mt-3 text-muted-foreground">
-          Don’t have an account?{' '}
+          {t('no_account')}{' '}
           <Link
             to="/signup"
             className="text-primary hover:underline"
             viewTransition={{ types: ['slide-right'] }}
           >
-            Sign up
+            {t('register')}
           </Link>
         </p>
       </CardContent>

@@ -1,0 +1,13 @@
+{
+  "title": "Sipariş Yönetimi",
+  "theme_switch": "Tema Değiştir",
+  "logout": "Çıkış Yap",
+  "logout_pending": "Çıkış yapılıyor...",
+  "nav": {
+    "dashboard": "Panel",
+    "orders": "Siparişler",
+    "products": "Ürünler",
+    "customers": "Müşteriler",
+    "deliveries": "Sevkler"
+  }
+}

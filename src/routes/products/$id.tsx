@@ -1,14 +1,7 @@
-import PageHeader from '@/components/PageHeader'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { productQuery } from '@/lib/queries/products'
-import ProductForm from '@/components/products/ProductForm'
-import { formatPrice } from '@/lib/currency'
-
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
   Box,
@@ -24,6 +17,14 @@ import {
   User,
 } from 'lucide-react'
 import type { ElementType } from 'react'
+import PageHeader from '@/components/PageHeader'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { productQuery } from '@/lib/queries/products'
+import ProductForm from '@/components/products/ProductForm'
+import { formatPrice } from '@/lib/currency'
+
 
 export const Route = createFileRoute('/products/$id')({
   component: RouteComponent,
@@ -45,6 +46,7 @@ export const Route = createFileRoute('/products/$id')({
 })
 
 function RouteComponent() {
+  const { t, i18n } = useTranslation('details')
   const { id } = Route.useParams()
   const productId = parseProductId(id)
   if (productId === null) {
@@ -65,7 +67,7 @@ function RouteComponent() {
 
   const handleEditSuccess = () => {
     setIsEditing(false)
-    toast.success('Product updated successfully')
+    toast.success(t('products.updated_success'))
   }
 
   const formattedPrice = formatPrice(
@@ -73,9 +75,7 @@ function RouteComponent() {
     product.currency ?? 'TRY',
   )
 
-  const hasLowStock =
-    product.min_stock_level != null &&
-    product.stock_quantity < product.min_stock_level
+  const hasLowStock = product.stock_quantity < product.min_stock_level
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -89,7 +89,7 @@ function RouteComponent() {
             className="gap-2"
           >
             <Edit className="size-4" />
-            Düzenle
+            {t('actions.edit')}
           </Button>
         }
       />
@@ -101,57 +101,55 @@ function RouteComponent() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Factory className="size-5 text-muted-foreground" />
-                Teknik Özellikler
+                {t('products.sections.tech_specs')}
               </CardTitle>
             </CardHeader>
             <CardContent className="grid sm:grid-cols-2 gap-x-8 gap-y-6">
               <DetailItem
                 icon={Layers}
-                label="Malzeme"
+                label={t('products.fields.material')}
                 value={product.material}
               />
-              <DetailItem icon={Box} label="Kaplama" value={product.coating} />
+              <DetailItem icon={Box} label={t('products.fields.coating')} value={product.coating} />
               <DetailItem
                 icon={LayoutGrid}
-                label="Son İşlem"
+                label={t('products.fields.post_process')}
                 value={product.post_process}
               />
-              <DetailItem icon={Maximize2} label="Ölçü" value={product.specs} />
+              <DetailItem icon={Maximize2} label={t('products.fields.specs')} value={product.specs} />
               <DetailItem
                 icon={Ruler}
-                label="Net Ölçü"
+                label={t('products.fields.specs_net')}
                 value={product.specs_net}
               />
               <DetailItem
                 icon={Tag}
-                label="Diğer Kod"
+                label={t('products.fields.other_codes')}
                 value={product.other_codes}
               />
             </CardContent>
           </Card>
 
-          {product.customer && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <User className="size-5 text-muted-foreground" />
-                  Müşteri Bilgileri
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <DetailItem
-                  icon={User}
-                  label="Müşteri Adı"
-                  value={product.customer.name}
-                />
-              </CardContent>
-            </Card>
-          )}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <User className="size-5 text-muted-foreground" />
+                {t('products.sections.customer_info')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DetailItem
+                icon={User}
+                label={t('products.fields.customer_name')}
+                value={product.customer.name}
+              />
+            </CardContent>
+          </Card>
 
           {product.notes && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Notlar</CardTitle>
+                <CardTitle className="text-lg">{t('products.sections.notes')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
@@ -167,7 +165,7 @@ function RouteComponent() {
           <Card className="bg-muted/30 border-primary/10 shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                Stok Durumu
+                {t('products.sections.stock_status')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -175,9 +173,9 @@ function RouteComponent() {
                 <span className="text-3xl font-bold tracking-tight">
                   {product.stock_quantity}
                 </span>
-                <Badge variant="secondary" className="text-base font-normal">
-                  {product.unit || 'Adet'}
-                </Badge>
+                  <Badge variant="secondary" className="text-base font-normal">
+                  {product.unit || t('common.empty')}
+                  </Badge>
               </div>
 
               {hasLowStock && (
@@ -186,15 +184,17 @@ function RouteComponent() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
                   </span>
-                  Kritik Stok Seviyesi ({product.min_stock_level})
+                  {t('products.fields.critical_stock_level', {
+                    value: product.min_stock_level,
+                  })}
                 </div>
               )}
 
               <div className="pt-4 border-t flex flex-col gap-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Minimum Stok</span>
+                  <span className="text-muted-foreground">{t('products.fields.minimum_stock')}</span>
                   <span className="font-mono">
-                    {product.min_stock_level ?? '—'}
+                    {product.min_stock_level}
                   </span>
                 </div>
               </div>
@@ -204,7 +204,7 @@ function RouteComponent() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                Fiyatlandırma
+                {t('products.sections.pricing')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -216,7 +216,7 @@ function RouteComponent() {
                   <p className="text-2xl font-bold text-foreground">
                     {formattedPrice}
                   </p>
-                  <p className="text-xs text-muted-foreground">Birim Fiyat</p>
+                  <p className="text-xs text-muted-foreground">{t('products.fields.unit_price')}</p>
                 </div>
               </div>
             </CardContent>
@@ -225,8 +225,8 @@ function RouteComponent() {
           <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
             <Calendar className="size-3" />
             <span>
-              Son Güncelleme:{' '}
-              {new Date(product.updated_at).toLocaleDateString('tr-TR')}
+              {t('common.last_update')}:{' '}
+              {new Date(product.updated_at).toLocaleDateString(i18n.language)}
             </span>
           </div>
         </div>
@@ -270,7 +270,7 @@ function DetailItem({
           {label}
         </p>
         <p className="text-sm font-medium text-foreground">
-          {value || <span className="text-muted-foreground/40">—</span>}
+          {value || <span className="text-muted-foreground/40">-</span>}
         </p>
       </div>
     </div>

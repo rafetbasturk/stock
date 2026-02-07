@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { zodValidator } from '@tanstack/zod-adapter'
-import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 import type { OrdersSearch } from '@/lib/types'
 import type { OrderListRow } from '@/types'
@@ -25,12 +25,11 @@ export const Route = createFileRoute('/orders/')({
     return await context.queryClient.ensureQueryData(ordersQuery(deps))
   },
   component: OrderList,
-  pendingComponent: () => (
-    <LoadingSpinner variant="full-page" text="Loading orders..." />
-  ),
+  pendingComponent: OrdersPending,
 })
 
 function OrderList() {
+  const { t } = useTranslation('entities')
   const navigate = useNavigate({ from: Route.fullPath })
   const search = Route.useSearch()
 
@@ -49,12 +48,6 @@ function OrderList() {
   )
 
   const deleteMutation = useDeleteOrderMutation()
-
-  useEffect(() => {
-    if (deleteMutation.isError) {
-      toast.error('Failed to delete order')
-    }
-  }, [deleteMutation.isError])
 
   const ordersQ = useSuspenseQuery(ordersQuery(search))
   const { data: orders, total, pageIndex, pageSize } = ordersQ.data
@@ -93,7 +86,7 @@ function OrderList() {
 
   const deleteOrderLabel = pendingDeleteOrder
     ? pendingDeleteOrder.order_number
-    : 'Bu sipariş'
+    : t('orders.fallback_label')
 
   const isDeleteDialogOpen = pendingDeleteId !== null
 
@@ -131,8 +124,8 @@ function OrderList() {
   }, [debouncedSearchChange])
 
   const columns = useMemo(
-    () => getColumns(openEditModal, handleDeleteOrder),
-    [handleDeleteOrder, openEditModal],
+    () => getColumns(openEditModal, handleDeleteOrder, t),
+    [handleDeleteOrder, openEditModal, t],
   )
 
   return (
@@ -177,4 +170,9 @@ function OrderList() {
       />
     </>
   )
+}
+
+function OrdersPending() {
+  const { t } = useTranslation('entities')
+  return <LoadingSpinner variant="full-page" text={t('orders.loading')} />
 }
