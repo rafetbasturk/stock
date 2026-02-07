@@ -20,6 +20,8 @@ import { Route as OrdersIndexRouteImport } from './routes/orders/index'
 import { Route as DeliveriesIndexRouteImport } from './routes/deliveries/index'
 import { Route as CustomersIndexRouteImport } from './routes/customers/index'
 import { Route as ProductsIdRouteImport } from './routes/products/$id'
+import { Route as OrdersIdRouteImport } from './routes/orders/$id'
+import { Route as CustomersIdRouteImport } from './routes/customers/$id'
 import { Route as ApiTestRouteImport } from './routes/api/test'
 import { Route as ApiSeedRouteImport } from './routes/api/seed'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
@@ -79,6 +81,16 @@ const ProductsIdRoute = ProductsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => ProductsRouteRoute,
 } as any)
+const OrdersIdRoute = OrdersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => OrdersRouteRoute,
+} as any)
+const CustomersIdRoute = CustomersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => CustomersRouteRoute,
+} as any)
 const ApiTestRoute = ApiTestRouteImport.update({
   id: '/api/test',
   path: '/api/test',
@@ -110,6 +122,8 @@ export interface FileRoutesByFullPath {
   '/signup': typeof AuthSignupRoute
   '/api/seed': typeof ApiSeedRoute
   '/api/test': typeof ApiTestRoute
+  '/customers/$id': typeof CustomersIdRoute
+  '/orders/$id': typeof OrdersIdRoute
   '/products/$id': typeof ProductsIdRoute
   '/customers/': typeof CustomersIndexRoute
   '/deliveries/': typeof DeliveriesIndexRoute
@@ -122,6 +136,8 @@ export interface FileRoutesByTo {
   '/signup': typeof AuthSignupRoute
   '/api/seed': typeof ApiSeedRoute
   '/api/test': typeof ApiTestRoute
+  '/customers/$id': typeof CustomersIdRoute
+  '/orders/$id': typeof OrdersIdRoute
   '/products/$id': typeof ProductsIdRoute
   '/customers': typeof CustomersIndexRoute
   '/deliveries': typeof DeliveriesIndexRoute
@@ -140,6 +156,8 @@ export interface FileRoutesById {
   '/_auth/signup': typeof AuthSignupRoute
   '/api/seed': typeof ApiSeedRoute
   '/api/test': typeof ApiTestRoute
+  '/customers/$id': typeof CustomersIdRoute
+  '/orders/$id': typeof OrdersIdRoute
   '/products/$id': typeof ProductsIdRoute
   '/customers/': typeof CustomersIndexRoute
   '/deliveries/': typeof DeliveriesIndexRoute
@@ -158,6 +176,8 @@ export interface FileRouteTypes {
     | '/signup'
     | '/api/seed'
     | '/api/test'
+    | '/customers/$id'
+    | '/orders/$id'
     | '/products/$id'
     | '/customers/'
     | '/deliveries/'
@@ -170,6 +190,8 @@ export interface FileRouteTypes {
     | '/signup'
     | '/api/seed'
     | '/api/test'
+    | '/customers/$id'
+    | '/orders/$id'
     | '/products/$id'
     | '/customers'
     | '/deliveries'
@@ -187,6 +209,8 @@ export interface FileRouteTypes {
     | '/_auth/signup'
     | '/api/seed'
     | '/api/test'
+    | '/customers/$id'
+    | '/orders/$id'
     | '/products/$id'
     | '/customers/'
     | '/deliveries/'
@@ -284,6 +308,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductsIdRouteImport
       parentRoute: typeof ProductsRouteRoute
     }
+    '/orders/$id': {
+      id: '/orders/$id'
+      path: '/$id'
+      fullPath: '/orders/$id'
+      preLoaderRoute: typeof OrdersIdRouteImport
+      parentRoute: typeof OrdersRouteRoute
+    }
+    '/customers/$id': {
+      id: '/customers/$id'
+      path: '/$id'
+      fullPath: '/customers/$id'
+      preLoaderRoute: typeof CustomersIdRouteImport
+      parentRoute: typeof CustomersRouteRoute
+    }
     '/api/test': {
       id: '/api/test'
       path: '/api/test'
@@ -330,10 +368,12 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 )
 
 interface CustomersRouteRouteChildren {
+  CustomersIdRoute: typeof CustomersIdRoute
   CustomersIndexRoute: typeof CustomersIndexRoute
 }
 
 const CustomersRouteRouteChildren: CustomersRouteRouteChildren = {
+  CustomersIdRoute: CustomersIdRoute,
   CustomersIndexRoute: CustomersIndexRoute,
 }
 
@@ -354,10 +394,12 @@ const DeliveriesRouteRouteWithChildren = DeliveriesRouteRoute._addFileChildren(
 )
 
 interface OrdersRouteRouteChildren {
+  OrdersIdRoute: typeof OrdersIdRoute
   OrdersIndexRoute: typeof OrdersIndexRoute
 }
 
 const OrdersRouteRouteChildren: OrdersRouteRouteChildren = {
+  OrdersIdRoute: OrdersIdRoute,
   OrdersIndexRoute: OrdersIndexRoute,
 }
 

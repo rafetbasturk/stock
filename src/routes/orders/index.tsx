@@ -1,9 +1,180 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { zodValidator } from '@tanstack/zod-adapter'
+import { toast } from 'sonner'
+
+import type { OrdersSearch } from '@/lib/types'
+import type { OrderListRow } from '@/types'
+import { ordersSearchSchema } from '@/lib/types'
+import { debounce } from '@/lib/debounce'
+import { useDeleteOrderMutation } from '@/lib/mutations/orders'
+import { ordersQuery } from '@/lib/queries/orders'
+
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { getColumns } from '@/components/orders/columns'
+import OrderForm from '@/components/orders/OrderForm'
+import { OrderListHeader } from '@/components/orders/OrderListHeader'
+import { OrdersDataTable } from '@/components/orders/OrdersDataTable'
+import { OrderDeleteDialog } from '@/components/orders/OrderDeleteDialog'
 
 export const Route = createFileRoute('/orders/')({
-  component: RouteComponent,
+  validateSearch: zodValidator(ordersSearchSchema),
+  loaderDeps: ({ search }) => search,
+  loader: async ({ context, deps }) => {
+    return await context.queryClient.ensureQueryData(ordersQuery(deps))
+  },
+  component: OrderList,
+  pendingComponent: () => (
+    <LoadingSpinner variant="full-page" text="Loading orders..." />
+  ),
 })
 
-function RouteComponent() {
-  return <div>Hello "/orders/"!</div>
+function OrderList() {
+  const navigate = useNavigate({ from: Route.fullPath })
+  const search = Route.useSearch()
+
+  const [modalState, setModalState] = useState<
+    | { type: 'closed' }
+    | { type: 'adding' }
+    | { type: 'editing'; order: OrderListRow }
+  >({ type: 'closed' })
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
+
+  const closeModal = useCallback(() => setModalState({ type: 'closed' }), [])
+  const openAddModal = useCallback(() => setModalState({ type: 'adding' }), [])
+  const openEditModal = useCallback(
+    (order: OrderListRow) => setModalState({ type: 'editing', order }),
+    [],
+  )
+
+  const deleteMutation = useDeleteOrderMutation()
+
+  useEffect(() => {
+    if (deleteMutation.isError) {
+      toast.error('Failed to delete order')
+    }
+  }, [deleteMutation.isError])
+
+  const ordersQ = useSuspenseQuery(ordersQuery(search))
+  const { data: orders, total, pageIndex, pageSize } = ordersQ.data
+
+  const pendingDeleteOrder = useMemo(
+    () =>
+      pendingDeleteId === null
+        ? null
+        : (orders.find((order) => order.id === pendingDeleteId) ?? null),
+    [orders, pendingDeleteId],
+  )
+
+  const handleDeleteOrder = useCallback(
+    (id: number) => {
+      if (deleteMutation.isPending) return
+      setPendingDeleteId(id)
+    },
+    [deleteMutation.isPending],
+  )
+
+  const confirmDeleteOrder = useCallback(() => {
+    if (pendingDeleteId === null || deleteMutation.isPending) return
+
+    deleteMutation.mutate(
+      { id: pendingDeleteId },
+      {
+        onSettled: () => setPendingDeleteId(null),
+      },
+    )
+  }, [deleteMutation, pendingDeleteId])
+
+  const closeDeleteDialog = useCallback(() => {
+    if (deleteMutation.isPending) return
+    setPendingDeleteId(null)
+  }, [deleteMutation.isPending])
+
+  const deleteOrderLabel = pendingDeleteOrder
+    ? pendingDeleteOrder.order_number
+    : 'Bu sipariş'
+
+  const isDeleteDialogOpen = pendingDeleteId !== null
+
+  useEffect(() => {
+    if (pendingDeleteId !== null && !pendingDeleteOrder) {
+      setPendingDeleteId(null)
+    }
+  }, [pendingDeleteOrder, pendingDeleteId])
+
+  const handleSearchChange = useCallback(
+    (updates: Record<string, string | undefined>) => {
+      navigate({
+        search: (prev: OrdersSearch) => {
+          const merged = { ...prev, ...updates } as Record<string, any>
+          Object.keys(merged).forEach(
+            (k) => merged[k] === undefined && delete merged[k],
+          )
+          return merged as OrdersSearch
+        },
+        replace: true,
+      })
+    },
+    [navigate],
+  )
+
+  const debouncedSearchChange = useMemo(
+    () => debounce(handleSearchChange, 400),
+    [handleSearchChange],
+  )
+
+  useEffect(() => {
+    return () => {
+      debouncedSearchChange.cancel()
+    }
+  }, [debouncedSearchChange])
+
+  const columns = useMemo(
+    () => getColumns(openEditModal, handleDeleteOrder),
+    [handleDeleteOrder, openEditModal],
+  )
+
+  return (
+    <>
+      <OrderListHeader onAdd={openAddModal} />
+      <OrdersDataTable
+        orders={orders}
+        columns={columns}
+        total={total}
+        pageIndex={pageIndex}
+        pageSize={pageSize}
+        isFetching={ordersQ.isFetching}
+        search={search}
+        onSearchChange={debouncedSearchChange}
+        onPageChange={(p) => handleSearchChange({ pageIndex: String(p) })}
+        onPageSizeChange={(s) =>
+          handleSearchChange({ pageSize: String(s), pageIndex: '0' })
+        }
+        onRowClick={(id) =>
+          navigate({
+            to: '/orders/$id',
+            params: { id: String(id) },
+          })
+        }
+      />
+
+      {modalState.type !== 'closed' && (
+        <OrderForm
+          item={modalState.type === 'editing' ? modalState.order : undefined}
+          isSubmitting={false}
+          onClose={closeModal}
+          onSuccess={closeModal}
+        />
+      )}
+
+      <OrderDeleteDialog
+        open={isDeleteDialogOpen}
+        isDeleting={deleteMutation.isPending}
+        orderLabel={deleteOrderLabel}
+        onClose={closeDeleteDialog}
+        onConfirm={confirmDeleteOrder}
+      />
+    </>
+  )
 }

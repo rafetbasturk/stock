@@ -9,7 +9,7 @@ export function getFormErrorMessage(
   const error = errors._form;
   if (!error) return null;
 
-  return t(`${error.key.ns}:${error.key.key}`, error.params);
+  return t(`${error.i18n.ns}:${error.i18n.key}`, error.params);
 }
 
 export function getFieldErrorMessage(
@@ -20,5 +20,5 @@ export function getFieldErrorMessage(
   const error = errors[field];
   if (!error) return null;
 
-  return t(`${error.key.ns}:${error.key.key}`, error.params);
+  return t(`${error.i18n.ns}:${error.i18n.key}`, error.params);
 }

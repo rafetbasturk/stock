@@ -1,10 +1,10 @@
 // src/components/form/InputField.tsx
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import { Field, FieldError, FieldLabel } from "../ui/field";
 import { Input } from "../ui/input";
-import { I18nErrorMessage } from "@/lib/error/core/errorTransport";
-import { useTranslation } from "react-i18next";
+import type { I18nErrorMessage } from "@/lib/error/core/errorTransport";
+import { cn } from "@/lib/utils";
 
 /**
  * Extend native input props but keep control over
@@ -15,10 +15,10 @@ interface InputFieldProps extends Omit<
   "value" | "onChange" | "name"
 > {
   name: string;
-  label: string;
+  label?: string;
   value: string | number | undefined;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  error?: I18nErrorMessage;
+  error?: I18nErrorMessage | string;
 }
 
 export default function InputField({
@@ -35,13 +35,15 @@ export default function InputField({
 
   return (
     <Field className="gap-1 relative">
-      <FieldLabel
-        htmlFor={name}
-        className={cn("capitalize", error && "text-red-500")}
-      >
-        {label}
-        {required && <span className="text-red-500">*</span>}
-      </FieldLabel>
+      {label && (
+        <FieldLabel
+          htmlFor={name}
+          className={cn("capitalize", error && "text-red-500")}
+        >
+          {label}
+          {required && <span className="text-red-500">*</span>}
+        </FieldLabel>
+      )}
 
       <Input
         id={name}
@@ -56,7 +58,9 @@ export default function InputField({
 
       {error && (
         <FieldError className="text-xs absolute -bottom-4.5">
-          {t(`${error.i18n.ns}:${error.i18n.key}`, error.params)}
+          {typeof error === "string"
+            ? error
+            : t(`${error.i18n.ns}:${error.i18n.key}`, error.params)}
         </FieldError>
       )}
     </Field>

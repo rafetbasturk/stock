@@ -1,11 +1,12 @@
 // src/lib/queries/products.ts
+import { keepPreviousData, queryOptions } from "@tanstack/react-query";
+import type { ProductsSearch } from "../types/types.search";
 import {
   getPaginated,
   getProductById,
   getProductFilterOptions,
+  getProducts,
 } from "@/server/products";
-import { keepPreviousData, queryOptions } from "@tanstack/react-query";
-import type { ProductsSearch } from "../types/types.search";
 
 function toMaterialArray(material?: string) {
   if (!material) return undefined;
@@ -37,7 +38,7 @@ export const productsQueryKey = (s: ProductsSearch) =>
     s.q ?? "",
     s.sortBy ?? "code",
     s.sortDir ?? "asc",
-    materialKey(s.material), // ✅ always a string
+    materialKey(s.material),
     s.customer ?? "",
   ] as const;
 
@@ -55,6 +56,12 @@ export const productsQuery = (search: ProductsSearch) =>
     staleTime: 1000 * 60 * 10,
     placeholderData: keepPreviousData,
   });
+
+export const selectProductsQuery = queryOptions({
+  queryKey: ["products", "select"],
+  queryFn: getProducts,
+  staleTime: 1000 * 60 * 10,
+});
 
 export const productQuery = (id: number) =>
   queryOptions({

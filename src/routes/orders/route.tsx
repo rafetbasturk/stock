@@ -1,8 +1,12 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { Outlet, createFileRoute } from '@tanstack/react-router'
 import { TerminalSquareIcon } from 'lucide-react'
+import { getLastOrderNumber } from '@/server/orders'
 
 export const Route = createFileRoute('/orders')({
   component: RouteComponent,
+  loader: async () => {
+    return await getLastOrderNumber()
+  },
   staticData: {
     sidebar: {
       label: 'Siparişler',

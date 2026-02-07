@@ -33,9 +33,7 @@ export const Route = createFileRoute('/products/')({
   },
   component: ProductList,
   pendingComponent: () => (
-    <div className="h-[50vh] flex items-center justify-center">
-      <LoadingSpinner variant="inline" text="Loading products..." />
-    </div>
+    <LoadingSpinner variant="full-page" text="Loading products..." />
   ),
 })
 
