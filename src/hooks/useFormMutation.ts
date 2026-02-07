@@ -1,10 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
+import type { MutationFormErrors } from "@/lib/types";
 import { AppError } from "@/lib/error/core";
-import { MutationFormErrors } from "@/lib/types";
 
 type UseFormMutationOptions<TData, TResult> = {
   mutationFn: (data: TData) => Promise<TResult>;
-  formErrorCodes?: string[];
+  formErrorCodes?: Array<string>;
 
   onFieldError?: MutationFormErrors["setAllErrors"];
   onOptimistic?: () => void;
@@ -23,7 +23,7 @@ export function useFormMutation<TData, TVariables>({
   return useMutation({
     mutationFn,
 
-    onMutate: async () => {
+    onMutate: () => {
       onOptimistic?.();
     },
 
@@ -40,9 +40,9 @@ export function useFormMutation<TData, TVariables>({
       if (
         appError.code === "VALIDATION_ERROR" &&
         appError.details &&
-        typeof appError.details === "object" &&
-        appError.details.type === "validation"
+        typeof appError.details === "object"
       ) {
+        (error as any).__handledBySafeMutation = true;
         onFieldError?.(appError.details.fieldErrors);
         return;
       }

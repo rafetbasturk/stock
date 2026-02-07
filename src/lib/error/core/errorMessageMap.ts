@@ -1,5 +1,5 @@
-import { ErrorCode } from "./errorCodes";
-import { MessageKey } from "./errorMessageKeys";
+import type { ErrorCode } from "./errorCodes";
+import type { MessageKey } from "./errorMessageKeys";
 
 export const ERROR_MESSAGE_KEY_MAP: Record<ErrorCode, MessageKey> = {
   // 📦 Fetch / Lists

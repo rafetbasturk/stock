@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import {
   DialogDescription,
@@ -11,15 +12,15 @@ type Props = {
 }
 
 export default function OrderFormHeader({ orderId, isSubmitting }: Props) {
+  const { t } = useTranslation('orders')
+
   return (
     <DialogHeader>
       <DialogTitle className="flex items-center gap-2">
-        {orderId ? 'Siparişi Düzenle' : 'Yeni Sipariş Ekle'}
+        {orderId ? t('form.header.edit') : t('form.header.create')}
         {isSubmitting && <LoadingSpinner variant="inline" text="" />}
       </DialogTitle>
-      <DialogDescription>
-        Sipariş bilgilerini doldurun ve kaydedin.
-      </DialogDescription>
+      <DialogDescription>{t('form.header.description')}</DialogDescription>
     </DialogHeader>
   )
 }

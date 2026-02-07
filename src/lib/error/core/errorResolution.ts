@@ -1,6 +1,6 @@
-import type { ErrorCode } from "./errorCodes";
 import { ERROR_BEHAVIORS } from "./errorBehaviors";
 import { getErrorTitle } from "./errorTitles";
+import type { ErrorCode } from "./errorCodes";
 
 export interface ErrorResolution {
   code: ErrorCode;

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import OrderFormCustomItemInfo from './OrderFormCustomItemInfo'
 import OrderFormProductInfo from './OrderFormProductInfo'
 import type { NewOrderItem } from '@/types'
@@ -37,12 +38,14 @@ export default function OrderFormItems({
   removeCustomItem,
   addCustomItem,
 }: Props) {
+  const { t } = useTranslation('orders')
+
   return (
     <FieldSet>
       <div className="flex justify-between items-center">
-        <FieldLegend className="m-0">Ürün Bilgileri</FieldLegend>
+        <FieldLegend className="m-0">{t('form.sections.items')}</FieldLegend>
         <div className="flex items-center space-x-2">
-          <Label htmlFor="custom-order">Özel Sipariş</Label>
+          <Label htmlFor="custom-order">{t('form.custom_order')}</Label>
           <Switch
             id="custom-order"
             checked={form.is_custom_order ?? false}

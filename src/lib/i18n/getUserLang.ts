@@ -1,6 +1,6 @@
 // src/lib/i18n/getUserLang.ts
 
-import { Language } from "../types/types.settings";
+import type { Language } from "../types/types.settings";
 
 const FALLBACK_LANG: Language = "en";
 

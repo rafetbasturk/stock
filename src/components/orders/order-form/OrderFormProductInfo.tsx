@@ -1,4 +1,5 @@
 import { Plus, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useOrderCalculations } from './hooks/useOrderCalculations'
 import EmptyOrderProducts from './EmptyOrderProducts'
 import type { NewOrderItem } from '@/types'
@@ -47,10 +48,12 @@ export default function OrderFormProductInfo({
   removeItem,
   addItem,
 }: Props) {
+  const { t } = useTranslation('orders')
   const { formattedTotal } = useOrderCalculations(
     form.items,
     form.currency ?? 'TRY',
   )
+  const itemsError = errorHelpers.get('items')
 
   return (
     <>
@@ -58,14 +61,14 @@ export default function OrderFormProductInfo({
         <Table className="table-fixed w-full">
           <TableHeader className="bg-muted">
             <TableRow>
-              <TableHead className="w-20">Sıra No</TableHead>
-              <TableHead className="max-w-100">Ürün</TableHead>
-              <TableHead className="w-25">Adet</TableHead>
+              <TableHead className="w-20">{t('form.table.row_no')}</TableHead>
+              <TableHead className="max-w-100">{t('form.table.product')}</TableHead>
+              <TableHead className="w-25">{t('form.table.quantity')}</TableHead>
               <TableHead className="w-30 text-right">
-                Birim Fiyat
+                {t('form.table.unit_price')}
               </TableHead>
-              <TableHead className="w-30 text-right">Tutar</TableHead>
-              <TableHead className="w-20 text-right">İşlem</TableHead>
+              <TableHead className="w-30 text-right">{t('form.table.amount')}</TableHead>
+              <TableHead className="w-20 text-right">{t('form.table.action')}</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -85,7 +88,7 @@ export default function OrderFormProductInfo({
                   <TableCell>{index + 1}</TableCell>
                   <TableCell className="relative">
                     <EntityCombobox
-                      placeholder="Bir ürün seçin"
+                      placeholder={t('form.placeholders.product')}
                       entities={products || []}
                       value={item.product_id}
                       onChange={(id) => onItemChange(index, 'product_id', id)}
@@ -145,7 +148,7 @@ export default function OrderFormProductInfo({
             <TableFooter>
               <TableRow>
                 <TableCell colSpan={4} className="text-right font-medium">
-                  Toplam Tutar
+                  {t('form.table.total_amount')}
                 </TableCell>
                 <TableCell className="text-right font-bold text-lg">
                   {formattedTotal}
@@ -184,7 +187,7 @@ export default function OrderFormProductInfo({
 
                 <div>
                   <EntityCombobox
-                    placeholder="Bir ürün seçin"
+                    placeholder={t('form.placeholders.product')}
                     entities={products || []}
                     value={item.product_id}
                     onChange={(id) => onItemChange(index, 'product_id', id)}
@@ -196,7 +199,7 @@ export default function OrderFormProductInfo({
                 <div className="grid grid-cols-2 gap-3">
                   <InputField
                     name={`items[${index}].quantity-mobile`}
-                    label="Adet"
+                    label={t('form.table.quantity')}
                     type="number"
                     value={item.quantity || 1}
                     min={1}
@@ -207,7 +210,7 @@ export default function OrderFormProductInfo({
 
                   <InputField
                     name={`items[${index}].unit_price-mobile`}
-                    label="Birim Fiyat"
+                    label={t('form.table.unit_price')}
                     type="number"
                     step="0.01"
                     value={item.unit_price / 100}
@@ -222,7 +225,7 @@ export default function OrderFormProductInfo({
                 </div>
 
                 <div className="flex justify-between items-center border-t pt-3">
-                  <span className="text-sm font-medium">Tutar</span>
+                  <span className="text-sm font-medium">{t('form.table.amount')}</span>
                   <span className="text-lg font-semibold">
                     {convertToCurrencyFormat({
                       cents: calculateItemTotal(item),
@@ -236,7 +239,9 @@ export default function OrderFormProductInfo({
 
           {form.items.length > 0 && (
             <div className="border-t pt-4 text-right">
-              <span className="text-sm font-medium mr-2">Toplam Tutar:</span>
+              <span className="text-sm font-medium mr-2">
+                {t('form.table.total_amount')}:
+              </span>
               <span className="text-lg font-bold">{formattedTotal}</span>
             </div>
           )}
@@ -253,11 +258,11 @@ export default function OrderFormProductInfo({
             className="w-full sm:w-auto"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Satır Ekle
+            {t('form.buttons.add_row')}
           </Button>
-          {errorHelpers.get('items') && (
+          {itemsError && (
             <FieldError className="text-xs absolute -bottom-4">
-              {errorHelpers.get('items')}
+              {t(`${itemsError.i18n.ns}:${itemsError.i18n.key}`, itemsError.params)}
             </FieldError>
           )}
         </div>

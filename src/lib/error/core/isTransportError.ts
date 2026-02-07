@@ -1,5 +1,5 @@
 // src/lib/error/core/isTransportError.ts
-import { TransportError } from "./errorTransport";
+import type { TransportError } from "./errorTransport";
 
 export function isTransportError(value: unknown): value is TransportError {
   return (

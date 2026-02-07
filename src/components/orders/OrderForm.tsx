@@ -15,6 +15,9 @@ import type {
   OrderSubmitPayload,
   OrderWithItems,
 } from '@/types'
+import type { I18nErrorMessage } from '@/lib/error/core/errorTransport'
+import type { FieldErrors } from '@/lib/error/utils/formErrors'
+import { normalizeFieldErrors } from '@/lib/error/utils/formErrors'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useExchangeRatesStore } from '@/stores/exchangeRatesStore'
 import { useSelectProducts } from '@/hooks/useProducts'
@@ -41,8 +44,8 @@ export type OrderFormState = InsertOrder & {
 }
 
 export type FormErrors = {
-  get: (path: string) => string | undefined
-  set: (path: string, message: string) => void
+  get: (path: string) => I18nErrorMessage | undefined
+  set: (path: string, message: I18nErrorMessage) => void
   clear: (path: string) => void
   has: (path: string) => boolean
 }
@@ -80,6 +83,7 @@ export default function OrderForm({
     form,
     setForm,
     formErrors,
+    setFormErrors,
     errorHelpers,
     handleChange,
     addItem,
@@ -90,8 +94,14 @@ export default function OrderForm({
     toggleCustomMode,
   } = useOrderForm({ order })
 
-  const createMutation = useCreateOrderMutation(onSuccess)
-  const updateMutation = useUpdateOrderMutation(onSuccess)
+  const mutationFormErrors = {
+    setAllErrors: (next: FieldErrors) =>
+      setFormErrors(normalizeFieldErrors(next)),
+    resetErrors: () => setFormErrors({}),
+  }
+
+  const createMutation = useCreateOrderMutation(onSuccess, mutationFormErrors)
+  const updateMutation = useUpdateOrderMutation(onSuccess, mutationFormErrors)
 
   const submitting =
     isSubmitting || createMutation.isPending || updateMutation.isPending
@@ -296,6 +306,7 @@ export default function OrderForm({
             form={form}
             setForm={setForm}
             formErrors={formErrors}
+            clearFieldError={errorHelpers.clear}
             onChange={handleChange}
           />
 

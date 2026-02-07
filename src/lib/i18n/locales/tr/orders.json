@@ -1,0 +1,58 @@
+{
+  "form": {
+    "header": {
+      "create": "Yeni Sipariş Ekle",
+      "edit": "Siparişi Düzenle",
+      "description": "Sipariş bilgilerini doldurun ve kaydedin."
+    },
+    "sections": {
+      "basic": "Temel Bilgiler",
+      "items": "Ürün Bilgileri"
+    },
+    "fields": {
+      "order_number": "Sipariş No",
+      "customer": "Müşteri",
+      "delivery_address": "Teslimat Adresi",
+      "order_date": "Sipariş Tarihi",
+      "currency": "Sipariş Para Birimi",
+      "status": "Sipariş Durumu"
+    },
+    "placeholders": {
+      "order_number": "Örn: SIP-2024-001",
+      "customer": "Müşteri seçin",
+      "delivery_address": "Teslimat adresini girin",
+      "order_date": "Tarih seçin",
+      "currency": "Para birimini seçin",
+      "status": "Sipariş durumunu seçin",
+      "product": "Bir ürün seçin",
+      "custom_item_name": "Ürün adı",
+      "custom_item_notes": "Satır açıklaması",
+      "custom_item_unit": "Birim",
+      "quantity": "Adet",
+      "unit_price": "Birim Fiyat"
+    },
+    "table": {
+      "row_no": "Sıra No",
+      "product": "Ürün",
+      "description": "Açıklama",
+      "unit": "Birim",
+      "quantity": "Adet",
+      "unit_price": "Birim Fiyat",
+      "amount": "Tutar",
+      "action": "İşlem",
+      "total_amount": "Toplam Tutar"
+    },
+    "custom_order": "Özel Sipariş",
+    "buttons": {
+      "cancel": "İptal",
+      "create": "Ekle",
+      "update": "Güncelle",
+      "saving": "Kaydediliyor...",
+      "add_row": "Satır Ekle"
+    },
+    "empty": {
+      "title": "Henüz ürün eklenmedi",
+      "description": "Listeye ürün eklemek için aşağıdaki butonu kullanın"
+    }
+  }
+}

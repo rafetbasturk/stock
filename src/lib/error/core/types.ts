@@ -1,7 +1,7 @@
 // src/lib/error/core/types.ts
 
-import { ErrorCode } from "./errorCodes";
-import { ValidationErrorPayload } from "./errorTransport";
+import type { ErrorCode } from "./errorCodes";
+import type { ValidationErrorPayload } from "./errorTransport";
 
 /**
  * AppErrorData

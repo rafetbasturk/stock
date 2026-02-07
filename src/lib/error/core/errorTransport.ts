@@ -1,6 +1,6 @@
 // src/lib/error/core/errorTransport.ts
-import { I18nErrorKey } from "@/lib/i18n/errorKeys";
 import type { ErrorCode } from "./errorCodes";
+import type { I18nErrorKey } from "@/lib/i18n/errorKeys";
 
 export interface I18nErrorMessage {
   i18n: I18nErrorKey;

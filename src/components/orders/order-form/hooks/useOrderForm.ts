@@ -1,6 +1,9 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { Currency, OrderWithItems, Status } from '@/types'
 import type { FormErrors, OrderFormState } from '../../OrderForm'
+import type { I18nErrorMessage } from '@/lib/error/core/errorTransport'
+import type { FieldErrors } from '@/lib/error/utils/formErrors'
+import { normalizeFieldPath } from '@/lib/error/utils/formErrors'
 
 type UseOrderFormArgs = {
   order?: OrderWithItems
@@ -74,26 +77,35 @@ function toInitialForm(order?: OrderWithItems): OrderFormState {
 
 export function useOrderForm({ order }: UseOrderFormArgs) {
   const [form, setForm] = useState<OrderFormState>(() => toInitialForm(order))
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+  const [formErrors, setFormErrors] = useState<FieldErrors>({})
   const [prevCurrency, setPrevCurrency] = useState<Currency>(
     (order?.currency as Currency) ?? 'TRY',
   )
 
+  const requiredError: I18nErrorMessage = {
+    i18n: { ns: 'validation', key: 'required' },
+  }
+  const invalidError: I18nErrorMessage = {
+    i18n: { ns: 'validation', key: 'invalid' },
+  }
+
   const errorHelpers: FormErrors = useMemo(
     () => ({
-      get: (path) => formErrors[path],
+      get: (path) => formErrors[normalizeFieldPath(path)],
       set: (path, message) => {
-        setFormErrors((prev) => ({ ...prev, [path]: message }))
+        const normalizedPath = normalizeFieldPath(path)
+        setFormErrors((prev) => ({ ...prev, [normalizedPath]: message }))
       },
       clear: (path) => {
+        const normalizedPath = normalizeFieldPath(path)
         setFormErrors((prev) => {
-          if (!prev[path]) return prev
+          if (!prev[normalizedPath]) return prev
           const next = { ...prev }
-          delete next[path]
+          delete next[normalizedPath]
           return next
         })
       },
-      has: (path) => Boolean(formErrors[path]),
+      has: (path) => Boolean(formErrors[normalizeFieldPath(path)]),
     }),
     [formErrors],
   )
@@ -148,43 +160,43 @@ export function useOrderForm({ order }: UseOrderFormArgs) {
   }, [])
 
   const validateForm = useCallback(() => {
-    const nextErrors: Record<string, string> = {}
+    const nextErrors: FieldErrors = {}
 
     if (!form.order_number.trim()) {
-      nextErrors.order_number = 'Sipariş no zorunludur'
+      nextErrors.order_number = requiredError
     }
 
     if (!form.customer_id || form.customer_id <= 0) {
-      nextErrors.customer_id = 'Müşteri seçimi zorunludur'
+      nextErrors.customer_id = requiredError
     }
 
     if (!form.order_date) {
-      nextErrors.order_date = 'Sipariş tarihi zorunludur'
+      nextErrors.order_date = requiredError
     }
 
     if (form.is_custom_order) {
       if (!form.customItems.length) {
-        nextErrors.customItems = 'En az bir özel satır eklemelisiniz'
+        nextErrors.customItems = invalidError
       }
       form.customItems.forEach((item, index) => {
         if (!item.name?.trim()) {
-          nextErrors[`customItems[${index}].name`] = 'Ürün adı zorunludur'
+          nextErrors[`customItems[${index}].name`] = requiredError
         }
       })
     } else {
       if (!form.items.length) {
-        nextErrors.items = 'En az bir ürün satırı eklemelisiniz'
+        nextErrors.items = invalidError
       }
       form.items.forEach((item, index) => {
         if (!item.product_id || item.product_id <= 0) {
-          nextErrors[`items[${index}].product_id`] = 'Ürün seçimi zorunludur'
+          nextErrors[`items[${index}].product_id`] = requiredError
         }
       })
     }
 
     setFormErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
-  }, [form])
+  }, [form, invalidError, requiredError])
 
   return {
     form,

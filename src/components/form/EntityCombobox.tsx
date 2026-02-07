@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Button } from "../ui/button";
+import { useTranslation } from "react-i18next";
 import { Check, ChevronsUpDown } from "lucide-react";
+import { Button } from "../ui/button";
 import {
   Command,
   CommandEmpty,
@@ -10,8 +10,10 @@ import {
   CommandItem,
   CommandList,
 } from "../ui/command";
-import { cn } from "@/lib/utils";
 import { Field, FieldError, FieldLabel } from "../ui/field";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import type { I18nErrorMessage } from "@/lib/error/core/errorTransport";
+import { cn } from "@/lib/utils";
 
 type Entity = {
   id: number;
@@ -24,11 +26,11 @@ type Props<T extends Entity> = {
   id?: string;
   label?: string;
   placeholder?: string;
-  entities: T[];
+  entities: Array<T>;
   value: number | null;
   onChange: (id: number) => void;
   isLoading?: boolean;
-  error?: string;
+  error?: I18nErrorMessage;
   required?: boolean;
 };
 
@@ -43,6 +45,7 @@ export default function EntityCombobox<T extends Entity>({
   error,
   required = false,
 }: Props<T>) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -129,7 +132,7 @@ export default function EntityCombobox<T extends Entity>({
                         </span>
                       </div>
                       <span className="text-sm text-muted-foreground">
-                        {(entity?.price! / 100).toFixed(2)} {entity?.currency}
+                        {(Number(entity.price ?? 0) / 100).toFixed(2)} {entity.currency}
                       </span>
                     </CommandItem>
                   ))}
@@ -141,7 +144,9 @@ export default function EntityCombobox<T extends Entity>({
       </Popover>
 
       {error && (
-        <FieldError className="text-xs absolute -bottom-4">{error}</FieldError>
+        <FieldError className="text-xs absolute -bottom-4">
+          {t(`${error.i18n.ns}:${error.i18n.key}`, error.params)}
+        </FieldError>
       )}
     </Field>
   );

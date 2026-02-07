@@ -1,5 +1,5 @@
 // src/lib/error/core/errorStatusMap.ts
-import { ErrorCode } from "./errorCodes";
+import type { ErrorCode } from "./errorCodes";
 
 export const ERROR_STATUS_MAP: Record<ErrorCode, number> = {
   // 🔐 Authentication / Session
@@ -72,5 +72,5 @@ export const ERROR_STATUS_MAP: Record<ErrorCode, number> = {
 };
 
 export function getHttpStatusFromCode(code: ErrorCode): number {
-  return ERROR_STATUS_MAP[code] ?? 500;
+  return ERROR_STATUS_MAP[code];
 }

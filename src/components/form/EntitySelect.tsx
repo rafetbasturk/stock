@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Field, FieldError, FieldLabel } from "../ui/field";
 import {
   Select,
@@ -6,9 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { I18nErrorMessage } from "@/lib/error/core/errorTransport";
-import { FieldErrors } from "@/lib/error/utils/formErrors";
-import { useTranslation } from "react-i18next";
+import type { I18nErrorMessage } from "@/lib/error/core/errorTransport";
+import type { FieldErrors } from "@/lib/error/utils/formErrors";
 
 type Option<T extends number | string> = {
   id?: number | string;
@@ -37,7 +37,7 @@ type Props<T extends number | string> = {
   /** Whether data is still loading */
   loading?: boolean;
   /** The available options */
-  options?: Option<T>[];
+  options?: Array<Option<T>>;
   /** Optional: Disable input */
   disabled?: boolean;
 };
@@ -89,7 +89,7 @@ export default function EntitySelect<T extends number | string>({
       matchedOption &&
       Object.prototype.hasOwnProperty.call(matchedOption.option, "returnValue")
     ) {
-      onValueChange((matchedOption.option.returnValue ?? null) as T | null);
+      onValueChange(matchedOption.option.returnValue ?? null);
     } else {
       const newValue = !Number.isNaN(Number(val))
         ? (Number(val) as T)
@@ -116,14 +116,16 @@ export default function EntitySelect<T extends number | string>({
       )}
 
       <Select
-        value={value !== null && value !== undefined ? String(value) : ""}
+        value={value !== null ? String(value) : ""}
         onValueChange={handleChange}
         disabled={isDisabled}
       >
         <SelectTrigger
           id={name}
           aria-invalid={!!error}
-          className={`border-muted bg-background hover:bg-accent font-normal text-muted-foreground {${error ? "border-red-500" : ""}`}
+          className={`border-muted bg-background hover:bg-accent font-normal text-muted-foreground ${
+            error ? "border-red-500" : ""
+          }`}
         >
           <SelectValue
             className="capitalize"

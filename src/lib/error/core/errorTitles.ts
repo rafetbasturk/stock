@@ -1,11 +1,11 @@
-import { getUserLang } from "@/lib/i18n/getUserLang";
-import { ErrorCode } from "./errorCodes";
 import { ERROR_TITLE_KEY_MAP } from "./errorTitleMap";
+import type { ErrorCode } from "./errorCodes";
 import type { TitleKey } from "./errorTitleKeys";
+import type { Language } from "@/lib/types/types.settings";
+import { getUserLang } from "@/lib/i18n/getUserLang";
 
 import trTitles from "@/lib/i18n/locales/tr/errors.titles.json";
 import enTitles from "@/lib/i18n/locales/en/errors.titles.json";
-import { Language } from "@/lib/types/types.settings";
 
 const TITLES_BY_LANG: Record<Language, Record<TitleKey, string>> = {
   tr: trTitles,

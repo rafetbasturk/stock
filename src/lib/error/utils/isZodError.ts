@@ -1,4 +1,4 @@
-import { ZodError } from "zod";
+import type { ZodError } from "zod";
 
 // src/lib/error/utils/isZodError.ts
 export function isZodError(error: unknown): error is ZodError {

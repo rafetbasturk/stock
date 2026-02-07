@@ -1,0 +1,58 @@
+{
+  "form": {
+    "header": {
+      "create": "Add New Order",
+      "edit": "Edit Order",
+      "description": "Fill in order details and save."
+    },
+    "sections": {
+      "basic": "Basic Information",
+      "items": "Product Information"
+    },
+    "fields": {
+      "order_number": "Order No",
+      "customer": "Customer",
+      "delivery_address": "Delivery Address",
+      "order_date": "Order Date",
+      "currency": "Order Currency",
+      "status": "Order Status"
+    },
+    "placeholders": {
+      "order_number": "Ex: ORD-2024-001",
+      "customer": "Select a customer",
+      "delivery_address": "Enter delivery address",
+      "order_date": "Select date",
+      "currency": "Select currency",
+      "status": "Select order status",
+      "product": "Select a product",
+      "custom_item_name": "Item name",
+      "custom_item_notes": "Line description",
+      "custom_item_unit": "Unit",
+      "quantity": "Qty",
+      "unit_price": "Unit Price"
+    },
+    "table": {
+      "row_no": "No",
+      "product": "Product",
+      "description": "Description",
+      "unit": "Unit",
+      "quantity": "Qty",
+      "unit_price": "Unit Price",
+      "amount": "Amount",
+      "action": "Action",
+      "total_amount": "Total Amount"
+    },
+    "custom_order": "Custom Order",
+    "buttons": {
+      "cancel": "Cancel",
+      "create": "Add",
+      "update": "Update",
+      "saving": "Saving...",
+      "add_row": "Add Row"
+    },
+    "empty": {
+      "title": "No products added yet",
+      "description": "Use the button below to add products to the list"
+    }
+  }
+}

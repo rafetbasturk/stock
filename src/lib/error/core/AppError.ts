@@ -1,13 +1,14 @@
 // src/lib/error/core/AppError.ts
-import type { AppErrorData, ErrorCode } from ".";
 import { isZodError } from "../utils/isZodError";
 import { isTransportError } from "./isTransportError";
 import { getErrorMessage } from "./errorMessages";
 import { getHttpStatusFromCode } from "./errorStatusMap";
-import { TransportError, ValidationErrorPayload } from "./errorTransport";
 import { zodToValidationPayload } from "./zodToValidationPayload";
 import { normalizeTransportDetails } from "./normalizeTransportDetails";
-import { ERROR_CODE_SYMBOL, ErrorWithCode } from "./errorCodeMarker";
+import { ERROR_CODE_SYMBOL } from "./errorCodeMarker";
+import type { ErrorWithCode } from "./errorCodeMarker";
+import type { TransportError, ValidationErrorPayload } from "./errorTransport";
+import type { AppErrorData, ErrorCode } from ".";
 
 export class BaseAppError extends Error implements AppErrorData {
   readonly status: number;
@@ -22,9 +23,7 @@ export class BaseAppError extends Error implements AppErrorData {
     this.status = status ?? getHttpStatusFromCode(code);
     this.details = details;
 
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, new.target);
-    }
+    Error.captureStackTrace(this, new.target);
   }
 
   static create(data: AppErrorData): BaseAppError {

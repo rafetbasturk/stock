@@ -1,7 +1,8 @@
 // src/lib/i18n/createI18n.ts
-import { createInstance, type i18n as I18nType } from 'i18next'
+import {  createInstance } from 'i18next'
 import resourcesToBackend from 'i18next-resources-to-backend'
 import { initReactI18next } from 'react-i18next'
+import type {i18n as I18nType} from 'i18next';
 
 const cache = new Map<string, I18nType>()
 
@@ -23,7 +24,7 @@ export function createI18n(lang: string) {
       lng: lang,
       fallbackLng: 'en',
       interpolation: { escapeValue: false },
-      ns: ['auth', 'validation', 'formErrors'],
+      ns: ['auth', 'validation', 'formErrors', 'orders'],
       react: { useSuspense: true },
       debug: false,
     })

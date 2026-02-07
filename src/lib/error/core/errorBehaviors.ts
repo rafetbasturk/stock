@@ -1,5 +1,5 @@
 // src/lib/error/core/errorBehaviors.ts
-import { ErrorCode } from "./errorCodes";
+import type { ErrorCode } from "./errorCodes";
 
 export interface ErrorBehavior {
   silent?: boolean;

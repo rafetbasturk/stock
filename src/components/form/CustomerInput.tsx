@@ -1,8 +1,8 @@
-import { useFetchCustomers } from "@/lib/queries/customers";
-import EntitySelect from "./EntitySelect";
 import { useEffect, useMemo } from "react";
-import { I18nErrorMessage } from "@/lib/error/core/errorTransport";
-import { FieldErrors } from "@/lib/error/utils/formErrors";
+import EntitySelect from "./EntitySelect";
+import type { I18nErrorMessage } from "@/lib/error/core/errorTransport";
+import type { FieldErrors } from "@/lib/error/utils/formErrors";
+import { useFetchCustomers } from "@/lib/queries/customers";
 
 type Props = {
   value: number | null;
@@ -12,7 +12,7 @@ type Props = {
   required?: boolean;
   label?: string;
   includeAllOption?: boolean;
-  filterIds?: number[];
+  filterIds?: Array<number>;
 };
 
 export default function CustomerInput({
@@ -33,16 +33,15 @@ export default function CustomerInput({
     return customers.filter((c) => filterIds.includes(c.id));
   }, [customers, filterIds]);
 
-  const customerOptions =
-    filtered?.map((c) => ({
-      id: c.id,
-      label: `${c.code} - ${c.name}`,
-    })) ?? [];
+  const customerOptions = filtered.map((c) => ({
+    id: c.id,
+    label: `${c.code} - ${c.name}`,
+  }));
 
   // --- Auto-select if only 1 available ---
   useEffect(() => {
     if (filtered.length === 1 && !value) {
-      onValueChange(filtered[0]?.id ?? 0);
+      onValueChange(filtered[0].id);
     }
   }, [filtered, value, onValueChange]);
 

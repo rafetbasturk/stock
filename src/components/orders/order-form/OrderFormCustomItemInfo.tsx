@@ -1,4 +1,5 @@
 import { Plus, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useOrderCalculations } from './hooks/useOrderCalculations'
 import EmptyOrderProducts from './EmptyOrderProducts'
 import type { FormErrors, OrderFormState } from '../OrderForm'
@@ -41,6 +42,7 @@ export default function OrderFormCustomItemInfo({
   removeCustomItem,
   onCustomItemChange,
 }: Props) {
+  const { t } = useTranslation('orders')
   const { formattedTotal } = useOrderCalculations(
     form.customItems,
     form.currency ?? 'TRY',
@@ -52,18 +54,18 @@ export default function OrderFormCustomItemInfo({
         <Table className="table-fixed w-full">
           <TableHeader className="bg-muted">
             <TableRow>
-              <TableHead className="w-15">Sıra No</TableHead>
+              <TableHead className="w-15">{t('form.table.row_no')}</TableHead>
               <TableHead className="w-45 max-w-75">
-                Ürün Adı
+                {t('form.table.product')}
               </TableHead>
-              <TableHead className="w-45">Açıklama</TableHead>
-              <TableHead className="w-25">Birim</TableHead>
-              <TableHead className="w-20">Adet</TableHead>
+              <TableHead className="w-45">{t('form.table.description')}</TableHead>
+              <TableHead className="w-25">{t('form.table.unit')}</TableHead>
+              <TableHead className="w-20">{t('form.table.quantity')}</TableHead>
               <TableHead className="w-30 text-right">
-                Birim Fiyat
+                {t('form.table.unit_price')}
               </TableHead>
-              <TableHead className="w-30 text-right">Tutar</TableHead>
-              <TableHead className="w-15 text-right">İşlem</TableHead>
+              <TableHead className="w-30 text-right">{t('form.table.amount')}</TableHead>
+              <TableHead className="w-15 text-right">{t('form.table.action')}</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -88,7 +90,7 @@ export default function OrderFormCustomItemInfo({
                       onChange={(e) =>
                         onCustomItemChange(index, 'name', e.target.value)
                       }
-                      placeholder="Ürün adı"
+                      placeholder={t('form.placeholders.custom_item_name')}
                       error={errorHelpers.get(`customItems[${index}].name`)}
                     />
                   </TableCell>
@@ -99,7 +101,7 @@ export default function OrderFormCustomItemInfo({
                       onChange={(e) =>
                         onCustomItemChange(index, 'notes', e.target.value)
                       }
-                      placeholder="Satır açıklaması"
+                      placeholder={t('form.placeholders.custom_item_notes')}
                     />
                   </TableCell>
                   <TableCell>
@@ -109,7 +111,7 @@ export default function OrderFormCustomItemInfo({
                       onChange={(e) =>
                         onCustomItemChange(index, 'unit', e.target.value)
                       }
-                      placeholder="Birim"
+                      placeholder={t('form.placeholders.custom_item_unit')}
                     />
                   </TableCell>
                   <TableCell>
@@ -170,7 +172,7 @@ export default function OrderFormCustomItemInfo({
             <TableFooter>
               <TableRow>
                 <TableCell colSpan={6} className="text-right font-medium">
-                  Toplam Tutar
+                  {t('form.table.total_amount')}
                 </TableCell>
                 <TableCell className="text-right font-bold text-lg">
                   {formattedTotal}
@@ -213,7 +215,7 @@ export default function OrderFormCustomItemInfo({
                   onChange={(e) =>
                     onCustomItemChange(index, 'name', e.target.value)
                   }
-                  placeholder="Ürün adı"
+                  placeholder={t('form.placeholders.custom_item_name')}
                   error={errorHelpers.get(`customItems[${index}].name`)}
                 />
                 <InputField
@@ -222,7 +224,7 @@ export default function OrderFormCustomItemInfo({
                   onChange={(e) =>
                     onCustomItemChange(index, 'notes', e.target.value)
                   }
-                  placeholder="Açıklama"
+                  placeholder={t('form.table.description')}
                 />
               </div>
 
@@ -233,23 +235,23 @@ export default function OrderFormCustomItemInfo({
                   onChange={(e) =>
                     onCustomItemChange(index, 'unit', e.target.value)
                   }
-                  placeholder="Birim"
+                  placeholder={t('form.placeholders.custom_item_unit')}
                 />
                 <InputField
                   name={`customItems[${index}].quantity-mobile`}
                   type="number"
                   min={1}
-                  label="Adet"
+                  label={t('form.table.quantity')}
                   value={item.quantity || 1}
                   onChange={(e) =>
                     onCustomItemChange(index, 'quantity', Number(e.target.value))
                   }
-                  placeholder="Adet"
+                  placeholder={t('form.placeholders.quantity')}
                 />
                 <InputField
                   name={`customItems[${index}].unit_price-mobile`}
                   type="number"
-                  label="Birim Fiyat"
+                  label={t('form.table.unit_price')}
                   step="0.01"
                   value={(item.unit_price ?? 0) / 100}
                   onChange={(e) =>
@@ -259,12 +261,12 @@ export default function OrderFormCustomItemInfo({
                       Math.round(Number(e.target.value) * 100),
                     )
                   }
-                  placeholder="Birim Fiyat"
+                  placeholder={t('form.placeholders.unit_price')}
                 />
               </div>
 
               <div className="flex justify-between items-center border-t pt-3">
-                <span className="text-sm font-medium">Tutar</span>
+                <span className="text-sm font-medium">{t('form.table.amount')}</span>
                 <span className="text-lg font-semibold">
                   {convertToCurrencyFormat({
                     cents:
@@ -279,7 +281,9 @@ export default function OrderFormCustomItemInfo({
 
         {form.customItems.length > 0 && (
           <div className="border-t pt-4 text-right">
-            <span className="text-sm font-medium mr-2">Toplam Tutar:</span>
+            <span className="text-sm font-medium mr-2">
+              {t('form.table.total_amount')}:
+            </span>
             <span className="text-lg font-bold">{formattedTotal}</span>
           </div>
         )}
@@ -293,7 +297,7 @@ export default function OrderFormCustomItemInfo({
           className="w-full sm:w-auto"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Satır Ekle
+          {t('form.buttons.add_row')}
         </Button>
       </div>
     </>

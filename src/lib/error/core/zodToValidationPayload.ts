@@ -49,7 +49,7 @@ export function zodToValidationPayload(
 
   for (const issue of error.issues) {
     const field = issue.path.join(".");
-    if (!field || fieldErrors[field]) continue;
+    if (Object.prototype.hasOwnProperty.call(fieldErrors, field)) continue;
 
     fieldErrors[field] = mapZodIssue(issue);
   }

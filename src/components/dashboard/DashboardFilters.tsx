@@ -1,12 +1,11 @@
-import { HomeSearch } from "@/lib/types/types.search";
-
 import { Card, CardContent } from "../ui/card";
-import CustomerInput from "../CustomerInput";
-import { Button } from "@/components/ui/button";
+import CustomerInput from "../form/CustomerInput";
 import EntitySelect from "../form/EntitySelect";
+import type { HomeSearch } from "@/lib/types/types.search";
+import { Button } from "@/components/ui/button";
 
 interface Props {
-  years: string[];
+  years: Array<string>;
   filters: HomeSearch;
   onSearchChange: (updates: Partial<HomeSearch>) => void;
 }

@@ -2,8 +2,10 @@ import { tr } from 'date-fns/locale'
 import { format } from 'date-fns'
 import { CalendarIcon } from 'lucide-react'
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { InsertOrder, OrderWithItems } from '@/types'
 import type { OrderFormState } from '../OrderForm'
+import type { FieldErrors } from '@/lib/error/utils/formErrors'
 import { useFetchCustomers } from '@/lib/queries/customers'
 import { statusArray } from '@/lib/constants'
 import { currencyArray } from '@/lib/currency'
@@ -31,7 +33,8 @@ type Props = {
   order?: OrderWithItems | null
   form: OrderFormState
   setForm: React.Dispatch<React.SetStateAction<OrderFormState>>
-  formErrors: Record<string, string>
+  formErrors: FieldErrors
+  clearFieldError: (path: string) => void
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
 
@@ -40,8 +43,10 @@ export default function OrderFormBasicInfo({
   form,
   setForm,
   formErrors,
+  clearFieldError,
   onChange,
 }: Props) {
+  const { t } = useTranslation('orders')
   const { data: customers = [] } = useFetchCustomers()
 
   const customerOptions = useMemo(
@@ -73,63 +78,52 @@ export default function OrderFormBasicInfo({
 
   return (
     <FieldSet>
-      <FieldLegend>Temel Bilgiler</FieldLegend>
+      <FieldLegend>{t('form.sections.basic')}</FieldLegend>
       <FieldSeparator />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <FieldGroup className="gap-6">
-          {/* Order Number */}
-          {/* <Field>
-            <FieldLabel>Sipariş No</FieldLabel>
-            <Input
-              name="order_number"
-              value={form.order_number}
-              onChange={onChange}
-              placeholder="Örn: SIP-2024-001"
-            />
-            {formErrors.order_number && (
-              <FieldError>{formErrors.order_number}</FieldError>
-            )}
-          </Field> */}
-
           <InputField
             name="order_number"
-            label="Sipariş No"
+            label={t('form.fields.order_number')}
             value={form.order_number}
             onChange={onChange}
-            // required
+            required
             error={formErrors.order_number}
-            placeholder="Örn: SIP-2024-001"
+            placeholder={t('form.placeholders.order_number')}
           />
 
           <EntitySelect
             name="customer_id"
-            label="Müşteri"
+            label={t('form.fields.customer')}
             value={form.customer_id > 0 ? form.customer_id : null}
+            error={formErrors.customer_id}
             onValueChange={(value) =>
-              setForm((prev) => ({
-                ...prev,
-                customer_id: Number(value ?? 0),
-              }))
+              {
+                setForm((prev) => ({
+                  ...prev,
+                  customer_id: Number(value ?? 0),
+                }))
+                clearFieldError('customer_id')
+              }
             }
             options={customerOptions}
-            placeholder="Müşteri seçin"
+            placeholder={t('form.placeholders.customer')}
           />
-          {formErrors.customer_id && (
-            <FieldError>{formErrors.customer_id}</FieldError>
-          )}
 
           <InputField
             name="delivery_address"
-            label="Teslimat Adresi"
+            label={t('form.fields.delivery_address')}
             value={form.delivery_address ?? ''}
             onChange={onChange}
-            placeholder="Teslimat adresini girin"
+            placeholder={t('form.placeholders.delivery_address')}
           />
         </FieldGroup>
 
         <FieldGroup className="gap-6">
           <Field className="gap-1">
-            <FieldLabel htmlFor="order_date">Sipariş Tarihi</FieldLabel>
+            <FieldLabel htmlFor="order_date">
+              {t('form.fields.order_date')}
+            </FieldLabel>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -145,7 +139,7 @@ export default function OrderFormBasicInfo({
                       locale: tr,
                     })
                   ) : (
-                    <span>Tarih seçin</span>
+                    <span>{t('form.placeholders.order_date')}</span>
                   )}
                 </Button>
               </PopoverTrigger>
@@ -156,6 +150,7 @@ export default function OrderFormBasicInfo({
                   onSelect={(value) => {
                     if (!value) return
                     setForm((prev) => ({ ...prev, order_date: value }))
+                    clearFieldError('order_date')
                   }}
                   className="rounded-md border"
                   captionLayout="label"
@@ -164,13 +159,18 @@ export default function OrderFormBasicInfo({
               </PopoverContent>
             </Popover>
             {formErrors.order_date && (
-              <FieldError>{formErrors.order_date}</FieldError>
+              <FieldError>
+                {t(
+                  `${formErrors.order_date.i18n.ns}:${formErrors.order_date.i18n.key}`,
+                  formErrors.order_date.params,
+                )}
+              </FieldError>
             )}
           </Field>
 
           <EntitySelect
             name="currency"
-            label="Sipariş Para Birimi"
+            label={t('form.fields.currency')}
             value={form.currency ?? 'TRY'}
             onValueChange={(value) =>
               setForm((prev) => ({
@@ -179,13 +179,13 @@ export default function OrderFormBasicInfo({
               }))
             }
             options={currencyOptions}
-            placeholder="Para birimini seçin"
+            placeholder={t('form.placeholders.currency')}
           />
 
           {order && (
             <EntitySelect
               name="status"
-              label="Sipariş Durumu"
+              label={t('form.fields.status')}
               value={form.status ?? 'KAYIT'}
               onValueChange={(value) =>
                 setForm((prev) => ({
@@ -194,7 +194,7 @@ export default function OrderFormBasicInfo({
                 }))
               }
               options={statusOptions}
-              placeholder="Sipariş durumunu seçin"
+              placeholder={t('form.placeholders.status')}
             />
           )}
         </FieldGroup>
