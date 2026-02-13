@@ -44,8 +44,12 @@ export const getServerCookies = createServerFn().handler(() => {
   const cookieLang = getCookie('lang')
   const acceptLang = getRequestHeader('accept-language')
   const cookieTheme = getCookie('theme')
+  const cookieSidebar = getCookie('sidebar_state')
+
   const theme: AppSettings['theme'] =
-    cookieTheme === 'light' || cookieTheme === 'dark' || cookieTheme === 'system'
+    cookieTheme === 'light' ||
+    cookieTheme === 'dark' ||
+    cookieTheme === 'system'
       ? cookieTheme
       : 'system'
 
@@ -57,7 +61,9 @@ export const getServerCookies = createServerFn().handler(() => {
     lang = primaryLang === 'en' ? 'en' : 'tr'
   }
 
-  return { lang, theme }
+  const sidebarOpen = cookieSidebar !== 'false'
+
+  return { lang, theme, sidebarOpen }
 })
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
@@ -125,9 +131,9 @@ function RootComponent() {
       <Outlet />
     </div>
   ) : (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={settings.sidebarOpen}>
       <div className="flex min-h-svh w-full">
-        <AppSidebar settings={settings} />
+        <AppSidebar settings={settings as any} />
         <main className="flex-1 overflow-hidden">
           <SidebarTrigger className="md:hidden" />
           <Outlet />

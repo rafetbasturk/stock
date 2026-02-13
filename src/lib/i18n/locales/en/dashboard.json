@@ -1,9 +1,10 @@
 {
   "pending": "Loading...",
   "sidebar_label": "Dashboard",
+  "heading": "Overview",
   "sections": {
     "status_chart": "Order Statuses",
-    "monthly_chart": "Monthly Order Counts"
+    "monthly_chart": "Monthly Orders"
   },
   "filters": {
     "all": "All",
@@ -14,8 +15,11 @@
     "load_error_title": "Failed to load metrics",
     "load_error_message": "Metrics could not be loaded.",
     "total_order_amount": "Total Order Amount",
+    "total_desc": "Overall amount from all orders",
     "delivered_order_amount": "Delivered Order Amount",
+    "delivered_desc": "Amount from already delivered items",
     "open_order_amount": "Open Order Amount",
+    "open_desc": "Amount from pending orders",
     "total_order_count": "Total Order Count",
     "order_count_this_month": "Order Count (This Month)",
     "open_order_count": "Open Order Count"
@@ -24,11 +28,15 @@
     "load_error_title": "Failed to load monthly orders",
     "load_error_message": "Monthly order data was not found.",
     "orders_axis": "Orders",
-    "amount_axis": "Amount",
+    "amount_axis": "Amount {{currency}}",
     "orders_count": "Order Count",
+    "deliveries_count": "Delivery Count",
     "total_amount": "Total Amount",
+    "delivered_amount": "Delivered Amount",
     "orders_count_label": "Order Count:",
-    "total_amount_label": "Total Amount:"
+    "deliveries_count_label": "Delivery Count:",
+    "total_amount_label": "Total Amount:",
+    "delivered_amount_label": "Delivered Amount:"
   },
   "status_chart": {
     "load_error_title": "Failed to load order statuses",
@@ -36,5 +44,35 @@
     "no_data": "No order data to display",
     "total_orders": "Total Orders",
     "order_suffix": "orders"
+  },
+  "months": {
+    "short": [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ],
+    "long": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ]
   }
 }

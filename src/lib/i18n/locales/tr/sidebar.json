@@ -8,6 +8,7 @@
     "orders": "Siparişler",
     "products": "Ürünler",
     "customers": "Müşteriler",
-    "deliveries": "Sevkler"
+    "deliveries": "Sevkler",
+    "stock_history": "Stok Hareketleri"
   }
 }

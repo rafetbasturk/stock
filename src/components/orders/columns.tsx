@@ -72,9 +72,7 @@ export const getColumns = (
       accessorFn: (row) => row.customer.name,
       header: t('orders.columns.customer'),
       cell: ({ row }) => (
-        <div className="font-medium truncate">
-          {row.original.customer.name}
-        </div>
+        <div className="font-medium truncate">{row.original.customer.name}</div>
       ),
       filterFn: (row, columnId, filterValue) => {
         if (
@@ -147,7 +145,9 @@ export const getColumns = (
       meta: {
         filterTitle: t('orders.columns.total_amount'),
       },
-      header: () => <div className="ml-auto">{t('orders.columns.total_amount')}</div>,
+      header: () => (
+        <div className="ml-auto">{t('orders.columns.total_amount')}</div>
+      ),
       cell: ({ row }) => {
         const totalAmount = Number(row.getValue('total_amount'))
         const formatted = new Intl.NumberFormat('tr', {
@@ -159,8 +159,16 @@ export const getColumns = (
       },
     },
     {
-      id: 'customer_id',
-      accessorKey: 'customer_id',
+      id: 'customerId',
+      accessorKey: 'customerId',
+      meta: { isFilterOnly: true },
+      enableHiding: false,
+      enableSorting: false,
+      enableResizing: false,
+    },
+    {
+      id: 'dateRange',
+      accessorKey: 'dateRange',
       meta: { isFilterOnly: true },
       enableHiding: false,
       enableSorting: false,

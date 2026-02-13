@@ -5,6 +5,7 @@ import type { Currency } from '@/types'
 import type { Rate } from '../currency'
 import {
   getKeyMetrics,
+  getMonthlyDeliveries,
   getMonthlyOrders,
   getOrdersByStatus,
 } from '@/server/metrics'
@@ -22,6 +23,7 @@ export const useFetchMetrics = (
       filters.customerId ?? null,
       filters.year ?? null,
       preferredCurrency ?? null,
+      rates,
     ],
     queryFn: () =>
       getKeyMetrics({
@@ -54,6 +56,30 @@ export const useFetchOrdersByStatus = (filters: HomeSearch) => {
   })
 }
 
+export const useFetchMonthlyDeliveries = (
+  filters: HomeSearch,
+  rates: Rate[],
+  preferredCurrency: Currency,
+) => {
+  return useQuery({
+    queryKey: [
+      'delivery-monthly',
+      filters.customerId ?? null,
+      filters.year ?? null,
+      preferredCurrency ?? null,
+      rates,
+    ],
+    queryFn: () =>
+      getMonthlyDeliveries({
+        data: {
+          filters,
+          rates,
+          preferredCurrency,
+        },
+      }),
+  })
+}
+
 export const useFetchMonthlyOrders = (
   filters: HomeSearch,
   rates: Rate[],
@@ -65,6 +91,7 @@ export const useFetchMonthlyOrders = (
       filters.customerId ?? null,
       filters.year ?? null,
       preferredCurrency ?? null,
+      rates,
     ],
     queryFn: () =>
       getMonthlyOrders({

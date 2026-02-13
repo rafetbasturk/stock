@@ -1,0 +1,9 @@
+{
+  "search_placeholder": "Ara...",
+  "clear_filters": "Filtreleri Temizle ({{count}})",
+  "columns": "Sütunlar",
+  "no_results": "Sonuç bulunamadı.",
+  "records_count": "{{count}} kayıt",
+  "rows_per_page": "Sayfa başı:",
+  "page_status": "Sayfa {{current}} / {{total}}"
+}

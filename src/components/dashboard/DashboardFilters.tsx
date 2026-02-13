@@ -32,8 +32,8 @@ export default function DashboardFilters({
     onSearchChange({ customerId: undefined, year: undefined });
 
   return (
-    <Card>
-      <CardContent>
+    <Card className="p-0 border-0 shadow-none">
+      <CardContent className="p-0">
         <div className="flex flex-col md:flex-row gap-4 items-center">
           <CustomerInput
             value={customerId ?? null}

@@ -9,7 +9,7 @@ import type { OrderListRow } from '@/types'
 import { ordersSearchSchema } from '@/lib/types'
 import { debounce } from '@/lib/debounce'
 import { useDeleteOrderMutation } from '@/lib/mutations/orders'
-import { ordersQuery } from '@/lib/queries/orders'
+import { getFilterOptions, lastOrderNumberQuery, ordersQuery } from '@/lib/queries/orders'
 
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { getColumns } from '@/components/orders/columns'
@@ -17,12 +17,17 @@ import OrderForm from '@/components/orders/OrderForm'
 import { OrderListHeader } from '@/components/orders/OrderListHeader'
 import { OrdersDataTable } from '@/components/orders/OrdersDataTable'
 import { OrderDeleteDialog } from '@/components/orders/OrderDeleteDialog'
+import { DataTableFilter } from '@/components/DataTable'
 
 export const Route = createFileRoute('/orders/')({
   validateSearch: zodValidator(ordersSearchSchema),
   loaderDeps: ({ search }) => search,
   loader: async ({ context, deps }) => {
-    return await context.queryClient.ensureQueryData(ordersQuery(deps))
+    return await Promise.all([
+      context.queryClient.prefetchQuery(lastOrderNumberQuery()),
+      context.queryClient.prefetchQuery(getFilterOptions()),
+      context.queryClient.ensureQueryData(ordersQuery(deps)),
+    ])
   },
   component: OrderList,
   pendingComponent: OrdersPending,
@@ -96,6 +101,38 @@ function OrderList() {
     }
   }, [pendingDeleteOrder, pendingDeleteId])
 
+  // filter options
+  const { data: filterOptions } = useSuspenseQuery(getFilterOptions())
+
+  const customFilters: Array<DataTableFilter> = useMemo(
+    () => [
+      {
+        columnId: 'customerId',
+        label: t('orders.filters.customer'),
+        type: 'multi',
+        options: filterOptions.customers.map((c) => ({
+          value: String(c.id),
+          label: c.name,
+        })),
+      },
+      {
+        columnId: 'status',
+        label: t('orders.filters.status'),
+        type: 'multi',
+        options: filterOptions.statuses.map((s) => ({
+          value: s,
+          label: s,
+        })),
+      },
+      {
+        columnId: 'dateRange',
+        label: t('orders.filters.daterange'),
+        type: 'daterange',
+      },
+    ],
+    [filterOptions.customers, filterOptions.statuses, t],
+  )
+
   const handleSearchChange = useCallback(
     (updates: Record<string, string | undefined>) => {
       navigate({
@@ -138,6 +175,7 @@ function OrderList() {
         pageIndex={pageIndex}
         pageSize={pageSize}
         isFetching={ordersQ.isFetching}
+        customFilters={customFilters}
         search={search}
         onSearchChange={debouncedSearchChange}
         onPageChange={(p) => handleSearchChange({ pageIndex: String(p) })}

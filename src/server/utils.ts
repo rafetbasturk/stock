@@ -1,6 +1,15 @@
+import { orderItemsTable, ordersTable } from '@/db/schema'
 import { TR } from '@/lib/constants'
 import { BaseAppError } from '@/lib/error/core'
-import { DeliveryWithItems, InsertProduct, OrderWithItems } from '@/types'
+import {
+  Currency,
+  DeliveryItem,
+  DeliveryListRow,
+  DeliveryWithItems,
+  InsertProduct,
+  OrderWithItems,
+} from '@/types'
+import { eq, isNull, sql } from 'drizzle-orm'
 
 export function normalizeText(input?: string | null) {
   const s = (input ?? '')
@@ -114,4 +123,91 @@ export function addTotalAmount<T extends OrderWithItems | DeliveryWithItems>(
   const total_amount = Number((totalCents / 100).toFixed(2))
 
   return { ...data, total_amount }
+}
+
+export function addDeliveryTotals(
+  delivery: DeliveryWithItems,
+): DeliveryListRow {
+  // 1) Sum in cents to avoid floating-point issues
+  const totalCents = (delivery.items ?? []).reduce((sum, item) => {
+    const price =
+      item.orderItem?.unit_price ?? item.customOrderItem?.unit_price ?? 0 // cents
+    const qty = item.delivered_quantity ?? 0
+    return sum + price * qty
+  }, 0)
+
+  // 2) Derive currency from the first item
+  //    Business rule: a delivery can't mix currencies (enforced in the form).
+  const firstItem = delivery.items?.[0]
+
+  const currency = (firstItem?.orderItem?.currency ??
+    firstItem?.customOrderItem?.currency ??
+    'TRY') as Currency
+
+  // 3) Convert back to "normal" amount with 2 decimals
+  const total_amount = Number((totalCents / 100).toFixed(2))
+
+  return {
+    ...delivery,
+    total_amount,
+    currency,
+  }
+}
+
+export const notDeleted = (table: { deleted_at: any }) =>
+  isNull(table.deleted_at)
+
+export const normalizeDateForDB = (value: any): Date => {
+  let normalizedDate: Date
+  if (value instanceof Date) {
+    normalizedDate = value
+  } else if (typeof value === 'string' || typeof value === 'number') {
+    normalizedDate = new Date(value)
+  } else {
+    throw Error('normalize date')
+    // throw new AppError(
+    //   400,
+    //   'VALIDATION_ERROR',
+    //   'en',
+    //   'Invalid delivery_date value',
+    // )
+  }
+  return normalizedDate
+}
+
+export async function updateOrderStatusIfComplete(tx: any, orderId: number) {
+  // Get order items with delivered quantities
+  const items = await tx.query.orderItemsTable.findMany({
+    where: eq(orderItemsTable.order_id, orderId),
+    with: {
+      deliveries: true, // deliveryItems
+    },
+  })
+
+  let allShipped = true
+
+  for (const item of items) {
+    const deliveredTotal = (item.deliveries ?? []).reduce(
+      (sum: number, di: DeliveryItem) => sum + (di.delivered_quantity ?? 0),
+      0,
+    )
+
+    if (deliveredTotal < item.quantity) {
+      allShipped = false
+      break
+    }
+  }
+
+  await tx
+    .update(ordersTable)
+    .set({
+      status: allShipped ? 'BİTTİ' : 'ÜRETİM',
+      updated_at: sql`now()`,
+    })
+    .where(eq(ordersTable.id, orderId))
+}
+
+export function normalizeParams(value?: string) {
+  const trimmed = value?.trim()
+  return trimmed && trimmed.length > 0 ? trimmed : undefined
 }

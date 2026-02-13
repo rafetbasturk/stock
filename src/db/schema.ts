@@ -1,6 +1,4 @@
-import { statusArray, unitArray } from '@/lib/constants'
-import { currencyArray } from '@/lib/currency'
-import { relations } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import {
   pgTable,
   serial,
@@ -10,22 +8,15 @@ import {
   boolean,
   unique,
   index,
-  pgEnum,
+  check,
 } from 'drizzle-orm/pg-core'
-
-// Define enums for Postgres
-export const statusEnum = pgEnum(
-  'status',
-  statusArray as unknown as [string, ...string[]],
-)
-export const unitEnum = pgEnum(
-  'unit',
-  unitArray as unknown as [string, ...string[]],
-)
-export const currencyEnum = pgEnum(
-  'currency',
-  currencyArray as unknown as [string, ...string[]],
-)
+import {
+  currencyEnum,
+  statusEnum,
+  stockMovementTypeEnum,
+  stockReferenceTypeEnum,
+  unitEnum,
+} from './enums'
 
 const timestamps = {
   created_at: timestamp('created_at').defaultNow().notNull(),
@@ -45,29 +36,53 @@ export const customersTable = pgTable('customers', {
   ...timestamps,
 })
 
-export const productsTable = pgTable('products', {
-  id: serial('id').primaryKey(),
-  code: text('code').notNull(),
-  name: text('name').notNull(),
-  unit: unitEnum('unit').notNull().default('adet'),
-  price: integer('price').default(0),
-  currency: currencyEnum('currency').default('TRY'),
-  stock_quantity: integer('stock_quantity').notNull().default(0),
-  min_stock_level: integer('min_stock_level').notNull().default(0),
-  other_codes: text('other_codes'),
-  material: text('material'),
-  post_process: text('post_process'),
-  coating: text('coating'),
-  specs: text('specs'),
-  specs_net: text('specs_net'),
-  notes: text('notes'),
-  customer_id: integer('customer_id')
-    .notNull()
-    .references(() => customersTable.id, {
-      onDelete: 'restrict',
-    }),
-  ...timestamps,
-})
+export const productsTable = pgTable(
+  'products',
+  {
+    id: serial('id').primaryKey(),
+    code: text('code').notNull(),
+    name: text('name').notNull(),
+    unit: unitEnum('unit').notNull().default('adet'),
+    price: integer('price').default(0),
+    currency: currencyEnum('currency').notNull().default('TRY'),
+    stock_quantity: integer('stock_quantity').notNull().default(0),
+    min_stock_level: integer('min_stock_level').notNull().default(0),
+    other_codes: text('other_codes'),
+    material: text('material'),
+    post_process: text('post_process'),
+    coating: text('coating'),
+    specs: text('specs'),
+    specs_net: text('specs_net'),
+    notes: text('notes'),
+    customer_id: integer('customer_id')
+      .notNull()
+      .references(() => customersTable.id, {
+        onDelete: 'restrict',
+      }),
+    ...timestamps,
+  },
+  (table) => [
+    index('idx_products_code').on(table.code),
+    index('idx_products_name').on(table.name),
+    index('idx_products_material').on(table.material),
+    index('idx_products_customer').on(table.customer_id),
+    index('idx_products_deleted').on(table.deleted_at),
+    index('idx_products_other_codes').on(table.other_codes),
+    index('idx_products_notes').on(table.notes),
+    index('idx_products_coating').on(table.coating),
+    index('idx_products_post_process').on(table.post_process),
+
+    check(
+      'products_stock_quantity_not_negative',
+      sql`${table.stock_quantity} >= 0`,
+    ),
+    check(
+      'products_min_stock_not_negative',
+      sql`${table.min_stock_level} >= 0`,
+    ),
+    check('products_price_not_negative', sql`${table.price} >= 0`),
+  ],
+)
 
 export const ordersTable = pgTable(
   'orders',
@@ -87,6 +102,12 @@ export const ordersTable = pgTable(
   },
   (table) => [
     unique().on(table.order_number, table.customer_id),
+    index('idx_orders_order_number').on(table.order_number),
+    index('idx_orders_order_date').on(table.order_date),
+    index('idx_orders_customer').on(table.customer_id),
+    index('idx_orders_status').on(table.status),
+    index('idx_orders_deleted').on(table.deleted_at),
+    index('idx_orders_currency').on(table.currency),
   ],
 )
 
@@ -102,25 +123,50 @@ export const orderItemsTable = pgTable(
       .references(() => productsTable.id),
     quantity: integer('quantity').notNull().default(1),
     unit_price: integer('unit_price').notNull(),
-    currency: currencyEnum('currency').default('TRY'),
+    currency: currencyEnum('currency').notNull().default('TRY'),
     ...timestamps,
   },
-  (table) => [index('idx_order_items_order_id').on(table.order_id)],
+  (table) => [
+    index('idx_order_items_order_id').on(table.order_id),
+    index('idx_order_items_product_id').on(table.product_id),
+    index('idx_order_items_created_at').on(table.created_at),
+    index('idx_order_items_order_created').on(table.order_id, table.created_at),
+
+    check('order_items_quantity_positive', sql`${table.quantity} > 0`),
+    check('order_items_unit_price_not_negative', sql`${table.unit_price} >= 0`),
+  ],
 )
 
-export const customOrderItemsTable = pgTable('custom_order_items', {
-  id: serial('id').primaryKey(),
-  order_id: integer('order_id')
-    .notNull()
-    .references(() => ordersTable.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  unit: unitEnum('unit').default('adet'),
-  quantity: integer('quantity').notNull().default(1),
-  unit_price: integer('unit_price').notNull(),
-  currency: currencyEnum('currency').default('TRY'),
-  notes: text('notes'),
-  ...timestamps,
-})
+export const customOrderItemsTable = pgTable(
+  'custom_order_items',
+  {
+    id: serial('id').primaryKey(),
+    order_id: integer('order_id')
+      .notNull()
+      .references(() => ordersTable.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    unit: unitEnum('unit').notNull().default('adet'),
+    quantity: integer('quantity').notNull().default(1),
+    unit_price: integer('unit_price').notNull(),
+    currency: currencyEnum('currency').notNull().default('TRY'),
+    notes: text('notes'),
+    ...timestamps,
+  },
+  (table) => [
+    index('idx_custom_order_items_order_id').on(table.order_id),
+    index('idx_custom_order_items_created_at').on(table.created_at),
+    index('idx_custom_order_items_order_created').on(
+      table.order_id,
+      table.created_at,
+    ),
+
+    check('custom_order_items_quantity_positive', sql`${table.quantity} > 0`),
+    check(
+      'custom_order_items_unit_price_not_negative',
+      sql`${table.unit_price} >= 0`,
+    ),
+  ],
+)
 
 export const deliveriesTable = pgTable(
   'deliveries',
@@ -134,26 +180,70 @@ export const deliveriesTable = pgTable(
     notes: text('notes'),
     ...timestamps,
   },
-  (table) => [unique().on(table.customer_id, table.delivery_number)],
+  (table) => [
+    unique().on(table.customer_id, table.delivery_number),
+    index('idx_deliveries_customer').on(table.customer_id),
+    index('idx_deliveries_delivery_date').on(table.delivery_date),
+    index('idx_deliveries_deleted').on(table.deleted_at),
+    index('idx_deliveries_date_customer').on(
+      table.delivery_date,
+      table.customer_id,
+    ),
+  ],
 )
 
-export const deliveryItemsTable = pgTable('delivery_items', {
-  id: serial('id').primaryKey(),
-  delivery_id: integer('delivery_id')
-    .notNull()
-    .references(() => deliveriesTable.id, { onDelete: 'cascade' }),
+export const deliveryItemsTable = pgTable(
+  'delivery_items',
+  {
+    id: serial('id').primaryKey(),
+    delivery_id: integer('delivery_id')
+      .notNull()
+      .references(() => deliveriesTable.id, { onDelete: 'cascade' }),
+    order_item_id: integer('order_item_id').references(
+      () => orderItemsTable.id,
+      {
+        onDelete: 'cascade',
+      },
+    ),
+    custom_order_item_id: integer('custom_order_item_id').references(
+      () => customOrderItemsTable.id,
+      {
+        onDelete: 'cascade',
+      },
+    ),
+    delivered_quantity: integer('delivered_quantity').notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    index('idx_delivery_items_delivery_id').on(table.delivery_id),
+    index('idx_delivery_items_order_item_id').on(table.order_item_id),
+    index('idx_delivery_items_custom_order_item_id').on(
+      table.custom_order_item_id,
+    ),
+    index('idx_delivery_items_order_item_delivery').on(
+      table.order_item_id,
+      table.delivery_id,
+    ),
+    index('idx_delivery_items_custom_order_item_delivery').on(
+      table.custom_order_item_id,
+      table.delivery_id,
+    ),
+    index('idx_delivery_items_created_at').on(table.created_at),
+    check(
+      'delivery_items_exactly_one_reference',
+      sql`
+    (${table.order_item_id} IS NOT NULL AND ${table.custom_order_item_id} IS NULL)
+    OR
+    (${table.order_item_id} IS NULL AND ${table.custom_order_item_id} IS NOT NULL)
+  `,
+    ),
 
-  order_item_id: integer('order_item_id').references(() => orderItemsTable.id, {
-    onDelete: 'cascade',
-  }),
-  custom_order_item_id: integer('custom_order_item_id').references(
-    () => customOrderItemsTable.id,
-    { onDelete: 'cascade' },
-  ),
-
-  delivered_quantity: integer('delivered_quantity').notNull(),
-  ...timestamps,
-})
+    check(
+      'delivery_items_quantity_positive',
+      sql`${table.delivered_quantity} > 0`,
+    ),
+  ],
+)
 
 export const ordersRelations = relations(ordersTable, ({ one, many }) => ({
   customer: one(customersTable, {
@@ -229,7 +319,8 @@ export const productsRelations = relations(productsTable, ({ one, many }) => ({
     fields: [productsTable.customer_id],
     references: [customersTable.id],
   }),
-  orderItems: many(orderItemsTable), // product can appear in many order items
+  orderItems: many(orderItemsTable),
+  stockMovements: many(stockMovementsTable),
 }))
 
 export const usersTable = pgTable('users', {
@@ -242,22 +333,13 @@ export const usersTable = pgTable('users', {
 
 export const sessionsTable = pgTable('sessions', {
   id: serial('id').primaryKey(),
-
   user_id: integer('user_id')
     .notNull()
     .references(() => usersTable.id, { onDelete: 'cascade' }),
-
-  // Secure random refresh token (UUIDv4)
   refresh_token: text('refresh_token').notNull().unique(),
-
-  // Optional user-agent string for session tracking
   user_agent: text('user_agent'),
-
-  // Expiration timestamp
   expires_at: timestamp('expires_at').notNull(),
-
   last_activity_at: timestamp('last_activity_at').notNull(),
-
   created_at: timestamp('created_at').defaultNow().notNull(),
 })
 
@@ -267,3 +349,62 @@ export const sessionsRelations = relations(sessionsTable, ({ one }) => ({
     references: [usersTable.id],
   }),
 }))
+
+export const stockMovementsTable = pgTable(
+  'stock_movements',
+  {
+    id: serial('id').primaryKey(),
+    product_id: integer('product_id')
+      .notNull()
+      .references(() => productsTable.id, {
+        onDelete: 'restrict',
+      }),
+    movement_type: stockMovementTypeEnum('movement_type').notNull(),
+    quantity: integer('quantity').notNull(),
+    reference_type: stockReferenceTypeEnum('reference_type'),
+    reference_id: integer('reference_id'),
+    notes: text('notes'),
+    created_by: integer('created_by')
+      .notNull()
+      .references(() => usersTable.id),
+    ...timestamps,
+  },
+  (table) => [
+    index('idx_stock_movements_product').on(table.product_id),
+    index('idx_stock_movements_created').on(table.created_at),
+    index('idx_stock_movements_type').on(table.movement_type),
+    index('idx_stock_movements_product_created').on(
+      table.product_id,
+      table.created_at,
+    ),
+    index('idx_stock_movements_reference').on(
+      table.reference_type,
+      table.reference_id,
+    ),
+    index('idx_stock_movements_created_by').on(table.created_by),
+
+    check('stock_movements_quantity_not_zero', sql`${table.quantity} <> 0`),
+    check(
+      'stock_movements_reference_consistency',
+      sql`
+    (${table.reference_type} IS NULL AND ${table.reference_id} IS NULL)
+    OR
+    (${table.reference_type} IS NOT NULL AND ${table.reference_id} IS NOT NULL)
+  `,
+    ),
+  ],
+)
+
+export const stockMovementsRelations = relations(
+  stockMovementsTable,
+  ({ one }) => ({
+    product: one(productsTable, {
+      fields: [stockMovementsTable.product_id],
+      references: [productsTable.id],
+    }),
+    createdBy: one(usersTable, {
+      fields: [stockMovementsTable.created_by],
+      references: [usersTable.id],
+    }),
+  }),
+)

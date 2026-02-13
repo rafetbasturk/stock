@@ -1,4 +1,4 @@
-import { Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+import { Pie, PieChart, ResponsiveContainer, Sector, Tooltip } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import { ErrorMessage } from '../error/ErrorMessage'
 import { Skeleton } from '../ui/skeleton'
@@ -6,6 +6,8 @@ import { LoadingSpinner } from '../LoadingSpinner'
 import type { HomeSearch } from '@/lib/types/types.search'
 import { useFetchOrdersByStatus } from '@/lib/queries/metrics'
 import { useMounted } from '@/hooks/useMounted'
+import type { PieSectorShapeProps } from 'recharts/types/polar/Pie'
+import { useState, useMemo } from 'react'
 
 export type OrderStatus = {
   name: string
@@ -17,11 +19,54 @@ interface Props {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  KAYIT: '#9F2D00',
-  ÜRETİM: '#3729AB',
-  HAZIR: '#22c55e',
-  BİTTİ: '#0ea5e9',
-  İPTAL: '#2A2524',
+  KAYIT: '#292524',
+  ÜRETİM: '#9A3412',
+  HAZIR: '#3730A3',
+  BİTTİ: '#065F46',
+  İPTAL: '#e2e8f0',
+}
+
+interface Props {
+  search: HomeSearch
+}
+
+type ChartPayload = {
+  name: string
+  value: number
+  fill: string
+  isActive?: boolean
+}
+
+type ActiveShapeProps = PieSectorShapeProps & {
+  payload?: ChartPayload
+}
+
+function ActiveShape(props: ActiveShapeProps) {
+  const {
+    cx,
+    cy,
+    innerRadius,
+    outerRadius,
+    startAngle,
+    endAngle,
+    fill,
+    payload,
+  } = props
+
+  const isActive = payload?.isActive === true
+
+  return (
+    <Sector
+      cx={cx}
+      cy={cy}
+      innerRadius={innerRadius}
+      outerRadius={isActive ? outerRadius + 6 : outerRadius}
+      startAngle={startAngle}
+      endAngle={endAngle}
+      fill={fill}
+      cornerRadius={6}
+    />
+  )
 }
 
 function CustomTooltip({
@@ -47,18 +92,28 @@ function CustomTooltip({
   )
 }
 
+//
+// Center label
+//
 function CenterLabel({ total, label }: { total: number; label: string }) {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-      <span className="text-2xl font-semibold">{total}</span>
+      <span className="text-2xl font-semibold tabular-nums">{total}</span>
+
       <span className="text-xs text-muted-foreground">{label}</span>
     </div>
   )
 }
 
+//
+// Main component
+//
 export default function OrdersByStatusChart({ search }: Props) {
   const { t } = useTranslation('dashboard')
+
   const mounted = useMounted()
+
+  const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
   const {
     data = [],
@@ -68,13 +123,36 @@ export default function OrdersByStatusChart({ search }: Props) {
     refetch,
   } = useFetchOrdersByStatus(search)
 
-  const total = data.reduce((acc, item) => acc + item.value, 0)
+  //
+  // total
+  //
+  const total = useMemo(
+    () => data.reduce((acc, item) => acc + item.value, 0),
+    [data],
+  )
 
-  if (isLoading) {
-    return <Skeleton className="h-62.5 rounded-xl" />
-  }
+  //
+  // chart data with fill + active state
+  //
+  const chartData = useMemo(
+    () =>
+      data.map((entry, index) => ({
+        ...entry,
+        fill: STATUS_COLORS[entry.name],
+        isActive: index === activeIndex,
+      })),
+    [data, activeIndex],
+  )
 
-  if (error) {
+  //
+  // loading
+  //
+  if (isLoading) return <Skeleton className="h-62.5 rounded-xl" />
+
+  //
+  // error
+  //
+  if (error)
     return (
       <ErrorMessage
         title={t('status_chart.load_error_title')}
@@ -82,45 +160,54 @@ export default function OrdersByStatusChart({ search }: Props) {
         onRetry={refetch}
       />
     )
-  }
 
-  if (!data.length) {
+  //
+  // empty
+  //
+  if (!data.length)
     return (
-      <div className="flex h-62.5 items-center justify-center rounded-xl border text-sm text-muted-foreground">
+      <div className="flex h-80 items-center justify-center rounded-xl border text-sm text-muted-foreground">
         {t('status_chart.no_data')}
       </div>
     )
-  }
 
+  //
+  // render
+  //
   return (
-    <div className="relative h-62.5">
+    <div className="relative h-80">
       {isFetching && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 rounded-xl">
           <LoadingSpinner size="lg" />
         </div>
       )}
+
       {mounted ? (
         <>
           <CenterLabel total={total} label={t('status_chart.total_orders')} />
+
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={data.map((entry: OrderStatus) => {
-                  return {
-                    ...entry,
-                    fill: STATUS_COLORS[entry.name],
-                  }
-                })}
+                data={chartData}
+                dataKey="value"
                 cx="50%"
                 cy="50%"
                 innerRadius={60}
                 outerRadius={100}
-                fill="#8884d8"
-                paddingAngle={8}
-                dataKey="value"
+                paddingAngle={4}
+                stroke="hsl(var(--background))"
+                strokeWidth={2}
+                cornerRadius={6}
+                shape={ActiveShape}
+                onMouseEnter={(_, index) => setActiveIndex(index)}
+                onMouseLeave={() => setActiveIndex(null)}
+                animationDuration={300}
                 label
-              ></Pie>
+              />
+
               <Tooltip
+                cursor={false}
                 content={
                   <CustomTooltip orderSuffix={t('status_chart.order_suffix')} />
                 }

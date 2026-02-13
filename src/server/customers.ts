@@ -1,12 +1,13 @@
 // src/server/customers.ts
 import { createServerFn } from '@tanstack/react-start'
-import { and, eq, ilike, or, sql } from 'drizzle-orm'
+import { and, eq, ilike, or, SQL, sql } from 'drizzle-orm'
 import z from 'zod'
 import type { InsertCustomer } from '@/types'
 import { db } from '@/db'
 import { customersTable } from '@/db/schema'
 import { customerSortFields } from '@/lib/types'
 import { BaseAppError } from '@/lib/error/core'
+import { normalizeParams, notDeleted } from './utils'
 
 export const getCustomers = createServerFn().handler(async () => {
   return await db.query.customersTable.findMany()
@@ -33,56 +34,69 @@ export const getPaginatedCustomers = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const { pageIndex, pageSize, q, sortBy = 'code', sortDir = 'asc' } = data
 
-    const conditions = []
+    const safePageIndex = Math.max(0, pageIndex)
+    const safePageSize = Math.min(Math.max(10, pageSize), 100)
 
-    if (q) {
+    const normalizedQ = normalizeParams(q)
+
+    const conditions: SQL[] = [notDeleted(customersTable)]
+
+    if (normalizedQ) {
+      const search = `%${normalizedQ}%`
+
       conditions.push(
         or(
-          ilike(customersTable.name, `%${q}%`),
-          ilike(customersTable.code, `%${q}%`),
-          ilike(customersTable.email, `%${q}%`),
-          ilike(customersTable.address, `%${q}%`),
-          ilike(customersTable.phone, `%${q}%`),
-        ),
+          ilike(customersTable.name, search),
+          ilike(customersTable.code, search),
+          ilike(customersTable.email, search),
+          ilike(customersTable.address, search),
+          ilike(customersTable.phone, search),
+        )!,
       )
     }
 
-    const whereExpr = conditions.length ? and(...conditions) : undefined
+    const whereExpr: SQL =
+      conditions.length === 1 ? conditions[0] : and(...conditions)!
 
-    const totalQuery = db
-      .select({ count: sql<number>`count(*)` })
-      .from(customersTable)
+    const [totalResult, customers] = await Promise.all([
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(customersTable)
+        .where(whereExpr),
+      db.query.customersTable.findMany({
+        where: () => whereExpr,
+        limit: pageSize,
+        offset: pageIndex * pageSize,
+        orderBy: (c, { asc, desc }) => {
+          const dir = sortDir === 'desc' ? desc : asc
 
-    if (whereExpr) totalQuery.where(whereExpr)
+          switch (sortBy) {
+            case 'code':
+              return [dir(c.code)]
+            case 'name':
+              return [dir(c.name)]
+            case 'email':
+              return [dir(c.email)]
+            case 'address':
+              return [dir(c.address)]
+            case 'phone':
+              return [dir(c.phone)]
+            default:
+              return [dir(c.code)]
+          }
+        },
+      }),
+    ])
 
-    const totalResult = await totalQuery
     const total = totalResult[0]?.count ?? 0
 
-    const customers = await db.query.customersTable.findMany({
-      ...(whereExpr && { where: () => whereExpr }),
-      limit: pageSize,
-      offset: pageIndex * pageSize,
-      orderBy: (c, { asc, desc }) => {
-        const dir = sortDir === 'desc' ? desc : asc
-
-        switch (sortBy) {
-          case 'code':
-            return [dir(c.code)]
-          case 'name':
-            return [dir(c.name)]
-          case 'email':
-            return [dir(c.email)]
-          case 'address':
-            return [dir(c.address)]
-          case 'phone':
-            return [dir(c.phone)]
-          default:
-            return [dir(c.code)]
-        }
-      },
-    })
-
-    return { data: customers, pageIndex, pageSize, total }
+    return {
+      data: customers,
+      pageIndex: safePageIndex,
+      pageSize: safePageSize,
+      total,
+      pageCount: Math.ceil(total / safePageSize),
+    }
   })
 
 export const createCustomer = createServerFn({ method: 'POST' })
@@ -154,6 +168,12 @@ export const updateCustomer = createServerFn({ method: 'POST' })
 export const removeCustomer = createServerFn({ method: 'POST' })
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data: { id } }) => {
-    await db.delete(customersTable).where(eq(customersTable.id, id))
+    await db
+      .update(customersTable)
+      .set({
+        deleted_at: sql`now()`,
+        updated_at: sql`now()`,
+      })
+      .where(eq(customersTable.id, id))
     return { success: true }
   })

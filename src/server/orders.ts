@@ -5,21 +5,26 @@ import {
   desc as drizzleDesc,
   eq,
   gte,
+  ilike,
   inArray,
   isNull,
-  like,
   lte,
+  or,
   sql,
 } from 'drizzle-orm'
 import z from 'zod'
-import { addTotalAmount } from './utils'
+import { addTotalAmount, notDeleted } from './utils'
+import type { SQL } from 'drizzle-orm'
 import type { OrderSubmitPayload } from '@/types'
 import { db } from '@/db'
 import {
   customOrderItemsTable,
   customersTable,
+  deliveriesTable,
+  deliveryItemsTable,
   orderItemsTable,
   ordersTable,
+  productsTable,
 } from '@/db/schema'
 import { statusArray, unitArray } from '@/lib/constants'
 import { currencyArray } from '@/lib/currency'
@@ -68,6 +73,7 @@ export const getOrders = createServerFn().handler(async () => {
         },
       },
     },
+    where: (o) => notDeleted(o),
     orderBy: (order, { asc }) => [asc(order.order_number)],
   })
 
@@ -146,11 +152,119 @@ export const getOrderById = createServerFn({ method: 'GET' })
     return order ? addTotalAmount(order) : null
   })
 
+export const getOrderDeliveries = createServerFn({ method: 'GET' })
+  .inputValidator((data: { orderId: number }) => data)
+  .handler(async ({ data: { orderId } }) => {
+    const [standardRefs, customRefs] = await Promise.all([
+      db
+        .selectDistinct({
+          delivery_id: deliveryItemsTable.delivery_id,
+        })
+        .from(deliveryItemsTable)
+        .innerJoin(
+          orderItemsTable,
+          eq(orderItemsTable.id, deliveryItemsTable.order_item_id),
+        )
+        .where(
+          and(
+            eq(orderItemsTable.order_id, orderId),
+            notDeleted(orderItemsTable),
+            notDeleted(deliveryItemsTable),
+          ),
+        ),
+      db
+        .selectDistinct({
+          delivery_id: deliveryItemsTable.delivery_id,
+        })
+        .from(deliveryItemsTable)
+        .innerJoin(
+          customOrderItemsTable,
+          eq(customOrderItemsTable.id, deliveryItemsTable.custom_order_item_id),
+        )
+        .where(
+          and(
+            eq(customOrderItemsTable.order_id, orderId),
+            notDeleted(customOrderItemsTable),
+            notDeleted(deliveryItemsTable),
+          ),
+        ),
+    ])
+
+    const deliveryIds = Array.from(
+      new Set(
+        [...standardRefs, ...customRefs]
+          .map((ref) => ref.delivery_id)
+          .filter((id): id is number => Number.isInteger(id)),
+      ),
+    )
+
+    if (deliveryIds.length === 0) {
+      return []
+    }
+
+    const deliveries = await db.query.deliveriesTable.findMany({
+      with: {
+        customer: true,
+        items: {
+          with: {
+            orderItem: {
+              with: {
+                product: true,
+                order: true,
+                deliveries: {
+                  columns: {
+                    id: true,
+                    delivered_quantity: true,
+                  },
+                  with: {
+                    delivery: {
+                      columns: {
+                        delivery_number: true,
+                        delivery_date: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            customOrderItem: {
+              with: {
+                order: true,
+                deliveries: {
+                  columns: {
+                    id: true,
+                    delivered_quantity: true,
+                  },
+                  with: {
+                    delivery: {
+                      columns: {
+                        delivery_number: true,
+                        delivery_date: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      where: and(
+        inArray(deliveriesTable.id, deliveryIds),
+        notDeleted(deliveriesTable),
+      ),
+      orderBy: (d, { desc }) => [desc(d.delivery_date), desc(d.id)],
+    })
+
+    return deliveries.map(addTotalAmount)
+  })
+
 const orderSortFields = [
   'order_number',
   'order_date',
   'status',
   'currency',
+  'customer',
 ] as const
 
 const paginatedSchema = z.object({
@@ -188,21 +302,25 @@ export const getPaginatedOrders = createServerFn({ method: 'POST' })
     const safePageIndex = Math.max(0, pageIndex)
     const safePageSize = Math.min(Math.max(10, pageSize), 100)
 
-    const startDate = startDateRaw
-      ? new Date(`${startDateRaw}T00:00:00`)
-      : null
-    const endDate = endDateRaw
-      ? new Date(`${endDateRaw}T23:59:59.999`)
-      : null
+    const startDate = startDateRaw ? new Date(`${startDateRaw}T00:00:00`) : null
+
+    const endDate = endDateRaw ? new Date(`${endDateRaw}T23:59:59.999`) : null
 
     const normalizedQ = normalizeParams(q)
     const normalizedStatus = normalizeParams(status)
     const normalizedCustomerId = normalizeParams(customerId)
 
-    const conditions = [isNull(ordersTable.deleted_at)]
+    const conditions: Array<SQL> = [notDeleted(ordersTable)]
 
+    // Search
     if (normalizedQ) {
-      conditions.push(like(ordersTable.order_number, `%${normalizedQ}%`))
+      const search = `%${normalizedQ}%`
+      conditions.push(
+        or(
+          ilike(ordersTable.order_number, search),
+          ilike(ordersTable.notes, search),
+        )!,
+      )
     }
 
     if (startDate) {
@@ -214,113 +332,100 @@ export const getPaginatedOrders = createServerFn({ method: 'POST' })
     }
 
     if (normalizedStatus) {
-      const values = normalizedStatus.split('|').filter(Boolean)
-      if (values.length > 1) {
-        conditions.push(
-          inArray(
-            ordersTable.status,
-            values as Array<(typeof statusArray)[number]>,
-          ),
-        )
-      } else if (values[0]) {
-        conditions.push(eq(ordersTable.status, values[0] as (typeof statusArray)[number]))
-      }
+      const values = normalizedStatus.split(',').filter(Boolean)
+
+      if (values.length > 1)
+        conditions.push(inArray(ordersTable.status, values as any))
+      else conditions.push(eq(ordersTable.status, values[0] as any))
     }
 
     if (normalizedCustomerId) {
       const ids = normalizedCustomerId
         .split('|')
-        .filter(Boolean)
         .map(Number)
-        .filter((id) => Number.isInteger(id) && id > 0)
+        .filter((n) => Number.isInteger(n))
 
-      if (ids.length > 1) {
-        conditions.push(inArray(ordersTable.customer_id, ids))
-      } else if (ids.length === 1) {
+      if (ids.length > 1) conditions.push(inArray(ordersTable.customer_id, ids))
+      else if (ids.length === 1)
         conditions.push(eq(ordersTable.customer_id, ids[0]))
-      }
     }
 
-    const whereExpr = conditions.length ? and(...conditions) : undefined
+    const whereExpr: SQL =
+      conditions.length === 1 ? conditions[0] : and(...conditions)!
 
-    const totalQuery = db
-      .select({ count: sql<number>`count(*)` })
-      .from(ordersTable)
-    if (whereExpr) totalQuery.where(whereExpr)
+    // Ranking
+    const rankingExpr = normalizedQ
+      ? sql<number>`
+        (
+          CASE
+            WHEN ${ordersTable.order_number} = ${normalizedQ}
+            THEN 1000 ELSE 0
+          END
+          +
+          similarity(${ordersTable.order_number}, ${normalizedQ}) * 100
+          +
+          similarity(${ordersTable.notes}, ${normalizedQ}) * 10
+        )
+      `
+      : undefined
 
-    const totalResult = await totalQuery
+    const [totalResult, orders] = await Promise.all([
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(ordersTable)
+        .where(whereExpr),
+
+      db.query.ordersTable.findMany({
+        with: {
+          customer: true,
+          items: {
+            with: {
+              product: true,
+              deliveries: {
+                with: { delivery: true },
+              },
+            },
+          },
+          customItems: true,
+        },
+        where: () => whereExpr,
+        limit: safePageSize,
+        offset: safePageIndex * safePageSize,
+
+        orderBy: (o, { asc, desc }) => {
+          if (normalizedQ && rankingExpr)
+            return [desc(rankingExpr), desc(o.order_date), asc(o.id)]
+
+          const dir = sortDir === 'asc' ? asc : desc
+
+          switch (sortBy) {
+            case 'order_number':
+              return [dir(o.order_number), desc(o.order_date), asc(o.id)]
+
+            case 'order_date':
+              return [dir(o.order_date), desc(o.order_number), asc(o.id)]
+
+            case 'status':
+              return [dir(o.status), desc(o.order_date), asc(o.id)]
+
+            case 'currency':
+              return [dir(o.currency), desc(o.order_date), asc(o.id)]
+
+            default:
+              return [desc(o.order_date), asc(o.id)]
+          }
+        },
+      }),
+    ])
+
     const total = totalResult[0]?.count ?? 0
-
-    const orders = await db.query.ordersTable.findMany({
-      with: {
-        customer: true,
-        items: {
-          with: {
-            product: true,
-            deliveries: {
-              columns: {
-                delivered_quantity: true,
-                id: true,
-              },
-              with: {
-                delivery: {
-                  columns: {
-                    delivery_number: true,
-                    delivery_date: true,
-                  },
-                },
-              },
-            },
-          },
-          orderBy: (items, { asc }) => [asc(items.created_at)],
-        },
-        customItems: {
-          with: {
-            deliveries: {
-              columns: {
-                delivered_quantity: true,
-                id: true,
-              },
-              with: {
-                delivery: {
-                  columns: {
-                    delivery_number: true,
-                    delivery_date: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      ...(whereExpr && { where: () => whereExpr }),
-      limit: safePageSize,
-      offset: safePageIndex * safePageSize,
-      orderBy: (o, { asc, desc: descSort }) => {
-        const sortField = sortBy ?? 'order_date'
-        const direction = sortDir === 'asc' ? 'asc' : 'desc'
-        const dir = direction === 'desc' ? descSort : asc
-
-        switch (sortField) {
-          case 'order_number':
-            return [dir(o.order_number), descSort(o.order_date)]
-          case 'order_date':
-            return [dir(o.order_date), descSort(o.order_number)]
-          case 'status':
-            return [dir(o.status)]
-          case 'currency':
-            return [dir(o.currency)]
-          default:
-            return [dir(o.order_date), descSort(o.order_number)]
-        }
-      },
-    })
 
     return {
       data: orders.map(addTotalAmount),
       pageIndex: safePageIndex,
       pageSize: safePageSize,
       total,
+      pageCount: Math.ceil(total / safePageSize),
     }
   })
 
@@ -342,57 +447,111 @@ export const createOrder = createServerFn({ method: 'POST' })
     }
 
     const orderId = await db.transaction(async (tx) => {
-      const [newOrder] = await tx
-        .insert(ordersTable)
-        .values({
-          is_custom_order: Boolean(order.is_custom_order),
-          order_number: order.order_number.trim(),
-          order_date: order.order_date,
-          delivery_address: order.delivery_address
-            ? order.delivery_address.trim()
-            : null,
-          customer_id: order.customer_id,
-          status: order.status,
-          currency: order.currency,
-          notes: order.notes ? order.notes.trim() : null,
-        })
-        .returning({ id: ordersTable.id })
+      try {
+        // 🧩 1️⃣ Check stock only for standard orders
+        let allItemsInStock = true
 
-      if (order.is_custom_order) {
-        const customItemsToInsert = order.customItems
-          .filter((item) => (item.name?.trim().length ?? 0) > 0)
-          .map((item) => ({
-            order_id: newOrder.id,
-            name: item.name?.trim() || '',
-            unit: unitArray.includes(item.unit as (typeof unitArray)[number])
-              ? (item.unit as (typeof unitArray)[number])
-              : 'adet',
-            quantity: Math.max(1, item.quantity ?? 1),
-            unit_price: Math.max(0, item.unit_price ?? 0),
-            currency: order.currency ?? 'TRY',
-            notes: item.notes?.trim() || null,
-          }))
+        if (!order.is_custom_order && order.items.length > 0) {
+          const productIds = order.items.map((item) => item.product_id)
 
-        if (customItemsToInsert.length > 0) {
-          await tx.insert(customOrderItemsTable).values(customItemsToInsert)
+          const products = await tx
+            .select({
+              id: productsTable.id,
+              stock_quantity: productsTable.stock_quantity,
+            })
+            .from(productsTable)
+            .where(inArray(productsTable.id, productIds))
+
+          // Check if all requested products exist
+          const uniqueProductIds = new Set(productIds)
+          if (products.length !== uniqueProductIds.size) {
+            throw BaseAppError.create({
+              status: 400,
+              code: 'PRODUCT_NOT_FOUND',
+              message: 'One or more products not found',
+            })
+          }
+
+          const stockMap = new Map(
+            products.map((p) => [p.id, p.stock_quantity]),
+          )
+
+          for (const item of order.items) {
+            const currentStock = stockMap.get(item.product_id) || 0
+            if (currentStock < item.quantity) {
+              allItemsInStock = false
+              break
+            }
+          }
         }
-      } else {
-        const itemsToInsert = order.items
-          .filter((item) => Number.isInteger(item.product_id) && item.product_id > 0)
-          .map((item) => ({
-            order_id: newOrder.id,
-            product_id: item.product_id,
-            quantity: Math.max(1, item.quantity),
-            unit_price: Math.max(0, item.unit_price),
-            currency: order.currency ?? 'TRY',
-          }))
 
-        if (itemsToInsert.length > 0) {
-          await tx.insert(orderItemsTable).values(itemsToInsert)
+        // Determine status based on stock availability
+        // If custom order or no items, default to 'KAYIT' (or whatever was passed if we wanted to respect it, but requirement says override)
+        // Actually requirement says: "sets orderStatus to 'HAZIR' if the stock is available... otherwise 'KAYIT'"
+        // It implies 'KAYIT' is the default if not ready.
+        const calculatedStatus =
+          !order.is_custom_order && order.items.length > 0 && allItemsInStock
+            ? 'HAZIR'
+            : 'KAYIT'
+
+        const [newOrder] = await tx
+          .insert(ordersTable)
+          .values({
+            is_custom_order: Boolean(order.is_custom_order),
+            order_number: order.order_number.trim(),
+            order_date: order.order_date,
+            delivery_address: order.delivery_address
+              ? order.delivery_address.trim()
+              : null,
+            customer_id: order.customer_id,
+            status: calculatedStatus,
+            currency: order.currency,
+            notes: order.notes ? order.notes.trim() : null,
+          })
+          .returning({ id: ordersTable.id })
+
+        if (order.is_custom_order) {
+          const customItemsToInsert = order.customItems
+            .filter((item) => (item.name?.trim().length ?? 0) > 0)
+            .map((item) => ({
+              order_id: newOrder.id,
+              name: item.name?.trim() || '',
+              unit: unitArray.includes(item.unit as (typeof unitArray)[number])
+                ? (item.unit as (typeof unitArray)[number])
+                : 'adet',
+              quantity: Math.max(1, item.quantity ?? 1),
+              unit_price: Math.max(0, item.unit_price ?? 0),
+              currency: order.currency ?? 'TRY',
+              notes: item.notes?.trim() || null,
+            }))
+
+          if (customItemsToInsert.length > 0) {
+            await tx.insert(customOrderItemsTable).values(customItemsToInsert)
+          }
+        } else {
+          const itemsToInsert = order.items
+            .filter(
+              (item) =>
+                Number.isInteger(item.product_id) && item.product_id > 0,
+            )
+            .map((item) => ({
+              order_id: newOrder.id,
+              product_id: item.product_id,
+              quantity: Math.max(1, item.quantity),
+              unit_price: Math.max(0, item.unit_price),
+              currency: order.currency ?? 'TRY',
+            }))
+
+          if (itemsToInsert.length > 0) {
+            await tx.insert(orderItemsTable).values(itemsToInsert)
+          }
         }
+
+        return newOrder.id
+      } catch (error) {
+        console.error('Order creation failed:', error)
+        throw error
       }
-
-      return newOrder.id
     })
 
     return await getOrderById({ data: { id: orderId } })
@@ -490,7 +649,9 @@ export const updateOrder = createServerFn({ method: 'POST' })
         }
       } else {
         const itemsToInsert = order.items
-          .filter((item) => Number.isInteger(item.product_id) && item.product_id > 0)
+          .filter(
+            (item) => Number.isInteger(item.product_id) && item.product_id > 0,
+          )
           .map((item) => ({
             order_id: id,
             product_id: item.product_id,
@@ -542,6 +703,7 @@ export const getOrderFilterOptions = createServerFn({
   const statusRows = await db
     .selectDistinct({ status: ordersTable.status })
     .from(ordersTable)
+    .where(notDeleted(ordersTable))
 
   const statuses = statusRows
     .map((s) => s.status)
@@ -553,6 +715,7 @@ export const getOrderFilterOptions = createServerFn({
       customer_name: customersTable.name,
     })
     .from(ordersTable)
+    .where(isNull(customersTable.deleted_at))
     .innerJoin(customersTable, eq(customersTable.id, ordersTable.customer_id))
 
   const customers = customerRows

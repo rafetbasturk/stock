@@ -5,8 +5,57 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1770214515995,
-      "tag": "0000_stale_kronos",
+      "when": 1770550121652,
+      "tag": "0000_fluffy_clea",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770568302925,
+      "tag": "0001_early_firebrand",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770568949164,
+      "tag": "0002_yielding_golden_guardian",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1770569290191,
+      "tag": "0003_yummy_speedball",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1770569739045,
+      "tag": "0004_bitter_nextwave",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1770570120789,
+      "tag": "0005_purple_zaladane",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1770701379533,
+      "tag": "0006_nice_gwen_stacy",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1770708620943,
+      "tag": "0007_thick_selene",
       "breakpoints": true
     }
   ]

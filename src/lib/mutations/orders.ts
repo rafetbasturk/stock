@@ -5,6 +5,7 @@ import type { MutationFormErrors } from '@/lib/types'
 import type { OrderSubmitPayload } from '@/types'
 import { useFormMutation } from '@/hooks/useFormMutation'
 import { createOrder, removeOrder, updateOrder } from '@/server/orders'
+import { orderQueryKeys } from '../queries/orders'
 
 export function useCreateOrderMutation(
   onSuccess?: (data: any) => void,
@@ -26,7 +27,8 @@ export function useCreateOrderMutation(
     },
 
     onSuccess: (newOrder) => {
-      qc.invalidateQueries({ queryKey: ['orders', 'list'] })
+      qc.invalidateQueries({ queryKey: orderQueryKeys.lists() })
+      qc.invalidateQueries({ queryKey: orderQueryKeys.lastNumber() })
       toast.success('Sipariş başarıyla oluşturuldu')
       onSuccess?.(newOrder)
     },
@@ -42,7 +44,7 @@ export function useDeleteOrderMutation(onSuccess?: () => void) {
       removeOrderFn({ data }),
 
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['orders', 'list'] })
+      qc.invalidateQueries({ queryKey: orderQueryKeys.lists() })
       toast.success('Sipariş silindi')
       onSuccess?.()
     },
@@ -70,8 +72,11 @@ export function useUpdateOrderMutation(
 
     onSuccess: (updatedOrder) => {
       if (!updatedOrder) return
-      qc.setQueryData(['orders', 'detail', updatedOrder.id], updatedOrder)
-      qc.invalidateQueries({ queryKey: ['orders', 'list'] })
+      qc.setQueryData(orderQueryKeys.detail(updatedOrder.id), updatedOrder)
+      qc.invalidateQueries({
+        queryKey: orderQueryKeys.lists(),
+        refetchType: 'active',
+      })
       toast.success('Sipariş başarıyla güncellendi')
       onSuccess?.(updatedOrder)
     },

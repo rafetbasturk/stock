@@ -4,7 +4,8 @@
     "delete": "Sil",
     "add_customer_aria": "Müşteri ekle",
     "add_product_aria": "Ürün ekle",
-    "add_order_aria": "Sipariş ekle"
+    "add_order_aria": "Sipariş ekle",
+    "stock_activity": "Stok Hareketi Ekle"
   },
   "customers": {
     "list_title": "Müşteri Listesi",
@@ -41,6 +42,72 @@
       "specs_net": "Net Ölçü",
       "notes": "Açıklama",
       "customer": "Müşteri Adı"
+    },
+    "form": {
+      "header": {
+        "create": "Yeni Ürün Ekle",
+        "edit": "Ürünü Düzenle",
+        "description": "Ürün bilgilerini doldurun ve kaydedin.",
+        "required_hint": "işaretli alanlar zorunludur."
+      },
+      "tabs": {
+        "basic": {
+          "label": "Temel Bilgiler",
+          "description": "Kod, Ad ve Stok"
+        },
+        "tech": {
+          "label": "Teknik Detaylar",
+          "description": "Malzeme ve Ölçü"
+        }
+      },
+      "sections": {
+        "identity": "Kimlik & Tanımlama",
+        "finance": "Finans & Birim",
+        "stock": "Stok Yönetimi",
+        "material_process": "Malzeme & Süreç",
+        "dimensions": "Boyutsal Veriler",
+        "notes": "Notlar & Açıklama"
+      },
+      "fields": {
+        "code": "Ürün Kodu",
+        "name": "Ürün Adı",
+        "customer": "Müşteri Portföyü",
+        "price": "Satış Fiyatı",
+        "unit": "Stok Birimi",
+        "initial_stock": "Başlangıç Stok",
+        "current_stock_readonly": "Mevcut Stok (salt okunur)",
+        "min_stock": "Kritik Seviye",
+        "material": "Malzeme Cinsi",
+        "post_process": "Üretim İşlemleri",
+        "coating": "Kaplama",
+        "specs": "Ölçü (Paylı)",
+        "specs_net": "Net Ölçü",
+        "other_codes": "Alternatif Kod"
+      },
+      "placeholders": {
+        "code": "KOD-001",
+        "name": "Ürünün tam başlığı",
+        "material": "Örn: 1040 veya CK45",
+        "post_process": "Son işlem detayları",
+        "coating": "Kaplama bilgisi",
+        "specs": "Örn: Ø25x100",
+        "specs_net": "Örn: Ø24.5x98",
+        "other_codes": "Muadil veya rakip kodlar",
+        "notes": "Ürünle ilgili diğer özel notlar veya kalite standartları...",
+        "quantity": "0",
+        "stock_action_notes": "Opsiyonel not"
+      },
+      "stock_action": {
+        "title": "Stok Hareketi (Opsiyonel)",
+        "description": "Buradan ek stok giriş/çıkış hareketi oluşturabilirsiniz.",
+        "quantity": "Hareket Miktarı",
+        "notes": "Hareket Notu"
+      },
+      "buttons": {
+        "cancel": "İptal",
+        "create": "Ekle",
+        "update": "Güncelle"
+      }
     }
   },
   "orders": {
@@ -54,6 +121,27 @@
       "delivery_address": "Teslimat Adresi",
       "status": "Sipariş Durumu",
       "total_amount": "Toplam Tutar"
+    },
+    "filters": {
+      "customer": "Müşteri",
+      "status": "Sipariş Durumu",
+      "daterange": "Tarih Aralığı"
+    }
+  },
+  "deliveries": {
+    "list_title": "Sevk Listesi",
+    "fallback_label": "Bu sevk",
+    "loading": "Sevkler yükleniyor...",
+    "columns": {
+      "delivery_number": "Sevk No",
+      "delivery_date": "Teslimat Tarihi",
+      "customer": "Müşteri",
+      "delivery_address": "Teslimat Adresi",
+      "total_amount": "Toplam Tutar"
+    },
+    "filters": {
+      "customer": "Müşteri",
+      "daterange": "Tarih Aralığı"
     }
   }
 }

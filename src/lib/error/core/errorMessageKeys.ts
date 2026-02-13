@@ -12,6 +12,7 @@ export const ERROR_MESSAGE_KEYS = [
   // 🧾 Domain rules
   "ORDER_LOCKED",
   "INSUFFICIENT_STOCK",
+  "PRODUCT_HAS_STOCK",
 
   // ⚙️ Validation
   "VALIDATION_ERROR",

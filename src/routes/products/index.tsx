@@ -19,6 +19,7 @@ import { ProductDeleteDialog } from '@/components/products/ProductDeleteDialog'
 import { ProductListHeader } from '@/components/products/ProductListHeader'
 import { ProductsDataTable } from '@/components/products/ProductsDataTable'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { StockAdjustmentDialog } from '@/components/stock/StockAdjustmentDialog'
 
 export const Route = createFileRoute('/products/')({
   validateSearch: zodValidator(productsSearchSchema),
@@ -45,6 +46,7 @@ function ProductList() {
     | { type: 'closed' }
     | { type: 'adding' }
     | { type: 'editing'; product: ProductListRow }
+    | { type: 'adjusting'; product: ProductListRow }
   >({ type: 'closed' })
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
 
@@ -52,6 +54,10 @@ function ProductList() {
   const openAddModal = useCallback(() => setModalState({ type: 'adding' }), [])
   const openEditModal = useCallback(
     (product: ProductListRow) => setModalState({ type: 'editing', product }),
+    [],
+  )
+  const openAdjustModal = useCallback(
+    (product: ProductListRow) => setModalState({ type: 'adjusting', product }),
     [],
   )
 
@@ -106,8 +112,8 @@ function ProductList() {
   }, [pendingDeleteId, pendingDeleteProduct])
 
   const columns = useMemo(
-    () => getColumns(openEditModal, handleDeleteProduct, t),
-    [handleDeleteProduct, openEditModal, t],
+    () => getColumns(openEditModal, handleDeleteProduct, openAdjustModal, t),
+    [handleDeleteProduct, openEditModal, openAdjustModal, t],
   )
 
   // Memoize customFilters with filtered empty materials
@@ -154,7 +160,6 @@ function ProductList() {
     [navigate],
   )
 
-  // Stable debounced search callback
   const debouncedSearchChange = useMemo(
     () => debounce(handleSearchChange, 400),
     [handleSearchChange],
@@ -191,7 +196,7 @@ function ProductList() {
         }
       />
 
-      {modalState.type !== 'closed' && (
+      {(modalState.type === 'adding' || modalState.type === 'editing') && (
         <ProductForm
           item={modalState.type === 'editing' ? modalState.product : undefined}
           isSubmitting={false}
@@ -206,6 +211,16 @@ function ProductList() {
         productLabel={deleteProductLabel}
         onClose={closeDeleteDialog}
         onConfirm={confirmDeleteProduct}
+      />
+
+      <StockAdjustmentDialog
+        product={modalState.type === 'adjusting' ? modalState.product : null}
+        open={modalState.type === 'adjusting'}
+        onOpenChange={(open) => !open && closeModal()}
+        onSuccess={() => {
+          closeModal()
+          productsQ.refetch()
+        }}
       />
     </>
   )

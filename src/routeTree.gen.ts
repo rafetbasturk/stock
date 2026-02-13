@@ -19,13 +19,21 @@ import { Route as ProductsIndexRouteImport } from './routes/products/index'
 import { Route as OrdersIndexRouteImport } from './routes/orders/index'
 import { Route as DeliveriesIndexRouteImport } from './routes/deliveries/index'
 import { Route as CustomersIndexRouteImport } from './routes/customers/index'
-import { Route as ProductsIdRouteImport } from './routes/products/$id'
+import { Route as StockHistoryRouteImport } from './routes/stock/history'
 import { Route as OrdersIdRouteImport } from './routes/orders/$id'
+import { Route as DeliveriesIdRouteImport } from './routes/deliveries/$id'
 import { Route as CustomersIdRouteImport } from './routes/customers/$id'
 import { Route as ApiTestRouteImport } from './routes/api/test'
 import { Route as ApiSeedRouteImport } from './routes/api/seed'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
+import { Route as ProductsIdRouteRouteImport } from './routes/products/$id/route'
+import { Route as ProductsIdIndexRouteImport } from './routes/products/$id/index'
+import { Route as ProductsIdActivitiesRouteImport } from './routes/products/$id/activities'
+import { Route as ProductsIdStockIndexRouteImport } from './routes/products/$id/stock/index'
+import { Route as ProductsIdStockHistoryRouteImport } from './routes/products/$id/stock/history'
+import { Route as ProductsIdStockNewOutRouteImport } from './routes/products/$id/stock/new/out'
+import { Route as ProductsIdStockNewInRouteImport } from './routes/products/$id/stock/new/in'
 
 const ProductsRouteRoute = ProductsRouteRouteImport.update({
   id: '/products',
@@ -76,15 +84,20 @@ const CustomersIndexRoute = CustomersIndexRouteImport.update({
   path: '/',
   getParentRoute: () => CustomersRouteRoute,
 } as any)
-const ProductsIdRoute = ProductsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ProductsRouteRoute,
+const StockHistoryRoute = StockHistoryRouteImport.update({
+  id: '/stock/history',
+  path: '/stock/history',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const OrdersIdRoute = OrdersIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => OrdersRouteRoute,
+} as any)
+const DeliveriesIdRoute = DeliveriesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => DeliveriesRouteRoute,
 } as any)
 const CustomersIdRoute = CustomersIdRouteImport.update({
   id: '/$id',
@@ -111,6 +124,41 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const ProductsIdRouteRoute = ProductsIdRouteRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ProductsRouteRoute,
+} as any)
+const ProductsIdIndexRoute = ProductsIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProductsIdRouteRoute,
+} as any)
+const ProductsIdActivitiesRoute = ProductsIdActivitiesRouteImport.update({
+  id: '/activities',
+  path: '/activities',
+  getParentRoute: () => ProductsIdRouteRoute,
+} as any)
+const ProductsIdStockIndexRoute = ProductsIdStockIndexRouteImport.update({
+  id: '/stock/',
+  path: '/stock/',
+  getParentRoute: () => ProductsIdRouteRoute,
+} as any)
+const ProductsIdStockHistoryRoute = ProductsIdStockHistoryRouteImport.update({
+  id: '/stock/history',
+  path: '/stock/history',
+  getParentRoute: () => ProductsIdRouteRoute,
+} as any)
+const ProductsIdStockNewOutRoute = ProductsIdStockNewOutRouteImport.update({
+  id: '/stock/new/out',
+  path: '/stock/new/out',
+  getParentRoute: () => ProductsIdRouteRoute,
+} as any)
+const ProductsIdStockNewInRoute = ProductsIdStockNewInRouteImport.update({
+  id: '/stock/new/in',
+  path: '/stock/new/in',
+  getParentRoute: () => ProductsIdRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -118,17 +166,25 @@ export interface FileRoutesByFullPath {
   '/deliveries': typeof DeliveriesRouteRouteWithChildren
   '/orders': typeof OrdersRouteRouteWithChildren
   '/products': typeof ProductsRouteRouteWithChildren
+  '/products/$id': typeof ProductsIdRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
   '/signup': typeof AuthSignupRoute
   '/api/seed': typeof ApiSeedRoute
   '/api/test': typeof ApiTestRoute
   '/customers/$id': typeof CustomersIdRoute
+  '/deliveries/$id': typeof DeliveriesIdRoute
   '/orders/$id': typeof OrdersIdRoute
-  '/products/$id': typeof ProductsIdRoute
+  '/stock/history': typeof StockHistoryRoute
   '/customers/': typeof CustomersIndexRoute
   '/deliveries/': typeof DeliveriesIndexRoute
   '/orders/': typeof OrdersIndexRoute
   '/products/': typeof ProductsIndexRoute
+  '/products/$id/activities': typeof ProductsIdActivitiesRoute
+  '/products/$id/': typeof ProductsIdIndexRoute
+  '/products/$id/stock/history': typeof ProductsIdStockHistoryRoute
+  '/products/$id/stock/': typeof ProductsIdStockIndexRoute
+  '/products/$id/stock/new/in': typeof ProductsIdStockNewInRoute
+  '/products/$id/stock/new/out': typeof ProductsIdStockNewOutRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -137,12 +193,19 @@ export interface FileRoutesByTo {
   '/api/seed': typeof ApiSeedRoute
   '/api/test': typeof ApiTestRoute
   '/customers/$id': typeof CustomersIdRoute
+  '/deliveries/$id': typeof DeliveriesIdRoute
   '/orders/$id': typeof OrdersIdRoute
-  '/products/$id': typeof ProductsIdRoute
+  '/stock/history': typeof StockHistoryRoute
   '/customers': typeof CustomersIndexRoute
   '/deliveries': typeof DeliveriesIndexRoute
   '/orders': typeof OrdersIndexRoute
   '/products': typeof ProductsIndexRoute
+  '/products/$id/activities': typeof ProductsIdActivitiesRoute
+  '/products/$id': typeof ProductsIdIndexRoute
+  '/products/$id/stock/history': typeof ProductsIdStockHistoryRoute
+  '/products/$id/stock': typeof ProductsIdStockIndexRoute
+  '/products/$id/stock/new/in': typeof ProductsIdStockNewInRoute
+  '/products/$id/stock/new/out': typeof ProductsIdStockNewOutRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -152,17 +215,25 @@ export interface FileRoutesById {
   '/deliveries': typeof DeliveriesRouteRouteWithChildren
   '/orders': typeof OrdersRouteRouteWithChildren
   '/products': typeof ProductsRouteRouteWithChildren
+  '/products/$id': typeof ProductsIdRouteRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/signup': typeof AuthSignupRoute
   '/api/seed': typeof ApiSeedRoute
   '/api/test': typeof ApiTestRoute
   '/customers/$id': typeof CustomersIdRoute
+  '/deliveries/$id': typeof DeliveriesIdRoute
   '/orders/$id': typeof OrdersIdRoute
-  '/products/$id': typeof ProductsIdRoute
+  '/stock/history': typeof StockHistoryRoute
   '/customers/': typeof CustomersIndexRoute
   '/deliveries/': typeof DeliveriesIndexRoute
   '/orders/': typeof OrdersIndexRoute
   '/products/': typeof ProductsIndexRoute
+  '/products/$id/activities': typeof ProductsIdActivitiesRoute
+  '/products/$id/': typeof ProductsIdIndexRoute
+  '/products/$id/stock/history': typeof ProductsIdStockHistoryRoute
+  '/products/$id/stock/': typeof ProductsIdStockIndexRoute
+  '/products/$id/stock/new/in': typeof ProductsIdStockNewInRoute
+  '/products/$id/stock/new/out': typeof ProductsIdStockNewOutRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -172,17 +243,25 @@ export interface FileRouteTypes {
     | '/deliveries'
     | '/orders'
     | '/products'
+    | '/products/$id'
     | '/login'
     | '/signup'
     | '/api/seed'
     | '/api/test'
     | '/customers/$id'
+    | '/deliveries/$id'
     | '/orders/$id'
-    | '/products/$id'
+    | '/stock/history'
     | '/customers/'
     | '/deliveries/'
     | '/orders/'
     | '/products/'
+    | '/products/$id/activities'
+    | '/products/$id/'
+    | '/products/$id/stock/history'
+    | '/products/$id/stock/'
+    | '/products/$id/stock/new/in'
+    | '/products/$id/stock/new/out'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -191,12 +270,19 @@ export interface FileRouteTypes {
     | '/api/seed'
     | '/api/test'
     | '/customers/$id'
+    | '/deliveries/$id'
     | '/orders/$id'
-    | '/products/$id'
+    | '/stock/history'
     | '/customers'
     | '/deliveries'
     | '/orders'
     | '/products'
+    | '/products/$id/activities'
+    | '/products/$id'
+    | '/products/$id/stock/history'
+    | '/products/$id/stock'
+    | '/products/$id/stock/new/in'
+    | '/products/$id/stock/new/out'
   id:
     | '__root__'
     | '/'
@@ -205,17 +291,25 @@ export interface FileRouteTypes {
     | '/deliveries'
     | '/orders'
     | '/products'
+    | '/products/$id'
     | '/_auth/login'
     | '/_auth/signup'
     | '/api/seed'
     | '/api/test'
     | '/customers/$id'
+    | '/deliveries/$id'
     | '/orders/$id'
-    | '/products/$id'
+    | '/stock/history'
     | '/customers/'
     | '/deliveries/'
     | '/orders/'
     | '/products/'
+    | '/products/$id/activities'
+    | '/products/$id/'
+    | '/products/$id/stock/history'
+    | '/products/$id/stock/'
+    | '/products/$id/stock/new/in'
+    | '/products/$id/stock/new/out'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -227,6 +321,7 @@ export interface RootRouteChildren {
   ProductsRouteRoute: typeof ProductsRouteRouteWithChildren
   ApiSeedRoute: typeof ApiSeedRoute
   ApiTestRoute: typeof ApiTestRoute
+  StockHistoryRoute: typeof StockHistoryRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -301,12 +396,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CustomersIndexRouteImport
       parentRoute: typeof CustomersRouteRoute
     }
-    '/products/$id': {
-      id: '/products/$id'
-      path: '/$id'
-      fullPath: '/products/$id'
-      preLoaderRoute: typeof ProductsIdRouteImport
-      parentRoute: typeof ProductsRouteRoute
+    '/stock/history': {
+      id: '/stock/history'
+      path: '/stock/history'
+      fullPath: '/stock/history'
+      preLoaderRoute: typeof StockHistoryRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/orders/$id': {
       id: '/orders/$id'
@@ -314,6 +409,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/orders/$id'
       preLoaderRoute: typeof OrdersIdRouteImport
       parentRoute: typeof OrdersRouteRoute
+    }
+    '/deliveries/$id': {
+      id: '/deliveries/$id'
+      path: '/$id'
+      fullPath: '/deliveries/$id'
+      preLoaderRoute: typeof DeliveriesIdRouteImport
+      parentRoute: typeof DeliveriesRouteRoute
     }
     '/customers/$id': {
       id: '/customers/$id'
@@ -350,6 +452,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/products/$id': {
+      id: '/products/$id'
+      path: '/$id'
+      fullPath: '/products/$id'
+      preLoaderRoute: typeof ProductsIdRouteRouteImport
+      parentRoute: typeof ProductsRouteRoute
+    }
+    '/products/$id/': {
+      id: '/products/$id/'
+      path: '/'
+      fullPath: '/products/$id/'
+      preLoaderRoute: typeof ProductsIdIndexRouteImport
+      parentRoute: typeof ProductsIdRouteRoute
+    }
+    '/products/$id/activities': {
+      id: '/products/$id/activities'
+      path: '/activities'
+      fullPath: '/products/$id/activities'
+      preLoaderRoute: typeof ProductsIdActivitiesRouteImport
+      parentRoute: typeof ProductsIdRouteRoute
+    }
+    '/products/$id/stock/': {
+      id: '/products/$id/stock/'
+      path: '/stock'
+      fullPath: '/products/$id/stock/'
+      preLoaderRoute: typeof ProductsIdStockIndexRouteImport
+      parentRoute: typeof ProductsIdRouteRoute
+    }
+    '/products/$id/stock/history': {
+      id: '/products/$id/stock/history'
+      path: '/stock/history'
+      fullPath: '/products/$id/stock/history'
+      preLoaderRoute: typeof ProductsIdStockHistoryRouteImport
+      parentRoute: typeof ProductsIdRouteRoute
+    }
+    '/products/$id/stock/new/out': {
+      id: '/products/$id/stock/new/out'
+      path: '/stock/new/out'
+      fullPath: '/products/$id/stock/new/out'
+      preLoaderRoute: typeof ProductsIdStockNewOutRouteImport
+      parentRoute: typeof ProductsIdRouteRoute
+    }
+    '/products/$id/stock/new/in': {
+      id: '/products/$id/stock/new/in'
+      path: '/stock/new/in'
+      fullPath: '/products/$id/stock/new/in'
+      preLoaderRoute: typeof ProductsIdStockNewInRouteImport
+      parentRoute: typeof ProductsIdRouteRoute
+    }
   }
 }
 
@@ -382,10 +533,12 @@ const CustomersRouteRouteWithChildren = CustomersRouteRoute._addFileChildren(
 )
 
 interface DeliveriesRouteRouteChildren {
+  DeliveriesIdRoute: typeof DeliveriesIdRoute
   DeliveriesIndexRoute: typeof DeliveriesIndexRoute
 }
 
 const DeliveriesRouteRouteChildren: DeliveriesRouteRouteChildren = {
+  DeliveriesIdRoute: DeliveriesIdRoute,
   DeliveriesIndexRoute: DeliveriesIndexRoute,
 }
 
@@ -407,13 +560,35 @@ const OrdersRouteRouteWithChildren = OrdersRouteRoute._addFileChildren(
   OrdersRouteRouteChildren,
 )
 
+interface ProductsIdRouteRouteChildren {
+  ProductsIdActivitiesRoute: typeof ProductsIdActivitiesRoute
+  ProductsIdIndexRoute: typeof ProductsIdIndexRoute
+  ProductsIdStockHistoryRoute: typeof ProductsIdStockHistoryRoute
+  ProductsIdStockIndexRoute: typeof ProductsIdStockIndexRoute
+  ProductsIdStockNewInRoute: typeof ProductsIdStockNewInRoute
+  ProductsIdStockNewOutRoute: typeof ProductsIdStockNewOutRoute
+}
+
+const ProductsIdRouteRouteChildren: ProductsIdRouteRouteChildren = {
+  ProductsIdActivitiesRoute: ProductsIdActivitiesRoute,
+  ProductsIdIndexRoute: ProductsIdIndexRoute,
+  ProductsIdStockHistoryRoute: ProductsIdStockHistoryRoute,
+  ProductsIdStockIndexRoute: ProductsIdStockIndexRoute,
+  ProductsIdStockNewInRoute: ProductsIdStockNewInRoute,
+  ProductsIdStockNewOutRoute: ProductsIdStockNewOutRoute,
+}
+
+const ProductsIdRouteRouteWithChildren = ProductsIdRouteRoute._addFileChildren(
+  ProductsIdRouteRouteChildren,
+)
+
 interface ProductsRouteRouteChildren {
-  ProductsIdRoute: typeof ProductsIdRoute
+  ProductsIdRouteRoute: typeof ProductsIdRouteRouteWithChildren
   ProductsIndexRoute: typeof ProductsIndexRoute
 }
 
 const ProductsRouteRouteChildren: ProductsRouteRouteChildren = {
-  ProductsIdRoute: ProductsIdRoute,
+  ProductsIdRouteRoute: ProductsIdRouteRouteWithChildren,
   ProductsIndexRoute: ProductsIndexRoute,
 }
 
@@ -430,6 +605,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProductsRouteRoute: ProductsRouteRouteWithChildren,
   ApiSeedRoute: ApiSeedRoute,
   ApiTestRoute: ApiTestRoute,
+  StockHistoryRoute: StockHistoryRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

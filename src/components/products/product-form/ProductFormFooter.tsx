@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -15,6 +16,8 @@ export default function ProductFormFooter({
   onClose,
   hasChanged,
 }: Props) {
+  const { t } = useTranslation("entities");
+
   return (
     <DialogFooter className="flex justify-end gap-2 p-8 pt-4 border-t">
       <Button
@@ -23,7 +26,7 @@ export default function ProductFormFooter({
         onClick={onClose}
         disabled={isSubmitting}
       >
-        İptal
+        {t("products.form.buttons.cancel")}
       </Button>
 
       <Button
@@ -34,9 +37,9 @@ export default function ProductFormFooter({
         {isSubmitting ? (
           <LoadingSpinner size="sm" variant="inline" />
         ) : productId ? (
-          "Güncelle"
+          t("products.form.buttons.update")
         ) : (
-          "Ekle"
+          t("products.form.buttons.create")
         )}
       </Button>
     </DialogFooter>

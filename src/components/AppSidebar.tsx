@@ -80,11 +80,6 @@ export function AppSidebar({ settings }: { settings: AppSettings }) {
     return () => observer.disconnect()
   }, [mounted])
 
-  if (!mounted) {
-    // SSR + first client render MUST MATCH
-    return null
-  }
-
   return (
     <Sidebar collapsible="icon" onClick={handleSidebarClick}>
       <SidebarContent className="flex justify-between">
@@ -116,7 +111,9 @@ export function AppSidebar({ settings }: { settings: AppSettings }) {
                     >
                       <Link to={route.to}>
                         <route.icon className="h-4 w-4" />
-                        <span>{t(route.label, { defaultValue: route.label })}</span>
+                        <span>
+                          {t(route.label, { defaultValue: route.label })}
+                        </span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -133,60 +130,72 @@ export function AppSidebar({ settings }: { settings: AppSettings }) {
               data-sidebar-interactive
               onClick={(e) => e.stopPropagation()}
             >
-              <Select
-                value={preferredCurrency}
-                onValueChange={setPreferredCurrency}
-              >
-                <SelectTrigger
-                  data-sidebar-interactive
-                  className={cn(
-                    'w-full',
-                    !open &&
-                      'justify-center w-8 px-0 [&>svg:last-child]:hidden',
-                  )}
+              {mounted ? (
+                <Select
+                  value={preferredCurrency}
+                  onValueChange={setPreferredCurrency}
                 >
-                  <HandCoinsIcon className="h-4 w-4 text-sidebar-foreground" />
-                  {open && (
-                    <div className="flex items-center gap-1">
-                      <span>{currencyFlags[preferredCurrency]}</span>
-                      <span>{preferredCurrency}</span>
-                    </div>
-                  )}
-                </SelectTrigger>
+                  <SelectTrigger
+                    data-sidebar-interactive
+                    className={cn(
+                      'w-full',
+                      !open &&
+                        'justify-center w-8 px-0 [&>svg:last-child]:hidden',
+                    )}
+                  >
+                    <HandCoinsIcon className="h-4 w-4 text-sidebar-foreground" />
+                    {open && (
+                      <div className="flex items-center gap-1">
+                        <span>{currencyFlags[preferredCurrency]}</span>
+                        <span>{preferredCurrency}</span>
+                      </div>
+                    )}
+                  </SelectTrigger>
 
-                <SelectContent position="popper" side="top" sideOffset={8}>
-                  {currencyArray.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {currencyFlags[c]} {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  <SelectContent position="popper" side="top" sideOffset={8}>
+                    {currencyArray.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {currencyFlags[c]} {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="flex items-center justify-center h-9 opacity-50">
+                  <HandCoinsIcon className="h-4 w-4" />
+                </div>
+              )}
             </SidebarMenuItem>
 
             {/* Language (reload by design) */}
             <SidebarMenuItem data-sidebar-interactive>
-              <Select value={lang} onValueChange={setLanguage}>
-                <SelectTrigger
-                  data-sidebar-interactive
-                  className={cn(
-                    'w-full',
-                    !open &&
-                      'justify-center w-8 px-0 [&>svg:last-child]:hidden',
-                  )}
-                >
-                  <LanguagesIcon className="h-4 w-4 text-sidebar-foreground" />
-                  {open && <span className="uppercase">{lang}</span>}
-                </SelectTrigger>
+              {mounted ? (
+                <Select value={lang} onValueChange={setLanguage}>
+                  <SelectTrigger
+                    data-sidebar-interactive
+                    className={cn(
+                      'w-full',
+                      !open &&
+                        'justify-center w-8 px-0 [&>svg:last-child]:hidden',
+                    )}
+                  >
+                    <LanguagesIcon className="h-4 w-4 text-sidebar-foreground" />
+                    {open && <span className="uppercase">{lang}</span>}
+                  </SelectTrigger>
 
-                <SelectContent position="popper" side="top" sideOffset={8}>
-                  {(['en', 'tr'] as Array<Language>).map((l) => (
-                    <SelectItem key={l} value={l}>
-                      {currencyFlags[l]} {l.toUpperCase()}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  <SelectContent position="popper" side="top" sideOffset={8}>
+                    {(['en', 'tr'] as Array<Language>).map((l) => (
+                      <SelectItem key={l} value={l}>
+                        {currencyFlags[l]} {l.toUpperCase()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="flex items-center justify-center h-9 opacity-50">
+                  <LanguagesIcon className="h-4 w-4" />
+                </div>
+              )}
             </SidebarMenuItem>
 
             {/* Theme */}
@@ -194,19 +203,20 @@ export function AppSidebar({ settings }: { settings: AppSettings }) {
               data-sidebar-interactive
               onClick={(e) => {
                 e.stopPropagation()
-
                 toggleTheme()
               }}
             >
               <SidebarMenuButton asChild>
                 <div className="flex items-center gap-2">
-                  {(() => {
-                    return isDark ? (
+                  {mounted ? (
+                    isDark ? (
                       <Sun className="h-4 w-4" />
                     ) : (
                       <Moon className="h-4 w-4" />
                     )
-                  })()}
+                  ) : (
+                    <div className="size-4" />
+                  )}
                   <span>{t('theme_switch')}</span>
                 </div>
               </SidebarMenuButton>

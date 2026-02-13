@@ -7,7 +7,9 @@
   "ALREADY_EXISTS": "Bu kayıt zaten mevcut.",
 
   "ORDER_LOCKED": "Bu sipariş artık değiştirilemez.",
+
   "INSUFFICIENT_STOCK": "Yetersiz stok.",
+  "PRODUCT_HAS_STOCK": "Stokta ürün mevcut.",
 
   "VALIDATION_ERROR": "Bazı alanlarda geçersiz değerler var.",
 

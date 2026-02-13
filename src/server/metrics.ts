@@ -2,6 +2,7 @@
 import { db } from '@/db'
 import {
   customOrderItemsTable,
+  deliveriesTable,
   deliveryItemsTable,
   orderItemsTable,
   ordersTable,
@@ -11,22 +12,19 @@ import { AppError } from '@/lib/error/core/AppError'
 import { fail } from '@/lib/error/core/serverError'
 import { Currency } from '@/types'
 import { createServerFn } from '@tanstack/react-start'
-import { and, count, eq, inArray, isNull, ne, sql } from 'drizzle-orm'
-
-const MONTH_NAMES = [
-  'Oca',
-  'Şub',
-  'Mar',
-  'Nis',
-  'May',
-  'Haz',
-  'Tem',
-  'Ağu',
-  'Eyl',
-  'Eki',
-  'Kas',
-  'Ara',
-]
+import {
+  and,
+  count,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  lt,
+  ne,
+  sql,
+  SQL,
+} from 'drizzle-orm'
+import { notDeleted } from './utils'
 
 export type GetKeyMetricsData = {
   rates: Rate[]
@@ -41,16 +39,18 @@ export const getKeyMetrics = createServerFn({ method: 'GET' })
       const { customerId, year } = data.filters ?? {}
 
       const whereConditions = [
-        isNull(ordersTable.deleted_at),
+        notDeleted(ordersTable),
         ne(ordersTable.status, 'İPTAL'),
       ]
 
       if (customerId)
         whereConditions.push(eq(ordersTable.customer_id, customerId))
       if (typeof year === 'number') {
-        whereConditions.push(
-          sql`EXTRACT(YEAR FROM ${ordersTable.order_date}) = ${year}`,
-        )
+        const start = new Date(year, 0, 1)
+        const end = new Date(year + 1, 0, 1)
+
+        whereConditions.push(gte(ordersTable.order_date, start))
+        whereConditions.push(lt(ordersTable.order_date, end))
       }
 
       // 🔹 1️⃣ Get relevant orders
@@ -101,7 +101,7 @@ export const getKeyMetrics = createServerFn({ method: 'GET' })
 
       const allItems = [...orderItems, ...customOrderItems]
 
-      // 🔹 3️⃣ Total revenue per order (TRY)
+      // 🔹 3️⃣ Total revenue per order
       const orderRevenueMap = new Map<number, number>()
       for (const item of allItems) {
         try {
@@ -214,16 +214,18 @@ export const getOrdersByStatus = createServerFn({ method: 'GET' })
   .handler(async ({ data }) => {
     try {
       const whereConditions = [
-        isNull(ordersTable.deleted_at),
+        notDeleted(ordersTable),
         ne(ordersTable.status, 'İPTAL'),
       ]
 
       if (data?.customerId)
         whereConditions.push(eq(ordersTable.customer_id, data.customerId))
       if (typeof data?.year === 'number') {
-        whereConditions.push(
-          sql`EXTRACT(YEAR FROM ${ordersTable.order_date}) = ${data.year}`,
-        )
+        const start = new Date(data.year, 0, 1)
+        const end = new Date(data.year + 1, 0, 1)
+
+        whereConditions.push(gte(ordersTable.order_date, start))
+        whereConditions.push(lt(ordersTable.order_date, end))
       }
 
       const result = await db
@@ -260,42 +262,64 @@ export const getMonthlyOrders = createServerFn({ method: 'GET' })
       try {
         const { customerId, year } = filters ?? {}
 
-        // 🔢 Güvenli monthCount
-        const safeMonthCount = Math.max(1, monthCount)
-        const rangeMonths = Math.max(0, safeMonthCount - 1)
+        let months: { yearMonth: string; monthIndex: number }[] = []
+        let whereConditions: SQL[] = []
 
-        // 📆 Son N ayı (local time) üret: YYYY-MM + kısa ay adı
-        const now = new Date()
-        const lastMonths = Array.from({ length: safeMonthCount }, (_, i) => {
-          const date = new Date(now)
-          // Ay başına sabitle (sürpriz saat kaymalarını önler)
-          date.setDate(1)
-          date.setMonth(now.getMonth() - (safeMonthCount - 1 - i))
+        if (typeof year === 'number') {
+          // 📆 Selected Year: Jan-Dec
+          months = Array.from({ length: 12 }, (_, i) => {
+            const monthNum = String(i + 1).padStart(2, '0')
+            return {
+              yearMonth: `${year}-${monthNum}`,
+              monthIndex: i,
+            }
+          })
 
-          const yearNum = date.getFullYear()
-          const monthNum = String(date.getMonth() + 1).padStart(2, '0')
+          const start = new Date(year, 0, 1)
+          const end = new Date(year + 1, 0, 1)
 
-          return {
-            yearMonth: `${yearNum}-${monthNum}`, // local YYYY-MM
-            shortMonth: MONTH_NAMES[date.getMonth()],
-          }
-        })
+          whereConditions = [
+            isNull(ordersTable.deleted_at),
+            ne(ordersTable.status, 'İPTAL'),
+            gte(ordersTable.order_date, start),
+            lt(ordersTable.order_date, end),
+          ]
+        } else {
+          // 📆 Default: Last N months
+          const safeMonthCount = Math.max(1, monthCount)
+          const now = new Date()
 
-        const whereConditions = [
-          isNull(ordersTable.deleted_at),
-          ne(ordersTable.status, 'İPTAL'),
-          // Son N ayın başından itibaren (local aylar ile uyumlu)
-          sql`${ordersTable.order_date} >= DATE_TRUNC('month', CURRENT_DATE) - (${rangeMonths} * INTERVAL '1 month')`,
-        ]
+          const start = new Date(
+            now.getFullYear(),
+            now.getMonth() - (safeMonthCount - 1),
+            1,
+          )
+          const end = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+
+          months = Array.from({ length: safeMonthCount }, (_, i) => {
+            const date = new Date(now)
+            date.setDate(1)
+            date.setMonth(now.getMonth() - (safeMonthCount - 1 - i))
+
+            const yearNum = date.getFullYear()
+            const monthNum = String(date.getMonth() + 1).padStart(2, '0')
+
+            return {
+              yearMonth: `${yearNum}-${monthNum}`,
+              monthIndex: date.getMonth(),
+            }
+          })
+
+          whereConditions = [
+            isNull(ordersTable.deleted_at),
+            ne(ordersTable.status, 'İPTAL'),
+            gte(ordersTable.order_date, start),
+            lt(ordersTable.order_date, end),
+          ]
+        }
 
         if (typeof customerId === 'number') {
           whereConditions.push(eq(ordersTable.customer_id, customerId))
-        }
-
-        if (typeof year === 'number') {
-          whereConditions.push(
-            sql`EXTRACT(YEAR FROM ${ordersTable.order_date}) = ${year}`,
-          )
         }
 
         // 🔹 1️⃣ Get relevant orders
@@ -309,8 +333,8 @@ export const getMonthlyOrders = createServerFn({ method: 'GET' })
           .where(and(...whereConditions))
 
         if (orders.length === 0) {
-          return lastMonths.map((m) => ({
-            month: m.shortMonth,
+          return months.map((m) => ({
+            monthIndex: m.monthIndex,
             orders: 0,
             revenue: 0,
           }))
@@ -376,11 +400,11 @@ export const getMonthlyOrders = createServerFn({ method: 'GET' })
           }
         }
 
-        // 📊 Grafiğe gidecek data: son N ay + o aya düşen stats
-        const chartData = lastMonths.map(({ yearMonth, shortMonth }) => {
+        // 📊 Grafiğe gidecek data
+        const chartData = months.map(({ yearMonth, monthIndex }) => {
           const data = statsMap.get(yearMonth)
           return {
-            month: shortMonth,
+            monthIndex,
             orders: data?.orders ?? 0,
             revenue: data?.revenue ?? 0,
           }
@@ -391,6 +415,169 @@ export const getMonthlyOrders = createServerFn({ method: 'GET' })
         console.error('[getMonthlyOrders] failed:', error)
         if (error instanceof AppError) throw error
         throw fail('MONTHLY_ORDERS_FETCH_FAILED')
+      }
+    },
+  )
+export const getMonthlyDeliveries = createServerFn({ method: 'GET' })
+  .inputValidator(
+    (data: {
+      filters: GetKeyMetricsData['filters']
+      monthCount?: number
+      rates: Rate[]
+      preferredCurrency: Currency
+    }) => data,
+  )
+  .handler(
+    async ({
+      data: { filters, monthCount = 12, rates, preferredCurrency },
+    }) => {
+      try {
+        const { customerId, year } = filters ?? {}
+
+        let months: { yearMonth: string; monthIndex: number }[] = []
+        let whereConditions: SQL[] = []
+
+        if (typeof year === 'number') {
+          // 📆 Selected Year: Jan-Dec
+          months = Array.from({ length: 12 }, (_, i) => {
+            const monthNum = String(i + 1).padStart(2, '0')
+            return {
+              yearMonth: `${year}-${monthNum}`,
+              monthIndex: i,
+            }
+          })
+
+          whereConditions = [
+            isNull(deliveriesTable.deleted_at),
+            sql`EXTRACT(YEAR FROM ${deliveriesTable.delivery_date}) = ${year}`,
+          ]
+        } else {
+          // 📆 Default: Last N months
+          const safeMonthCount = Math.max(1, monthCount)
+          const rangeMonths = Math.max(0, safeMonthCount - 1)
+          const now = new Date()
+
+          months = Array.from({ length: safeMonthCount }, (_, i) => {
+            const date = new Date(now)
+            date.setDate(1)
+            date.setMonth(now.getMonth() - (safeMonthCount - 1 - i))
+
+            const yearNum = date.getFullYear()
+            const monthNum = String(date.getMonth() + 1).padStart(2, '0')
+
+            return {
+              yearMonth: `${yearNum}-${monthNum}`,
+              monthIndex: date.getMonth(),
+            }
+          })
+
+          whereConditions = [
+            isNull(deliveriesTable.deleted_at),
+            sql`${deliveriesTable.delivery_date} >= DATE_TRUNC('month', CURRENT_DATE) - (${rangeMonths} * INTERVAL '1 month')`,
+          ]
+        }
+
+        if (typeof customerId === 'number') {
+          whereConditions.push(eq(deliveriesTable.customer_id, customerId))
+        }
+
+        // 🔹 1️⃣ Get deliveries with items and prices
+        const deliveries = await db
+          .select({
+            id: deliveriesTable.id,
+            delivery_date: deliveriesTable.delivery_date,
+            delivered_quantity: deliveryItemsTable.delivered_quantity,
+            standard_price: orderItemsTable.unit_price,
+            standard_currency: orderItemsTable.currency,
+            custom_price: customOrderItemsTable.unit_price,
+            custom_currency: customOrderItemsTable.currency,
+          })
+          .from(deliveriesTable)
+          .leftJoin(
+            deliveryItemsTable,
+            eq(deliveryItemsTable.delivery_id, deliveriesTable.id),
+          )
+          .leftJoin(
+            orderItemsTable,
+            eq(deliveryItemsTable.order_item_id, orderItemsTable.id),
+          )
+          .leftJoin(
+            customOrderItemsTable,
+            eq(
+              deliveryItemsTable.custom_order_item_id,
+              customOrderItemsTable.id,
+            ),
+          )
+          .where(and(...whereConditions))
+
+        if (deliveries.length === 0) {
+          return months.map((m) => ({
+            monthIndex: m.monthIndex,
+            deliveries: 0,
+            revenue: 0,
+          }))
+        }
+
+        // 🔹 2️⃣ Aggregate by month
+        const statsMap = new Map<
+          string,
+          { deliveries: number; revenue: number }
+        >()
+        const deliveryCountSet = new Map<string, Set<number>>()
+
+        // Initialize with default months
+        months.forEach((m) => {
+          statsMap.set(m.yearMonth, { deliveries: 0, revenue: 0 })
+          deliveryCountSet.set(m.yearMonth, new Set())
+        })
+
+        for (const d of deliveries) {
+          const date = d.delivery_date
+          const ym = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+
+          if (!statsMap.has(ym)) continue
+
+          // Unique delivery count per month
+          if (d.id) {
+            deliveryCountSet.get(ym)?.add(d.id)
+          }
+
+          const unitPrice = d.standard_price ?? d.custom_price ?? 0
+          const currency = d.standard_currency ?? d.custom_currency ?? 'TRY'
+          const amount = (d.delivered_quantity ?? 0) * unitPrice
+
+          const converted = convertToBaseCurrency(
+            amount,
+            currency,
+            preferredCurrency,
+            rates,
+          )
+
+          const current = statsMap.get(ym)!
+          current.revenue += converted
+        }
+
+        // Apply distinct counts
+        deliveryCountSet.forEach((ids, ym) => {
+          if (statsMap.has(ym)) {
+            statsMap.get(ym)!.deliveries = ids.size
+          }
+        })
+
+        const chartData = months.map(({ yearMonth, monthIndex }) => {
+          const data = statsMap.get(yearMonth)
+          return {
+            monthIndex,
+            deliveries: data?.deliveries ?? 0,
+            revenue: data?.revenue ?? 0,
+          }
+        })
+
+        return chartData
+      } catch (error) {
+        console.error('[getMonthlyDeliveries] failed:', error)
+        if (error instanceof AppError) throw error
+        throw fail('DELIVERIES_FETCH_FAILED')
       }
     },
   )

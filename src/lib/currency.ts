@@ -197,17 +197,19 @@ export const convertToCurrencyFormat = ({
   cents,
   currency = 'TRY',
   locale = 'tr-TR',
+  style = 'currency',
   compact = false,
 }: {
   cents: number
   currency?: Currency
   locale?: Intl.LocalesArgument
+  style?: Intl.NumberFormatOptionsStyle
   compact?: boolean
 }) => {
   const amount = cents / 100
 
   return new Intl.NumberFormat(locale, {
-    style: 'currency',
+    style,
     currency,
     currencyDisplay: 'symbol',
     ...(compact && { notation: 'compact' }),

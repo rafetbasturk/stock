@@ -1,6 +1,7 @@
 {
   "actions": {
-    "edit": "Edit"
+    "edit": "Edit",
+    "stock_activity": "Stock Activities"
   },
   "common": {
     "last_update": "Last Updated",
@@ -49,6 +50,40 @@
       "currency": "Currency",
       "order_date": "Order Date",
       "delivery_address": "Delivery Address"
+    },
+    "items_title": "Order Items",
+    "items_headers": {
+      "product": "Product / Item",
+      "quantity": "Quantity",
+      "unit_price": "Unit Price",
+      "total": "Total",
+      "notes": "Notes"
+    },
+    "totals": {
+      "subtotal": "Subtotal",
+      "tax": "Tax",
+      "total": "Grand Total"
+    }
+  },
+  "deliveries": {
+    "card_title": "Delivery Details",
+    "fields": {
+      "delivery_number": "Delivery No",
+      "customer": "Customer",
+      "delivery_date": "Delivery Date",
+      "notes": "Notes"
+    },
+    "summary_title": "Summary",
+    "summary_items": "Items",
+    "summary_quantity": "Delivered Quantity",
+    "summary_total": "Total Amount",
+    "items_title": "Delivery Items",
+    "items_headers": {
+      "item": "Product / Item",
+      "order": "Order",
+      "quantity": "Delivered",
+      "unit_price": "Unit Price",
+      "total": "Total"
     }
   }
 }

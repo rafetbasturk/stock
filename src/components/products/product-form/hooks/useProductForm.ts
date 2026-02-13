@@ -1,12 +1,12 @@
 // src/components/products/product-form/hooks/useProductForm.ts
 import { useEffect, useRef, useState } from "react";
+import type { Currency, InsertProduct, Product } from "@/types";
+import type { FieldErrors } from "@/lib/error/utils/formErrors";
 import {
   convertFormValueToNumber,
   createNumberInputHandler,
 } from "@/lib/inputUtils";
-import type { Currency, InsertProduct, Product } from "@/types";
 import { unitArray } from "@/lib/constants";
-import { FieldErrors } from "@/lib/error/utils/formErrors";
 
 const productInitials: InsertProduct = {
   code: "",
@@ -30,12 +30,12 @@ const productInitials: InsertProduct = {
 function normalizeForm(form: InsertProduct): InsertProduct {
   return {
     ...form,
-    code: form.code?.trim() ?? "",
-    name: form.name?.trim() ?? "",
-    customer_id: Number(form.customer_id ?? 0),
-    stock_quantity: Number(form.stock_quantity ?? 0),
-    min_stock_level: Number(form.min_stock_level ?? 0),
-    price: Number(form.price ?? 0),
+    code: form.code.trim(),
+    name: form.name.trim(),
+    customer_id: Number(form.customer_id),
+    stock_quantity: Number(form.stock_quantity),
+    min_stock_level: Number(form.min_stock_level),
+    price: Number(form.price),
     other_codes: form.other_codes ?? "",
     post_process: form.post_process ?? "",
     material: form.material ?? "",
@@ -56,9 +56,14 @@ function areFormsEqual(a: InsertProduct, b: InsertProduct): boolean {
 type Props = {
   item?: Product | null;
   onSuccess: (payload: InsertProduct) => void;
+  allowSubmitWhenUnchanged?: boolean;
 };
 
-export function useProductForm({ item, onSuccess }: Props) {
+export function useProductForm({
+  item,
+  onSuccess,
+  allowSubmitWhenUnchanged = false,
+}: Props) {
   const [form, setForm] = useState<InsertProduct>(productInitials);
   const [formErrors, setFormErrors] = useState<FieldErrors>({});
 
@@ -85,11 +90,11 @@ export function useProductForm({ item, onSuccess }: Props) {
   const validateForm = (): boolean => {
     const errors: FieldErrors = {};
 
-    if (!form.code?.trim()) {
+    if (!form.code.trim()) {
       errors.code = { i18n: { ns: "validation", key: "required" } };
     }
 
-    if (!form.name?.trim()) {
+    if (!form.name.trim()) {
       errors.name = { i18n: { ns: "validation", key: "required" } };
     }
 
@@ -97,21 +102,12 @@ export function useProductForm({ item, onSuccess }: Props) {
       errors.price = { i18n: { ns: "validation", key: "invalid" } };
     }
 
-    if (form.stock_quantity && form.stock_quantity < 0) {
+    if (form.stock_quantity < 0) {
       errors.stock_quantity = { i18n: { ns: "validation", key: "invalid" } };
     }
 
-    if (form.min_stock_level && form.min_stock_level < 0) {
+    if (form.min_stock_level < 0) {
       errors.min_stock_level = { i18n: { ns: "validation", key: "invalid" } };
-    }
-
-    if (
-      form.min_stock_level !== undefined &&
-      form.stock_quantity !== undefined
-    ) {
-      if (form.min_stock_level > form.stock_quantity) {
-        errors.min_stock_level = { i18n: { ns: "validation", key: "invalid" } };
-      }
     }
 
     setFormErrors(errors);
@@ -143,7 +139,7 @@ export function useProductForm({ item, onSuccess }: Props) {
     e.preventDefault();
 
     // 🛑 In edit mode, if nothing changed → do nothing
-    if (item && !hasChanged) {
+    if (item && !hasChanged && !allowSubmitWhenUnchanged) {
       return;
     }
 

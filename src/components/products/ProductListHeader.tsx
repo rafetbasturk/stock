@@ -8,19 +8,21 @@ interface ProductListHeaderProps {
 }
 
 export function ProductListHeader({ onAdd }: ProductListHeaderProps) {
-  const { t } = useTranslation('entities')
+  const { t } = useTranslation(['entities', 'stock'])
 
   return (
     <PageHeader
-      title={t('products.list_title')}
+      title={t('entities:products.list_title')}
       actions={
-        <Button
-          aria-label={t('actions.add_product_aria')}
-          className="w-12 rounded-md"
-          onClick={onAdd}
-        >
-          <Plus className="size-5" />
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            aria-label={t('entities:actions.add_product_aria')}
+            className="w-12 rounded-md"
+            onClick={onAdd}
+          >
+            <Plus className="size-5" />
+          </Button>
+        </div>
       }
     />
   )

@@ -1,5 +1,6 @@
 // src/components/DataTable.tsx
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ArrowDown,
   ArrowUp,
@@ -9,7 +10,7 @@ import {
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
-} from "lucide-react";
+} from 'lucide-react'
 
 import {
   flexRender,
@@ -19,13 +20,9 @@ import {
   type ColumnDef,
   type SortingState,
   type VisibilityState,
-} from "@tanstack/react-table";
+} from '@tanstack/react-table'
 
-import { useTableFilters } from "@/hooks/useTableFilters";
-import {
-  encodeFiltersToParams,
-  decodeParamsToFilters,
-} from "@/lib/filtersUtility";
+import { useTableFilters } from '@/hooks/useTableFilters'
 
 import {
   TableBody,
@@ -34,57 +31,57 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import { Label } from "./ui/label";
+} from '@/components/ui/table'
+import { Input } from './ui/input'
+import { Button } from './ui/button'
+import { Label } from './ui/label'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { MultiSelectFilter } from "./MultiSelectFilter";
-import { DateRangeFilter } from "./DateRangeFilter";
+} from './ui/select'
+import { DateRangeFilter } from './DateRangeFilter'
+import { MultiSelectFilter } from './form/MultiSelectFilter'
 
 export interface DataTableFilter {
-  columnId: string;
-  label: string;
-  type: "select" | "multi" | "daterange" | "text";
-  options?: { value: string; label: string }[];
-  isVirtual?: boolean;
+  columnId: string
+  label: string
+  type: 'select' | 'multi' | 'daterange' | 'text'
+  options?: { value: string; label: string }[]
+  isVirtual?: boolean
 }
 
-type TableSearch = Record<string, string | undefined>;
+type TableSearch = Record<string, string | undefined>
 
 interface DataTableProps<TData, TValue> {
-  data: TData[];
-  total: number;
-  serverPageIndex: number;
-  serverPageSize: number;
-  onServerPageChange: (p: number) => void;
-  onServerPageSizeChange: (s: number) => void;
-  getRowClassName?: (row: TData) => string;
-  columns: ColumnDef<TData, TValue>[];
-  customFilters?: DataTableFilter[];
+  data: TData[]
+  total: number
+  serverPageIndex: number
+  serverPageSize: number
+  onServerPageChange: (p: number) => void
+  onServerPageSizeChange: (s: number) => void
+  getRowClassName?: (row: TData) => string
+  columns: ColumnDef<TData, TValue>[]
+  customFilters?: DataTableFilter[]
 
-  search?: TableSearch;
-  onSearchChange?: (updates: TableSearch) => void;
+  search?: TableSearch
+  onSearchChange?: (updates: TableSearch) => void
 
-  onRowClick?: (row: TData) => void;
-  renderExpandedRow?: (row: TData) => React.ReactNode;
+  onRowClick?: (row: TData) => void
+  renderExpandedRow?: (row: TData) => React.ReactNode
 
-  enableAutofocus?: boolean;
-  initialSorting?: SortingState;
-  initialColumnVisibility?: VisibilityState;
-  showColumnVisibilityToggle?: boolean;
+  enableAutofocus?: boolean
+  initialSorting?: SortingState
+  initialColumnVisibility?: VisibilityState
+  showColumnVisibilityToggle?: boolean
 }
 
 export default function DataTable<TData, TValue>({
@@ -106,84 +103,76 @@ export default function DataTable<TData, TValue>({
   initialColumnVisibility,
   showColumnVisibilityToggle = false,
 }: DataTableProps<TData, TValue>) {
-  const [globalFilter, setGlobalFilter] = useState((search.q as string) ?? "");
-
-  const [columnFilters, setColumnFilters] = useState(() =>
-    decodeParamsToFilters(
-      search,
-      customFilters.filter((f) => !f.isVirtual),
-    ),
-  );
-
-  const sortByFromUrl = search.sortBy;
-  const sortDirFromUrl =
-    (search.sortDir as "asc" | "desc" | undefined) ?? "asc";
-
-  const [sorting, setSorting] = useState<SortingState>(() => {
-    if (sortByFromUrl) {
-      return [{ id: sortByFromUrl, desc: sortDirFromUrl === "desc" }];
-    }
-    return initialSorting ?? [];
-  });
+  const { t } = useTranslation('table')
+  const globalFilter = search.q ?? ''
+  const [searchInput, setSearchInput] = useState(globalFilter)
 
   useEffect(() => {
-    if (sortByFromUrl) {
-      setSorting([
+    setSearchInput(globalFilter)
+  }, [globalFilter])
+
+  const sorting: SortingState = useMemo(() => {
+    if (search.sortBy) {
+      return [
         {
-          id: sortByFromUrl,
-          desc: sortDirFromUrl === "desc",
+          id: search.sortBy,
+          desc: search.sortDir === 'desc',
         },
-      ]);
-    } else if (initialSorting && initialSorting.length > 0) {
-      setSorting(initialSorting);
-    } else {
-      setSorting([]);
+      ]
     }
-  }, [search.sortBy, search.sortDir, initialSorting]);
+
+    return initialSorting ?? []
+  }, [search.sortBy, search.sortDir, initialSorting])
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     initialColumnVisibility ?? {},
-  );
-  const [rowSelection, setRowSelection] = useState({});
+  )
+
+  const [rowSelection, setRowSelection] = useState({})
 
   const table = useReactTable({
     data,
     columns,
+
     state: {
       sorting,
-      columnFilters,
       globalFilter,
       columnVisibility,
       rowSelection,
     },
-    manualSorting: true,
-    enableSortingRemoval: false,
-    manualFiltering: true,
-    onSortingChange: (updater) => {
-      setSorting((prev) => {
-        const nextSorting =
-          typeof updater === "function" ? updater(prev) : updater;
 
-        const [s] = nextSorting;
-        if (s) {
-          onSearchChange({
-            sortBy: s.id,
-            sortDir: s.desc ? "desc" : "asc",
-            pageIndex: "0",
-          });
-        }
-        return nextSorting;
-      });
+    manualSorting: true,
+    manualFiltering: true,
+    manualPagination: true,
+
+    enableSortingRemoval: false,
+
+    onSortingChange: (updater) => {
+      const next = typeof updater === 'function' ? updater(sorting) : updater
+
+      const s = next[0]
+
+      onSearchChange({
+        sortBy: s?.id,
+        sortDir: s?.desc ? 'desc' : 'asc',
+        pageIndex: '0',
+      })
     },
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
+    onGlobalFilterChange: (value) => {
+      onSearchChange({
+        q: value || undefined,
+        pageIndex: '0',
+      })
+    },
+
     onColumnVisibilityChange: setColumnVisibility,
+
     onRowSelectionChange: setRowSelection,
+
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
-  });
+  })
 
-  // 🔥 Filter helpers (for multi/select)
   const {
     activeFilters,
     hasActiveFilters,
@@ -195,42 +184,11 @@ export default function DataTable<TData, TValue>({
     filters: customFilters,
     search,
     globalFilter,
-  });
+  })
 
-  // 🔁 Sync columnFilters & globalFilter → URL search params (for q + table filters only)
-  useEffect(() => {
-    const filterParams = encodeFiltersToParams(
-      columnFilters,
-      customFilters.filter((f) => !f.isVirtual),
-    );
-
-    const q = globalFilter.trim();
-    const next: Record<string, string | undefined> = {
-      ...search,
-      q: q.length ? q : undefined, // keep key with undefined when empty
-      ...filterParams,
-    };
-
-    // Compare using a compacted copy (but DO NOT send the compacted version)
-    const compact = (obj: Record<string, string | undefined>) => {
-      const copy: Record<string, string> = {};
-      for (const [k, v] of Object.entries(obj)) {
-        if (v !== undefined) copy[k] = v;
-      }
-      return copy;
-    };
-
-    if (
-      JSON.stringify(compact(search as any)) !== JSON.stringify(compact(next))
-    ) {
-      onSearchChange(next); // ✅ sends q: undefined when cleared
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [globalFilter, columnFilters, customFilters]);
-
-  const safePageSize = Math.max(1, Number(serverPageSize) || 100);
-  const safeTotal = Math.max(0, Number(total) || 0);
-  const pageCount = Math.max(1, Math.ceil(safeTotal / safePageSize));
+  const safePageSize = Math.max(1, Number(serverPageSize) || 100)
+  const safeTotal = Math.max(0, Number(total) || 0)
+  const pageCount = Math.max(1, Math.ceil(safeTotal / safePageSize))
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -238,18 +196,20 @@ export default function DataTable<TData, TValue>({
       <div className="flex gap-4 justify-between">
         <div className="grow flex flex-col md:flex-row items-start md:items-center gap-2">
           <Input
-            placeholder="Ara..."
-            value={globalFilter ?? ""}
-            onChange={(e) => setGlobalFilter(e.target.value)}
+            placeholder={t('search_placeholder')}
+            value={searchInput}
+            onChange={(e) => {
+              const value = e.target.value
+              setSearchInput(value)
+              table.setGlobalFilter(value)
+            }}
             autoFocus={enableAutofocus}
             className="w-full md:max-w-sm"
           />
 
           {customFilters.map((filter) => {
-            const column = table.getColumn(filter.columnId);
-
             switch (filter.type) {
-              case "daterange":
+              case 'daterange':
                 return (
                   <DateRangeFilter
                     key={filter.columnId}
@@ -258,15 +218,16 @@ export default function DataTable<TData, TValue>({
                     end={search.endDate}
                     onChange={(updates) =>
                       onSearchChange({
-                        pageIndex: "0",
+                        pageIndex: '0',
                         ...updates,
                       })
                     }
                   />
-                );
+                )
 
-              case "multi":
-                if (!column || !filter.options) return null;
+              case 'multi':
+                if (!filter.options) return null
+
                 return (
                   <MultiSelectFilter
                     key={filter.columnId}
@@ -275,56 +236,71 @@ export default function DataTable<TData, TValue>({
                       label: filter.label,
                       options: filter.options,
                     }}
-                    column={column}
+                    selectedValues={
+                      search[filter.columnId]
+                        ? search[filter.columnId]!.split(',')
+                        : []
+                    }
                     onChange={(colId, values) => {
-                      handleMultiFilterChange(colId, values);
-                      onSearchChange({ pageIndex: "0" });
+                      handleMultiFilterChange(colId, values)
+
+                      onSearchChange({
+                        [colId]: values.length ? values.join(',') : undefined,
+                        pageIndex: '0',
+                      })
                     }}
                   />
-                );
+                )
 
-              case "select":
-                if (!column) return null;
+              case 'select':
+                if (!filter.options) return null
+
                 return (
                   <Select
                     key={filter.columnId}
-                    value={(column.getFilterValue() as string) ?? "all"}
+                    value={search[filter.columnId] ?? 'all'}
                     onValueChange={(v) => {
-                      handleSingleFilterChange(filter.columnId, v);
-                      onSearchChange({ pageIndex: "0" });
+                      handleSingleFilterChange(filter.columnId, v)
+
+                      onSearchChange({
+                        [filter.columnId]: v === 'all' ? undefined : v,
+                        pageIndex: '0',
+                      })
                     }}
                   >
                     <SelectTrigger className="w-full md:w-48">
                       <SelectValue placeholder={filter.label} />
                     </SelectTrigger>
+
                     <SelectContent>
                       <SelectItem value="all">{filter.label}</SelectItem>
-                      {filter.options?.map((o) => (
+
+                      {filter.options.map((o) => (
                         <SelectItem key={o.value} value={o.value}>
                           {o.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                );
+                )
 
-              case "text":
+              case 'text':
               default:
                 return (
                   <Input
                     key={filter.columnId}
                     placeholder={filter.label}
-                    value={search[filter.columnId] || ""}
+                    value={search[filter.columnId] || ''}
                     onChange={(e) =>
                       onSearchChange({
-                        pageIndex: "0",
+                        pageIndex: '0',
                         [filter.columnId]:
-                          e.target.value === "" ? undefined : e.target.value,
+                          e.target.value === '' ? undefined : e.target.value,
                       })
                     }
                     className="w-full md:w-40"
                   />
-                );
+                )
             }
           })}
 
@@ -332,29 +308,24 @@ export default function DataTable<TData, TValue>({
             <Button
               variant="outline"
               onClick={() => {
-                clearAllFilters();
-                setGlobalFilter("");
+                clearAllFilters()
 
-                // Clear URL-level filters as well (q + daterange + text filters)
                 const reset: Record<string, string | undefined> = {
                   q: undefined,
                   startDate: undefined,
                   endDate: undefined,
-                  pageIndex: "0",
+                  pageIndex: '0',
                   pageSize: String(serverPageSize),
-                };
+                }
 
                 customFilters.forEach((f) => {
-                  if (f.type === "text") reset[f.columnId] = undefined;
-                  if (f.type === "select" || f.type === "multi") {
-                    reset[f.columnId] = undefined;
-                  }
-                });
+                  reset[f.columnId] = undefined
+                })
 
-                onSearchChange(reset);
+                onSearchChange(reset)
               }}
             >
-              Filtreleri Temizle ({activeFilters.length})
+              {t('clear_filters', { count: activeFilters.length })}
             </Button>
           )}
         </div>
@@ -366,7 +337,7 @@ export default function DataTable<TData, TValue>({
                 variant="outline"
                 className="border-muted bg-background hover:bg-accent font-normal text-muted-foreground"
               >
-                Sütunlar <ChevronDown />
+                {t('columns')} <ChevronDown />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -409,8 +380,8 @@ export default function DataTable<TData, TValue>({
                       style={{ width: header.getSize() }}
                       className={`sticky top-0 z-10 bg-muted ${
                         header.column.getCanSort()
-                          ? "cursor-pointer select-none"
-                          : ""
+                          ? 'cursor-pointer select-none'
+                          : ''
                       }`}
                       onClick={
                         header.column.getCanSort()
@@ -425,9 +396,9 @@ export default function DataTable<TData, TValue>({
                             header.getContext(),
                           )}
                           {header.column.getCanSort() &&
-                            (header.column.getIsSorted() === "asc" ? (
+                            (header.column.getIsSorted() === 'asc' ? (
                               <ArrowUp className="h-4 w-4" />
-                            ) : header.column.getIsSorted() === "desc" ? (
+                            ) : header.column.getIsSorted() === 'desc' ? (
                               <ArrowDown className="h-4 w-4" />
                             ) : (
                               <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
@@ -446,9 +417,9 @@ export default function DataTable<TData, TValue>({
               table.getRowModel().rows.map((row) => (
                 <Fragment key={row.id}>
                   <TableRow
-                    data-state={row.getIsSelected() && "selected"}
+                    data-state={row.getIsSelected() && 'selected'}
                     className={`even:bg-background odd:bg-muted/30 hover:bg-accent hover:cursor-pointer transition-colors duration-200 ${
-                      getRowClassName?.(row.original) ?? ""
+                      getRowClassName?.(row.original) ?? ''
                     }`}
                     onClick={() => onRowClick?.(row.original)}
                   >
@@ -458,11 +429,11 @@ export default function DataTable<TData, TValue>({
                         (cell) => !cell.column.columnDef.meta?.isFilterOnly,
                       )
                       .map((cell) => {
-                        const metaClass = cell.column.columnDef.meta?.className;
+                        const metaClass = cell.column.columnDef.meta?.className
                         const className =
-                          typeof metaClass === "function"
+                          typeof metaClass === 'function'
                             ? metaClass(cell.getValue() as TValue, row.original)
-                            : (metaClass ?? "");
+                            : (metaClass ?? '')
 
                         return (
                           <TableCell
@@ -475,7 +446,7 @@ export default function DataTable<TData, TValue>({
                               cell.getContext(),
                             )}
                           </TableCell>
-                        );
+                        )
                       })}
                   </TableRow>
 
@@ -508,7 +479,7 @@ export default function DataTable<TData, TValue>({
                   }
                   className="h-24 text-center"
                 >
-                  Sonuç bulunamadı.
+                  {t('no_results')}
                 </TableCell>
               </TableRow>
             )}
@@ -541,12 +512,12 @@ export default function DataTable<TData, TValue>({
       {/* Pagination */}
       <div className="flex justify-end gap-6 items-center pt-2 text-xs md:text-sm">
         <div className="text-muted-foreground flex-1 text-sm lg:flex">
-          {total} kayıt
-          {activeFilters.length > 0 && ` (${activeFilters.join(", ")})`}
+          {t('records_count', { count: total })}
+          {activeFilters.length > 0 && ` (${activeFilters.join(', ')})`}
         </div>
 
         <div className="hidden lg:flex items-center gap-2">
-          <Label>Sayfa başı:</Label>
+          <Label>{t('rows_per_page')}</Label>
           <Select
             value={String(serverPageSize)}
             onValueChange={(v) => onServerPageSizeChange(Number(v))}
@@ -565,7 +536,7 @@ export default function DataTable<TData, TValue>({
         </div>
 
         <div>
-          Sayfa {serverPageIndex + 1} / {pageCount}
+          {t('page_status', { current: serverPageIndex + 1, total: pageCount })}
         </div>
 
         <div className="flex gap-2">
@@ -611,5 +582,5 @@ export default function DataTable<TData, TValue>({
         </div>
       </div>
     </div>
-  );
+  )
 }

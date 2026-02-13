@@ -7,8 +7,10 @@
   "ALREADY_EXISTS": "This record already exists.",
 
   "ORDER_LOCKED": "This order can no longer be modified.",
-  "INSUFFICIENT_STOCK": "Insufficient stock available.",
 
+  "INSUFFICIENT_STOCK": "Insufficient stock available.",
+  "PRODUCT_HAS_STOCK": "Product has stock",
+  
   "VALIDATION_ERROR": "Some fields contain invalid values.",
 
   "INVALID_CREDENTIALS": "Invalid username or password.",

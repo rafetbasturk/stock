@@ -10,6 +10,34 @@ import type { ErrorWithCode } from "./errorCodeMarker";
 import type { TransportError, ValidationErrorPayload } from "./errorTransport";
 import type { AppErrorData, ErrorCode } from ".";
 
+function extractTransportError(value: unknown): TransportError | null {
+  if (isTransportError(value)) {
+    return value;
+  }
+
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+
+  const candidate = value as any;
+  const nestedCandidates = [
+    candidate.data,
+    candidate.cause,
+    candidate.error,
+    candidate.payload,
+    candidate.response?.data,
+    candidate.data?.data,
+  ];
+
+  for (const nested of nestedCandidates) {
+    if (isTransportError(nested)) {
+      return nested;
+    }
+  }
+
+  return null;
+}
+
 export class BaseAppError extends Error implements AppErrorData {
   readonly status: number;
   readonly code: ErrorCode;
@@ -47,8 +75,9 @@ export class BaseAppError extends Error implements AppErrorData {
       return error;
     }
 
-    if (isTransportError(error)) {
-      return BaseAppError.fromTransport(error);
+    const transportError = extractTransportError(error);
+    if (transportError) {
+      return BaseAppError.fromTransport(transportError);
     }
 
     if (isZodError(error)) {

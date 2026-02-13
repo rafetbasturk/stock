@@ -1,26 +1,26 @@
-import React from "react";
-import type { Row } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
+import React from 'react'
+import type { Row } from '@tanstack/react-table'
+import { MoreHorizontal } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import type { ActionMenuItem } from "@/types";
+} from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
+import type { ActionMenuItem } from '@/types'
 
 interface DataTableRowActionsProps<TData> {
-  row: Row<TData>;
-  actions: ActionMenuItem<TData>[];
-  alignment?: "start" | "center" | "end" | undefined;
+  row: Row<TData>
+  actions: ActionMenuItem<TData>[]
+  alignment?: 'start' | 'center' | 'end' | undefined
 }
 
 export function DataTableRowActions<TData>({
   row,
   actions,
-  alignment = "start",
+  alignment = 'start',
 }: DataTableRowActionsProps<TData>) {
   return (
     <DropdownMenu>
@@ -35,18 +35,17 @@ export function DataTableRowActions<TData>({
           <React.Fragment key={index}>
             <DropdownMenuItem
               onClick={(e) => {
-                e.stopPropagation();
-                actionItem.action(row.original);
+                e.stopPropagation()
+                actionItem.action(row.original)
               }}
-              className={actionItem.isDestructive ? "text-red-500" : ""}
+              className={actionItem.isDestructive ? 'text-red-500' : ''}
             >
               {actionItem.label}
             </DropdownMenuItem>
-            {/* Eğer istenirse, elemandan sonra bir ayraç ekliyoruz. */}
             {actionItem.separatorAfter && <DropdownMenuSeparator />}
           </React.Fragment>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }

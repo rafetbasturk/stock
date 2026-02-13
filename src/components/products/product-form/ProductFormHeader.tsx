@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   DialogDescription,
   DialogHeader,
@@ -8,14 +9,19 @@ type Props = {
   productId: number | undefined;
 };
 export default function ProductFormHeader({ productId }: Props) {
+  const { t } = useTranslation("entities");
+
   return (
     <DialogHeader className="p-8 pb-4 border-b">
       <DialogTitle className="flex items-center gap-2">
-        {productId ? "Ürünü Düzenle" : "Yeni Ürün Ekle"}
+        {productId
+          ? t("products.form.header.edit")
+          : t("products.form.header.create")}
       </DialogTitle>
       <DialogDescription>
-        Ürün bilgilerini doldurun ve kaydedin.{" "}
-        <span className="text-red-500">*</span> işaretli alanlar zorunludur.
+        {t("products.form.header.description")}{" "}
+        <span className="text-red-500">*</span>{" "}
+        {t("products.form.header.required_hint")}
       </DialogDescription>
     </DialogHeader>
   );

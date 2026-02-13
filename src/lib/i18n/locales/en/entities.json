@@ -4,7 +4,8 @@
     "delete": "Delete",
     "add_customer_aria": "Add customer",
     "add_product_aria": "Add product",
-    "add_order_aria": "Add order"
+    "add_order_aria": "Add order",
+    "stock_activity": "Add Stock Activity"
   },
   "customers": {
     "list_title": "Customer List",
@@ -41,6 +42,72 @@
       "specs_net": "Specs (Net)",
       "notes": "Notes",
       "customer": "Customer Name"
+    },
+    "form": {
+      "header": {
+        "create": "Add New Product",
+        "edit": "Edit Product",
+        "description": "Fill in product details and save.",
+        "required_hint": "marked fields are required."
+      },
+      "tabs": {
+        "basic": {
+          "label": "Basic Information",
+          "description": "Code, Name and Stock"
+        },
+        "tech": {
+          "label": "Technical Details",
+          "description": "Material and Dimensions"
+        }
+      },
+      "sections": {
+        "identity": "Identity & Definition",
+        "finance": "Finance & Unit",
+        "stock": "Stock Management",
+        "material_process": "Material & Process",
+        "dimensions": "Dimensional Data",
+        "notes": "Notes & Description"
+      },
+      "fields": {
+        "code": "Product Code",
+        "name": "Product Name",
+        "customer": "Customer Portfolio",
+        "price": "Sales Price",
+        "unit": "Stock Unit",
+        "initial_stock": "Initial Stock",
+        "current_stock_readonly": "Current Stock (read-only)",
+        "min_stock": "Critical Level",
+        "material": "Material Type",
+        "post_process": "Production Process",
+        "coating": "Coating",
+        "specs": "Specs (Gross)",
+        "specs_net": "Specs (Net)",
+        "other_codes": "Alternative Code"
+      },
+      "placeholders": {
+        "code": "CODE-001",
+        "name": "Full product title",
+        "material": "Ex: 1040 or CK45",
+        "post_process": "Post-process details",
+        "coating": "Coating information",
+        "specs": "Ex: Ø25x100",
+        "specs_net": "Ex: Ø24.5x98",
+        "other_codes": "Equivalent or competitor codes",
+        "notes": "Any special notes or quality standards for this product...",
+        "quantity": "0",
+        "stock_action_notes": "Optional note"
+      },
+      "stock_action": {
+        "title": "Stock Movement (Optional)",
+        "description": "Create an additional stock in/out movement from here.",
+        "quantity": "Movement Quantity",
+        "notes": "Movement Note"
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "create": "Add",
+        "update": "Update"
+      }
     }
   },
   "orders": {
@@ -54,6 +121,27 @@
       "delivery_address": "Delivery Address",
       "status": "Order Status",
       "total_amount": "Total Amount"
+    },
+    "filters": {
+      "customer": "Customer",
+      "status": "Order Status",
+      "daterange": "Date Range"
+    }
+  },
+  "deliveries": {
+    "list_title": "Delivery List",
+    "fallback_label": "This delivery",
+    "loading": "Loading deliveries...",
+    "columns": {
+      "delivery_number": "Delivery No",
+      "delivery_date": "Delivery Date",
+      "customer": "Customer",
+      "delivery_address": "Delivery Address",
+      "total_amount": "Total Amount"
+    },
+    "filters": {
+      "customer": "Customer",
+      "daterange": "Date Range"
     }
   }
 }

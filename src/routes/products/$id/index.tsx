@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -25,8 +25,7 @@ import { productQuery } from '@/lib/queries/products'
 import ProductForm from '@/components/products/ProductForm'
 import { formatPrice } from '@/lib/currency'
 
-
-export const Route = createFileRoute('/products/$id')({
+export const Route = createFileRoute('/products/$id/')({
   component: RouteComponent,
   loader: async ({ context, params }) => {
     const productId = parseProductId(params.id)
@@ -78,19 +77,26 @@ function RouteComponent() {
   const hasLowStock = product.stock_quantity < product.min_stock_level
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6">
       <PageHeader
         title={product.code}
         description={product.name}
         actions={
-          <Button
-            size="sm"
-            onClick={() => setIsEditing(true)}
-            className="gap-2"
-          >
-            <Edit className="size-4" />
-            {t('actions.edit')}
-          </Button>
+          <>
+            <Link to="/products/$id/activities" params={{ id }}>
+              <Button size="sm" variant="outline">
+                {t("actions.stock_activity")}
+              </Button>
+            </Link>
+            <Button
+              size="sm"
+              onClick={() => setIsEditing(true)}
+              className="gap-2"
+            >
+              <Edit className="size-4" />
+              {t('actions.edit')}
+            </Button>
+          </>
         }
       />
 
@@ -110,13 +116,21 @@ function RouteComponent() {
                 label={t('products.fields.material')}
                 value={product.material}
               />
-              <DetailItem icon={Box} label={t('products.fields.coating')} value={product.coating} />
+              <DetailItem
+                icon={Box}
+                label={t('products.fields.coating')}
+                value={product.coating}
+              />
               <DetailItem
                 icon={LayoutGrid}
                 label={t('products.fields.post_process')}
                 value={product.post_process}
               />
-              <DetailItem icon={Maximize2} label={t('products.fields.specs')} value={product.specs} />
+              <DetailItem
+                icon={Maximize2}
+                label={t('products.fields.specs')}
+                value={product.specs}
+              />
               <DetailItem
                 icon={Ruler}
                 label={t('products.fields.specs_net')}
@@ -149,7 +163,9 @@ function RouteComponent() {
           {product.notes && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">{t('products.sections.notes')}</CardTitle>
+                <CardTitle className="text-lg">
+                  {t('products.sections.notes')}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
@@ -173,9 +189,9 @@ function RouteComponent() {
                 <span className="text-3xl font-bold tracking-tight">
                   {product.stock_quantity}
                 </span>
-                  <Badge variant="secondary" className="text-base font-normal">
+                <Badge variant="secondary" className="text-base font-normal">
                   {product.unit || t('common.empty')}
-                  </Badge>
+                </Badge>
               </div>
 
               {hasLowStock && (
@@ -192,10 +208,10 @@ function RouteComponent() {
 
               <div className="pt-4 border-t flex flex-col gap-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{t('products.fields.minimum_stock')}</span>
-                  <span className="font-mono">
-                    {product.min_stock_level}
+                  <span className="text-muted-foreground">
+                    {t('products.fields.minimum_stock')}
                   </span>
+                  <span className="font-mono">{product.min_stock_level}</span>
                 </div>
               </div>
             </CardContent>
@@ -216,7 +232,9 @@ function RouteComponent() {
                   <p className="text-2xl font-bold text-foreground">
                     {formattedPrice}
                   </p>
-                  <p className="text-xs text-muted-foreground">{t('products.fields.unit_price')}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t('products.fields.unit_price')}
+                  </p>
                 </div>
               </div>
             </CardContent>

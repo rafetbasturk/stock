@@ -1,0 +1,9 @@
+{
+  "search_placeholder": "Search...",
+  "clear_filters": "Clear Filters ({{count}})",
+  "columns": "Columns",
+  "no_results": "No results found.",
+  "records_count": "{{count}} records",
+  "rows_per_page": "Rows per page:",
+  "page_status": "Page {{current}} / {{total}}"
+}

@@ -1,9 +1,10 @@
 import * as React from "react";
+import { FlaskConical, Maximize2, StickyNote } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import type { InsertProduct } from "@/types";
+import type { FieldErrors } from "@/lib/error/utils/formErrors";
 import InputField from "@/components/form/InputField";
 import { Textarea } from "@/components/ui/textarea";
-import { FlaskConical, Maximize2, StickyNote } from "lucide-react";
-import type { InsertProduct } from "@/types";
-import { FieldErrors } from "@/lib/error/utils/formErrors";
 
 type Props = {
   form: InsertProduct;
@@ -18,6 +19,8 @@ export default function ProductFormTechInfo({
   formErrors,
   onTextChange,
 }: Props) {
+  const { t } = useTranslation("entities");
+
   return (
     <div className="space-y-8 pb-8">
       <section className="space-y-4">
@@ -26,35 +29,35 @@ export default function ProductFormTechInfo({
             <FlaskConical className="size-4" />
           </div>
           <h3 className="uppercase text-xs tracking-widest text-muted-foreground/80 font-black">
-            Malzeme & Süreç
+            {t("products.form.sections.material_process")}
           </h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-4 rounded-2xl border bg-secondary/10 shadow-sm">
           <InputField
-            label="Malzeme Cinsi"
+            label={t("products.form.fields.material")}
             name="material"
             value={form.material ?? ""}
             onChange={onTextChange}
             error={formErrors.material}
-            placeholder="Örn: 1040 veya CK45"
+            placeholder={t("products.form.placeholders.material")}
             className="md:col-span-2"
           />
           <InputField
-            label="Üretim İşlemleri"
+            label={t("products.form.fields.post_process")}
             name="post_process"
             value={form.post_process ?? ""}
             onChange={onTextChange}
             error={formErrors.post_process}
-            placeholder="Son işlem detayları"
+            placeholder={t("products.form.placeholders.post_process")}
           />
           <InputField
-            label="Kaplama"
+            label={t("products.form.fields.coating")}
             name="coating"
             value={form.coating ?? ""}
             onChange={onTextChange}
             error={formErrors.coating}
-            placeholder="Kaplama bilgisi"
+            placeholder={t("products.form.placeholders.coating")}
           />
         </div>
       </section>
@@ -65,34 +68,34 @@ export default function ProductFormTechInfo({
             <Maximize2 className="size-4" />
           </div>
           <h3 className="uppercase text-xs tracking-widest text-muted-foreground/80 font-black">
-            Boyutsal Veriler
+            {t("products.form.sections.dimensions")}
           </h3>
         </div>
 
         <div className="grid grid-cols-2 gap-5 p-4 rounded-2xl border bg-secondary/10 shadow-sm">
           <InputField
-            label="Ölçü (Paylı)"
+            label={t("products.form.fields.specs")}
             name="specs"
             value={form.specs ?? ""}
             onChange={onTextChange}
             error={formErrors.specs}
-            placeholder="Örn: Ø25x100"
+            placeholder={t("products.form.placeholders.specs")}
           />
           <InputField
-            label="Net Ölçü"
+            label={t("products.form.fields.specs_net")}
             name="specs_net"
             value={form.specs_net ?? ""}
             onChange={onTextChange}
             error={formErrors.specs_net}
-            placeholder="Örn: Ø24.5x98"
+            placeholder={t("products.form.placeholders.specs_net")}
           />
           <InputField
-            label="Alternatif Kod"
+            label={t("products.form.fields.other_codes")}
             name="other_codes"
             value={form.other_codes ?? ""}
             onChange={onTextChange}
             error={formErrors.other_codes}
-            placeholder="Muadil veya rakip kodlar"
+            placeholder={t("products.form.placeholders.other_codes")}
             className="md:col-span-2"
           />
         </div>
@@ -104,7 +107,7 @@ export default function ProductFormTechInfo({
             <StickyNote className="size-4" />
           </div>
           <h3 className="uppercase text-xs tracking-widest text-muted-foreground/80 font-black">
-            Notlar & Açıklama
+            {t("products.form.sections.notes")}
           </h3>
         </div>
 
@@ -118,7 +121,7 @@ export default function ProductFormTechInfo({
             onChange={(e) =>
               setForm((prev) => ({ ...prev, notes: e.target.value }))
             }
-            placeholder="Ürünle ilgili diğer özel notlar veya kalite standartları..."
+            placeholder={t("products.form.placeholders.notes")}
           />
         </div>
       </section>

@@ -1,6 +1,7 @@
 {
   "actions": {
-    "edit": "Düzenle"
+    "edit": "Düzenle",
+    "stock_activity": "Stok Hareketleri"
   },
   "common": {
     "last_update": "Son Güncelleme",
@@ -49,6 +50,40 @@
       "currency": "Para Birimi",
       "order_date": "Sipariş Tarihi",
       "delivery_address": "Teslimat Adresi"
+    },
+    "items_title": "Sipariş İçeriği",
+    "items_headers": {
+      "product": "Ürün / Kalem",
+      "quantity": "Miktar",
+      "unit_price": "Birim Fiyat",
+      "total": "Tutar",
+      "notes": "Notlar"
+    },
+    "totals": {
+      "subtotal": "Ara Toplam",
+      "tax": "KDV",
+      "total": "Genel Toplam"
+    }
+  },
+  "deliveries": {
+    "card_title": "Sevkiyat Bilgileri",
+    "fields": {
+      "delivery_number": "Sevkiyat No",
+      "customer": "Müşteri",
+      "delivery_date": "Sevkiyat Tarihi",
+      "notes": "Notlar"
+    },
+    "summary_title": "Özet",
+    "summary_items": "Kalem",
+    "summary_quantity": "Teslim Edilen Miktar",
+    "summary_total": "Toplam Tutar",
+    "items_title": "Sevkiyat Kalemleri",
+    "items_headers": {
+      "item": "Ürün / Kalem",
+      "order": "Sipariş",
+      "quantity": "Teslim",
+      "unit_price": "Birim Fiyat",
+      "total": "Tutar"
     }
   }
 }

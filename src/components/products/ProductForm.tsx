@@ -1,17 +1,18 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import type { InsertProduct, ProductListRow } from "@/types";
-import { useProductForm } from "./product-form/hooks/useProductForm";
+import * as Tabs from "@radix-ui/react-tabs";
+import { AnimatePresence, motion } from "framer-motion";
+import { Box, ChevronRight, Settings } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ProductFormBasicInfo,
   ProductFormFooter,
   ProductFormHeader,
   ProductFormTechInfo,
 } from "./product-form";
-import * as Tabs from "@radix-ui/react-tabs";
-import { motion, AnimatePresence } from "framer-motion";
-import { Settings, Box, ChevronRight } from "lucide-react";
+import { useProductForm } from "./product-form/hooks/useProductForm";
+import type { InsertProduct, ProductListRow } from "@/types";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useCreateProductMutation, useUpdateProductMutation } from "@/lib/mutations/products";
 
 interface BasePaginatedFormProps<TData, TSubmitPayload> {
@@ -22,6 +23,19 @@ interface BasePaginatedFormProps<TData, TSubmitPayload> {
 }
 
 type ProductFormProps = BasePaginatedFormProps<ProductListRow, InsertProduct>;
+type StockActionType = "IN" | "OUT";
+
+type StockActionFormState = {
+  type: StockActionType;
+  quantity: string;
+  notes: string;
+};
+
+const stockActionInitialState: StockActionFormState = {
+  type: "IN",
+  quantity: "",
+  notes: "",
+};
 
 export default function ProductForm({
   item: product,
@@ -29,7 +43,16 @@ export default function ProductForm({
   onSuccess: onSuccessProp,
   isSubmitting: isSubmittingProp,
 }: ProductFormProps) {
+  const { t } = useTranslation("entities");
   const [activeTab, setActiveTab] = useState("basic");
+  const [stockAction, setStockAction] = useState<StockActionFormState>(
+    stockActionInitialState,
+  );
+  const hasStockAction = Number(stockAction.quantity) > 0;
+
+  useEffect(() => {
+    setStockAction(stockActionInitialState);
+  }, [product?.id]);
 
   const {
     form,
@@ -44,11 +67,24 @@ export default function ProductForm({
     hasChanged,
   } = useProductForm({
     item: product,
+    allowSubmitWhenUnchanged: hasStockAction,
     onSuccess: (val) => {
       if (!product) {
         createMutation.mutate(val);
       } else {
-        updateMutation.mutate({ id: product.id, data: val });
+        updateMutation.mutate({
+          id: product.id,
+          data: {
+            ...val,
+            stockAction: hasStockAction
+              ? {
+                  type: stockAction.type,
+                  quantity: Math.trunc(Number(stockAction.quantity)),
+                  notes: stockAction.notes.trim() || undefined,
+                }
+              : undefined,
+          },
+        });
       }
     },
   });
@@ -65,6 +101,7 @@ export default function ProductForm({
 
   const updateMutation = useUpdateProductMutation(
     () => {
+      setStockAction(stockActionInitialState);
       onSuccessProp(form);
     },
     {
@@ -92,15 +129,15 @@ export default function ProductForm({
               <TabTrigger
                 value="basic"
                 icon={Box}
-                label="Temel Bilgiler"
-                description="KOD, AD ve Stok"
+                label={t("products.form.tabs.basic.label")}
+                description={t("products.form.tabs.basic.description")}
                 active={activeTab === "basic"}
               />
               <TabTrigger
                 value="tech"
                 icon={Settings}
-                label="Teknik Detaylar"
-                description="Malzeme ve Ölçü"
+                label={t("products.form.tabs.tech.label")}
+                description={t("products.form.tabs.tech.description")}
                 active={activeTab === "tech"}
               />
             </Tabs.List>
@@ -126,6 +163,17 @@ export default function ProductForm({
                       onCustomerChange={handleCustomerChange}
                       onNumberChange={handleNumberChange}
                       onCurrencyChange={handleCurrencyChange}
+                      isEditing={Boolean(product?.id)}
+                      stockAction={stockAction}
+                      onStockActionTypeChange={(type) =>
+                        setStockAction((prev) => ({ ...prev, type }))
+                      }
+                      onStockActionQuantityChange={(quantity) =>
+                        setStockAction((prev) => ({ ...prev, quantity }))
+                      }
+                      onStockActionNotesChange={(notes) =>
+                        setStockAction((prev) => ({ ...prev, notes }))
+                      }
                     />
                   ) : (
                     <ProductFormTechInfo
@@ -144,7 +192,7 @@ export default function ProductForm({
             productId={product?.id}
             isSubmitting={isSubmitting}
             onClose={onClose}
-            hasChanged={hasChanged}
+            hasChanged={hasChanged || hasStockAction}
           />
         </form>
       </DialogContent>

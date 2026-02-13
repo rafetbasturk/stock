@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog'
 
-interface OrderDeleteDialogProps {
+interface DeleteDialogProps {
   open: boolean
   isDeleting: boolean
   orderLabel: string
@@ -15,7 +15,7 @@ export function OrderDeleteDialog({
   orderLabel,
   onClose,
   onConfirm,
-}: OrderDeleteDialogProps) {
+}: DeleteDialogProps) {
   const { t } = useTranslation('deleteDialogs')
 
   return (

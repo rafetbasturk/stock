@@ -1,5 +1,4 @@
 import { useCallback, useEffect } from 'react'
-import { useLoaderData } from '@tanstack/react-router'
 import { useOrderForm } from './order-form/hooks/useOrderForm'
 import {
   OrderFormBasicInfo,
@@ -22,15 +21,22 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useExchangeRatesStore } from '@/stores/exchangeRatesStore'
 import { useSelectProducts } from '@/hooks/useProducts'
 import { convertCurrency } from '@/lib/currency'
-import { useCreateOrderMutation, useUpdateOrderMutation } from '@/lib/mutations/orders'
+import {
+  useCreateOrderMutation,
+  useUpdateOrderMutation,
+} from '@/lib/mutations/orders'
+import { useQuery } from '@tanstack/react-query'
+import { lastOrderNumberQuery } from '@/lib/queries/orders'
 
 export type OrderFormState = InsertOrder & {
   is_custom_order?: boolean
-  items: Array<NewOrderItem & {
-    id?: number
-    tempId?: string
-    unit_price_raw?: string
-  }>
+  items: Array<
+    NewOrderItem & {
+      id?: number
+      tempId?: string
+      unit_price_raw?: string
+    }
+  >
   customItems: Array<{
     id?: number
     name?: string
@@ -74,8 +80,7 @@ export default function OrderForm({
   isSubmitting,
 }: OrderFormProps) {
   const { data: products = [], isLoading } = useSelectProducts()
-
-  const lastOrderNumber = useLoaderData({ from: '/orders' })
+  const { data: lastOrderNumber } = useQuery(lastOrderNumberQuery())
 
   const rates = useExchangeRatesStore.use.rates()
 
@@ -176,14 +181,7 @@ export default function OrderForm({
 
       setPrevCurrency(toCurrency)
     }
-  }, [
-    form.currency,
-    prevCurrency,
-    rates,
-    products,
-    setForm,
-    setPrevCurrency,
-  ])
+  }, [form.currency, prevCurrency, rates, products, setForm, setPrevCurrency])
 
   const handleItemChange = useCallback(
     (idx: number, field: keyof NewOrderItem, value: any) => {
