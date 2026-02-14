@@ -1,11 +1,13 @@
-import { Card, CardContent } from '@/components/ui/card'
+import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
 
 interface DashboardCardProps {
   title: string
   value: string | number
   icon?: LucideIcon
   description?: string
+  footerRight?: ReactNode
   status?: 'success' | 'warning' | 'error' | 'neutral'
   className?: string
 }
@@ -15,6 +17,7 @@ export default function DashboardCard({
   value,
   icon: Icon,
   description,
+  footerRight,
   status = 'neutral',
   className,
 }: DashboardCardProps) {
@@ -42,7 +45,7 @@ export default function DashboardCard({
         {Icon && <Icon className="size-16" />}
       </div>
 
-      <CardContent className="p-6">
+      <CardContent className="px-6 pt-6">
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
             {title}
@@ -56,12 +59,16 @@ export default function DashboardCard({
           )}
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex min-h-24 flex-col gap-1">
           <h3 className="text-3xl font-bold tracking-tight">{value}</h3>
           {description && (
             <p className="text-xs text-muted-foreground line-clamp-1">
               {description}
             </p>
+          )}
+
+          {footerRight && (
+            <div className="mt-auto flex justify-end pt-3">{footerRight}</div>
           )}
         </div>
       </CardContent>

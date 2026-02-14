@@ -15,6 +15,7 @@ import type {
   DeliveryWithItems,
 } from '@/types'
 import { useCreateDeliveryMutation } from '@/lib/mutations/deliveries'
+import type { FieldErrors } from '@/lib/error/utils/formErrors'
 
 function incrementDeliveryNumber(num: string) {
   const match = num.match(/(\d+)$/)
@@ -192,17 +193,23 @@ export function DeliveryForm({
   onClose,
 }: DeliveryFormProps) {
   const [form, setForm] = useState<DeliveryFormState>(formInitials)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [errors, setErrors] = useState<FieldErrors>({})
 
   function validateForm() {
-    const newErrors: Record<string, string> = {}
+    const newErrors: FieldErrors = {}
 
-    if (!form.customer_id) newErrors.customer_id = 'Müşteri seçilmelidir.'
+    if (!form.customer_id) {
+      newErrors.customer_id = { i18n: { ns: 'validation', key: 'required' } }
+    }
     if (!form.delivery_number.trim())
-      newErrors.delivery_number = 'İrsaliye numarası gereklidir.'
+      newErrors.delivery_number = {
+        i18n: { ns: 'validation', key: 'required' },
+      }
 
     if (form.items.length === 0)
-      newErrors.items = 'En az bir ürün eklenmelidir.'
+      newErrors.items = {
+        i18n: { ns: 'validation', key: 'at_least_one_item' },
+      }
 
     // 🔥 Mixed currency validation
     const currencies = new Set(
@@ -213,7 +220,9 @@ export function DeliveryForm({
     )
 
     if (currencies.size > 1) {
-      newErrors.items = 'Farklı para birimleri aynı sevkte kullanılamaz.'
+      newErrors.items = {
+        i18n: { ns: 'validation', key: 'mixed_currency_not_allowed' },
+      }
     }
 
     // 🚫 Prevent over-delivery (only for rows with selected item)
@@ -224,7 +233,9 @@ export function DeliveryForm({
     )
 
     if (qtyError) {
-      newErrors.items = 'Teslim miktarı sipariş miktarını aşamaz!'
+      newErrors.items = {
+        i18n: { ns: 'validation', key: 'delivery_quantity_exceeds_remaining' },
+      }
     }
 
     setErrors(newErrors)
@@ -501,7 +512,6 @@ export function DeliveryForm({
             onChange={handleChange}
             customerIds={customerIdsFromOrders}
             errors={errors}
-            setErrors={setErrors}
           />
 
           <div className="h-full max-h-60 overflow-y-auto">

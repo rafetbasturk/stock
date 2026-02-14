@@ -1,7 +1,7 @@
 import { and, eq, sql } from 'drizzle-orm'
 import { InsertStockMovement } from '@/types'
 import { productsTable, stockMovementsTable } from '@/db/schema'
-import { BaseAppError } from '@/lib/error/core'
+import { fail } from '@/lib/error/core/serverError'
 import type { PgTransaction } from 'drizzle-orm/pg-core'
 
 export async function createStockMovementTx(
@@ -9,17 +9,13 @@ export async function createStockMovementTx(
   input: InsertStockMovement,
 ) {
   if (input.quantity === 0)
-    throw BaseAppError.create({
-      code: 'INVALID_STOCK_QUANTITY',
-    })
+    fail('INVALID_STOCK_QUANTITY')
 
   if (
     (input.reference_type && !input.reference_id) ||
     (!input.reference_type && input.reference_id)
   )
-    throw BaseAppError.create({
-      code: 'INVALID_REFERENCE',
-    })
+    fail('INVALID_REFERENCE')
 
   const product = await tx
     .select({
@@ -37,17 +33,13 @@ export async function createStockMovementTx(
     .then((rows) => rows[0])
 
   if (!product)
-    throw BaseAppError.create({
-      code: 'PRODUCT_NOT_FOUND',
-    })
+    fail('PRODUCT_NOT_FOUND')
 
   if (input.quantity < 0) {
     const newStock = product.stock_quantity + input.quantity
 
     if (newStock < 0)
-      throw BaseAppError.create({
-        code: 'INSUFFICIENT_STOCK',
-      })
+      fail('INSUFFICIENT_STOCK')
   }
 
   await tx.insert(stockMovementsTable).values(input).returning()
@@ -73,14 +65,10 @@ export async function deleteStockMovementTx(
     .then((rows) => rows[0])
 
   if (!movement)
-    throw BaseAppError.create({
-      code: 'STOCK_MOVEMENT_NOT_FOUND',
-    })
+    fail('STOCK_MOVEMENT_NOT_FOUND')
 
   if (movement.reference_type && movement.reference_type !== 'adjustment') {
-    throw BaseAppError.create({
-      code: 'RESTRICTED_STOCK_MOVEMENT',
-    })
+    fail('RESTRICTED_STOCK_MOVEMENT')
   }
 
   // Revert stock quantity
@@ -108,21 +96,15 @@ export async function updateStockMovementTx(
     .then((rows) => rows[0])
 
   if (!movement)
-    throw BaseAppError.create({
-      code: 'STOCK_MOVEMENT_NOT_FOUND',
-    })
+    fail('STOCK_MOVEMENT_NOT_FOUND')
 
   if (movement.reference_type && movement.reference_type !== 'adjustment') {
-    throw BaseAppError.create({
-      code: 'RESTRICTED_STOCK_MOVEMENT',
-    })
+    fail('RESTRICTED_STOCK_MOVEMENT')
   }
 
   if (input.quantity !== undefined && input.quantity !== movement.quantity) {
     if (input.quantity === 0)
-      throw BaseAppError.create({
-        code: 'INVALID_STOCK_QUANTITY',
-      })
+      fail('INVALID_STOCK_QUANTITY')
 
     // Update product stock with the difference
     const diff = input.quantity - movement.quantity

@@ -21,6 +21,12 @@ import { ProductsDataTable } from '@/components/products/ProductsDataTable'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { StockAdjustmentDialog } from '@/components/stock/StockAdjustmentDialog'
 
+type ModalState =
+  | { type: 'closed' }
+  | { type: 'adding' }
+  | { type: 'editing'; product: ProductListRow }
+  | { type: 'adjusting'; product: ProductListRow }
+
 export const Route = createFileRoute('/products/')({
   validateSearch: zodValidator(productsSearchSchema),
   loaderDeps: ({ search }) => search,
@@ -42,12 +48,7 @@ function ProductList() {
   const search = Route.useSearch()
 
   // Modal state using discriminated union
-  const [modalState, setModalState] = useState<
-    | { type: 'closed' }
-    | { type: 'adding' }
-    | { type: 'editing'; product: ProductListRow }
-    | { type: 'adjusting'; product: ProductListRow }
-  >({ type: 'closed' })
+  const [modalState, setModalState] = useState<ModalState>({ type: 'closed' })
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
 
   const closeModal = useCallback(() => setModalState({ type: 'closed' }), [])

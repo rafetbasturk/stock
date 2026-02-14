@@ -9,7 +9,11 @@ import type { OrderListRow } from '@/types'
 import { ordersSearchSchema } from '@/lib/types'
 import { debounce } from '@/lib/debounce'
 import { useDeleteOrderMutation } from '@/lib/mutations/orders'
-import { getFilterOptions, lastOrderNumberQuery, ordersQuery } from '@/lib/queries/orders'
+import {
+  getFilterOptions,
+  lastOrderNumberQuery,
+  ordersQuery,
+} from '@/lib/queries/orders'
 
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { getColumns } from '@/components/orders/columns'
@@ -18,6 +22,11 @@ import { OrderListHeader } from '@/components/orders/OrderListHeader'
 import { OrdersDataTable } from '@/components/orders/OrdersDataTable'
 import { OrderDeleteDialog } from '@/components/orders/OrderDeleteDialog'
 import { DataTableFilter } from '@/components/DataTable'
+
+type ModalState =
+  | { type: 'closed' }
+  | { type: 'adding' }
+  | { type: 'editing'; order: OrderListRow }
 
 export const Route = createFileRoute('/orders/')({
   validateSearch: zodValidator(ordersSearchSchema),
@@ -38,11 +47,7 @@ function OrderList() {
   const navigate = useNavigate({ from: Route.fullPath })
   const search = Route.useSearch()
 
-  const [modalState, setModalState] = useState<
-    | { type: 'closed' }
-    | { type: 'adding' }
-    | { type: 'editing'; order: OrderListRow }
-  >({ type: 'closed' })
+  const [modalState, setModalState] = useState<ModalState>({ type: 'closed' })
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
 
   const closeModal = useCallback(() => setModalState({ type: 'closed' }), [])

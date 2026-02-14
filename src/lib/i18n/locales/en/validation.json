@@ -4,5 +4,8 @@
   "max_length": "Must be at most {{max}} characters",
   "invalid_format": "Invalid format",
   "not_multiple_of": "Must be a multiple of {{multiple}}",
-  "invalid": "Invalid value"
+  "invalid": "Invalid value",
+  "at_least_one_item": "At least one item is required.",
+  "mixed_currency_not_allowed": "Different currencies cannot be used in the same delivery.",
+  "delivery_quantity_exceeds_remaining": "Delivery quantity cannot exceed remaining order quantity."
 }

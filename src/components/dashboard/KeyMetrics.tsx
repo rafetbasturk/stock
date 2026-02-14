@@ -1,12 +1,13 @@
+import { Clock, PackageCheck, Wallet } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Skeleton } from '../ui/skeleton'
 import { ErrorMessage } from '../error/ErrorMessage'
+import { Badge } from '../ui/badge'
+import { Skeleton } from '../ui/skeleton'
 import DashboardCard from './DashboardCard'
 import type { HomeSearch } from '@/lib/types/types.search'
-import { useFetchMetrics } from '@/lib/queries/metrics'
 import { convertToCurrencyFormat } from '@/lib/currency'
+import { useFetchMetrics } from '@/lib/queries/metrics'
 import { useExchangeRatesStore } from '@/stores/exchangeRatesStore'
-import { Clock, PackageCheck, Wallet } from 'lucide-react'
 
 interface Props {
   filters: HomeSearch
@@ -67,6 +68,11 @@ export default function KeyMetrics({ filters }: Props) {
         value={totalRevenue}
         icon={Wallet}
         description={t('metrics.total_desc')}
+        footerRight={
+          <Badge variant="secondary" className="font-medium tracking-wide">
+            {t('metrics.total_orders_chip', { count: data.totalOrders })}
+          </Badge>
+        }
       />
       <DashboardCard
         title={t('metrics.delivered_order_amount')}
@@ -74,6 +80,13 @@ export default function KeyMetrics({ filters }: Props) {
         icon={PackageCheck}
         status="success"
         description={t('metrics.delivered_desc')}
+        footerRight={
+          <Badge variant="secondary" className="font-medium tracking-wide">
+            {t('metrics.finished_orders_chip', {
+              count: data.totalOrders - data.pendingOrders,
+            })}
+          </Badge>
+        }
       />
       <DashboardCard
         title={t('metrics.open_order_amount')}
@@ -81,6 +94,11 @@ export default function KeyMetrics({ filters }: Props) {
         icon={Clock}
         status="warning"
         description={t('metrics.open_desc')}
+        footerRight={
+          <Badge variant="secondary" className="font-medium tracking-wide">
+            {t('metrics.pending_orders_chip', { count: data.pendingOrders })}
+          </Badge>
+        }
       />
     </div>
   )

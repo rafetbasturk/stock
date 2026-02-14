@@ -18,7 +18,7 @@ interface InputFieldProps extends Omit<
   label?: string;
   value: string | number | undefined;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  error?: I18nErrorMessage;
+  error?: I18nErrorMessage | string;
 }
 
 export default function InputField({
@@ -58,7 +58,9 @@ export default function InputField({
 
       {error && (
         <FieldError className="text-xs absolute -bottom-4.5">
-          {t(`${error.i18n.ns}:${error.i18n.key}`, error.params)}
+          {typeof error === "string"
+            ? error
+            : t(`${error.i18n.ns}:${error.i18n.key}`, error.params)}
         </FieldError>
       )}
     </Field>

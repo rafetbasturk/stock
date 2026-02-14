@@ -9,6 +9,7 @@ import {
   unique,
   index,
   check,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core'
 import {
   currencyEnum,
@@ -331,15 +332,49 @@ export const usersTable = pgTable('users', {
   created_at: timestamp('created_at').defaultNow().notNull(),
 })
 
-export const sessionsTable = pgTable('sessions', {
+export const sessionsTable = pgTable(
+  'sessions',
+  {
+    id: serial('id').primaryKey(),
+    user_id: integer('user_id')
+      .notNull()
+      .references(() => usersTable.id, { onDelete: 'cascade' }),
+    refresh_token: text('refresh_token').notNull().unique(),
+    user_agent: text('user_agent'),
+    expires_at: timestamp('expires_at').notNull(),
+    last_activity_at: timestamp('last_activity_at').notNull(),
+    created_at: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('sessions_user_idx').on(table.user_id),
+    index('sessions_expires_idx').on(table.expires_at),
+    index('sessions_last_activity_idx').on(table.last_activity_at),
+    uniqueIndex('sessions_refresh_token_idx').on(table.refresh_token),
+  ],
+)
+
+export const loginAttemptsTable = pgTable(
+  'login_attempts',
+  {
+    id: serial('id').primaryKey(),
+    username: text('username').notNull(),
+    ip: text('ip').notNull(),
+    attempts: integer('attempts').notNull().default(0),
+    locked_until: timestamp('locked_until'),
+    last_attempt_at: timestamp('last_attempt_at').notNull().defaultNow(),
+    created_at: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('login_attempts_username_ip_idx').on(table.username, table.ip),
+  ],
+)
+
+export const rateLimitsTable = pgTable('rate_limits', {
   id: serial('id').primaryKey(),
-  user_id: integer('user_id')
-    .notNull()
-    .references(() => usersTable.id, { onDelete: 'cascade' }),
-  refresh_token: text('refresh_token').notNull().unique(),
-  user_agent: text('user_agent'),
-  expires_at: timestamp('expires_at').notNull(),
-  last_activity_at: timestamp('last_activity_at').notNull(),
+  ip: text('ip').notNull().unique(),
+  count: integer('count').notNull().default(0),
+  window_start: timestamp('window_start').notNull(),
+  locked_until: timestamp('locked_until'),
   created_at: timestamp('created_at').defaultNow().notNull(),
 })
 

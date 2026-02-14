@@ -8,7 +8,7 @@ import { useFetchCustomers } from "@/lib/queries/customers";
 type Props = {
   value: number | null;
   onValueChange: (id: number | null) => void;
-  error?: I18nErrorMessage;
+  error?: I18nErrorMessage | string;
   onErrorChange?: React.Dispatch<React.SetStateAction<FieldErrors>>;
   required?: boolean;
   label?: string;

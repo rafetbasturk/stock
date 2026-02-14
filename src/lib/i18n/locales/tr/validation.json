@@ -4,5 +4,8 @@
   "max_length": "En fazla {{max}} karakter olmalıdır",
   "invalid_format": "Geçersiz format",
   "not_multiple_of": "{{multiple}} katı olmalıdır",
-  "invalid": "Geçersiz değer"
+  "invalid": "Geçersiz değer",
+  "at_least_one_item": "En az bir ürün kalemi eklenmelidir.",
+  "mixed_currency_not_allowed": "Aynı sevkte farklı para birimleri kullanılamaz.",
+  "delivery_quantity_exceeds_remaining": "Teslim miktarı kalan sipariş miktarını aşamaz."
 }

@@ -1,5 +1,6 @@
 // src/server/deliveries.ts
 import { createServerFn } from '@tanstack/react-start'
+import { authMiddleware } from './middleware/auth'
 import {
   and,
   desc as drizzleDesc,
@@ -29,9 +30,9 @@ import {
   deliveryItemsTable,
   orderItemsTable,
 } from '@/db/schema'
-import { fail } from '@/lib/error/core/serverError'
+import { fail, failValidation } from '@/lib/error/core/serverError'
 import { BaseAppError } from '@/lib/error/core'
-import { createStockMovementTx } from './stock.service'
+import { createStockMovementTx } from './services/stockService'
 
 export interface CreateDeliveryInput {
   customer_id: number
@@ -44,17 +45,31 @@ export interface CreateDeliveryInput {
   )[]
 }
 
-export const createDelivery = createServerFn({ method: 'POST' })
+export const createDelivery = createServerFn().middleware([authMiddleware])
   .inputValidator((data: CreateDeliveryInput) => data)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const user = context.user
+
     const { customer_id, delivery_number, delivery_date, notes, items } = data
 
+    const fieldErrors: Record<string, { i18n: { ns: 'validation'; key: 'required' } }> = {}
+
     if (!customer_id) {
-      throw fail('CUSTOMER_NOT_FOUND')
+      fieldErrors.customer_id = { i18n: { ns: 'validation', key: 'required' } }
+    }
+
+    if (!delivery_number?.trim()) {
+      fieldErrors.delivery_number = {
+        i18n: { ns: 'validation', key: 'required' },
+      }
     }
 
     if (!items?.length) {
-      throw fail('DELIVERY_NOT_FOUND')
+      fieldErrors.items = { i18n: { ns: 'validation', key: 'required' } }
+    }
+
+    if (Object.keys(fieldErrors).length > 0) {
+      failValidation(fieldErrors)
     }
 
     try {
@@ -85,9 +100,7 @@ export const createDelivery = createServerFn({ method: 'POST' })
           const ids = standardItems.map((i) => i.order_item_id)
 
           if (new Set(ids).size !== ids.length)
-            throw BaseAppError.create({
-              code: 'DUPLICATE_ORDER_ITEM',
-            })
+            fail('DUPLICATE_ORDER_ITEM')
 
           standardOrderItems = await tx.query.orderItemsTable.findMany({
             where: and(
@@ -112,24 +125,18 @@ export const createDelivery = createServerFn({ method: 'POST' })
           })
 
           if (standardOrderItems.length !== standardItems.length)
-            throw BaseAppError.create({
-              code: 'ORDER_ITEM_NOT_FOUND',
-            })
+            fail('ORDER_ITEM_NOT_FOUND')
 
           for (const item of standardItems) {
             if (item.delivered_quantity <= 0)
-              throw BaseAppError.create({
-                code: 'INVALID_DELIVERY_QUANTITY',
-              })
+              fail('INVALID_DELIVERY_QUANTITY')
 
             const orderItem = standardOrderItems.find(
               (oi) => oi.id === item.order_item_id,
             )
 
             if (!orderItem?.product)
-              throw BaseAppError.create({
-                code: 'ORDER_ITEM_MISSING_PRODUCT',
-              })
+              fail('ORDER_ITEM_MISSING_PRODUCT')
 
             if (orderItem.order_id) affectedOrderIds.add(orderItem.order_id)
           }
@@ -149,7 +156,7 @@ export const createDelivery = createServerFn({ method: 'POST' })
           .returning()
 
         if (!delivery) {
-          throw fail('DELIVERY_CREATION_FAILED')
+          fail('DELIVERY_CREATION_FAILED')
         }
 
         /*───────────────────────────────────────────────
@@ -177,14 +184,10 @@ export const createDelivery = createServerFn({ method: 'POST' })
             const orderItem = orderItemMap.get(item.order_item_id)
 
             if (!orderItem)
-              throw BaseAppError.create({
-                code: 'ORDER_ITEM_NOT_FOUND',
-              })
+              fail('ORDER_ITEM_NOT_FOUND')
 
             if (!orderItem.product_id)
-              throw BaseAppError.create({
-                code: 'ORDER_ITEM_INVALID',
-              })
+              fail('ORDER_ITEM_INVALID')
 
             await createStockMovementTx(tx, {
               product_id: orderItem.product_id,
@@ -197,7 +200,7 @@ export const createDelivery = createServerFn({ method: 'POST' })
 
               reference_id: delivery.id,
 
-              created_by: 1, // replace with session user later
+              created_by: user.id,
 
               notes: `Delivery #${delivery.delivery_number}`,
             })
@@ -238,11 +241,16 @@ export const createDelivery = createServerFn({ method: 'POST' })
     } catch (error) {
       console.error('[createDelivery] failed:', error)
 
-      throw BaseAppError.create({ code: 'DELIVERY_CREATION_FAILED' })
+      if (error instanceof BaseAppError) {
+        throw error
+      }
+
+      fail('DELIVERY_CREATION_FAILED')
     }
   })
 
-export const getDeliveries = createServerFn().handler(async () => {
+export const getDeliveries = createServerFn().middleware([authMiddleware]).handler(async () => {
+
   const deliveriesRaw = await db.query.deliveriesTable.findMany({
     with: {
       customer: true,
@@ -296,9 +304,10 @@ export const getDeliveries = createServerFn().handler(async () => {
   return deliveriesRaw.map(addTotalAmount)
 })
 
-export const getDeliveryById = createServerFn({ method: 'GET' })
+export const getDeliveryById = createServerFn().middleware([authMiddleware])
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data }) => {
+
     const delivery = await db.query.deliveriesTable.findFirst({
       with: {
         customer: true,
@@ -355,9 +364,10 @@ const paginatedSchema = z.object({
   endDate: z.string().trim().optional(),
 })
 
-export const getPaginatedDeliveries = createServerFn({ method: 'POST' })
+export const getPaginatedDeliveries = createServerFn().middleware([authMiddleware])
   .inputValidator((data) => paginatedSchema.parse(data))
   .handler(async ({ data }) => {
+
     const {
       pageIndex,
       pageSize,
@@ -518,9 +528,10 @@ export const getPaginatedDeliveries = createServerFn({ method: 'POST' })
     }
   })
 
-export const removeDelivery = createServerFn({ method: 'POST' })
+export const removeDelivery = createServerFn().middleware([authMiddleware])
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data: { id } }) => {
+
     await db
       .update(deliveriesTable)
       .set({
@@ -532,8 +543,9 @@ export const removeDelivery = createServerFn({ method: 'POST' })
     return { success: true }
   })
 
-export const getLastDeliveryNumber = createServerFn({ method: 'GET' }).handler(
+export const getLastDeliveryNumber = createServerFn().middleware([authMiddleware]).handler(
   async () => {
+
     const [lastDelivery] = await db
       .select({
         delivery_number: deliveriesTable.delivery_number,
@@ -549,9 +561,8 @@ export const getLastDeliveryNumber = createServerFn({ method: 'GET' }).handler(
   },
 )
 
-export const getDeliveryFilterOptions = createServerFn({
-  method: 'GET',
-}).handler(async () => {
+export const getDeliveryFilterOptions = createServerFn().middleware([authMiddleware]).handler(async () => {
+
   const customerRows = await db
     .selectDistinct({
       customer_id: deliveriesTable.customer_id,

@@ -1,22 +1,29 @@
 import { createServerFn } from '@tanstack/react-start'
+import { authMiddleware } from './middleware/auth'
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import {
   createStockMovementTx,
   deleteStockMovementTx,
   updateStockMovementTx,
-} from './stock.service'
+} from './services/stockService'
 import type { SQL } from 'drizzle-orm'
 import type { InsertStockMovement } from '@/types'
 import { db } from '@/db'
 import { stockMovementsTable } from '@/db/schema'
 import { BaseAppError } from '@/lib/error/core'
+import { fail } from '@/lib/error/core/serverError'
 
-export const createStockMovement = createServerFn({ method: 'POST' })
+export const createStockMovement = createServerFn().middleware([authMiddleware])
   .inputValidator((data: InsertStockMovement) => data)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const user = context.user
+
     try {
       await db.transaction(async (tx) => {
-        await createStockMovementTx(tx, data)
+        await createStockMovementTx(tx, {
+          ...data,
+          created_by: user.id,
+        })
       })
 
       return { success: true }
@@ -25,13 +32,11 @@ export const createStockMovement = createServerFn({ method: 'POST' })
 
       if (error instanceof BaseAppError) throw error
 
-      throw BaseAppError.create({
-        code: 'STOCK_MOVEMENT_FAILED',
-      })
+      fail('STOCK_MOVEMENT_FAILED')
     }
   })
 
-export const getStockMovements = createServerFn({ method: 'GET' })
+export const getStockMovements = createServerFn().middleware([authMiddleware])
   .inputValidator(
     (data: {
       product_id?: number
@@ -42,6 +47,7 @@ export const getStockMovements = createServerFn({ method: 'GET' })
     }) => data,
   )
   .handler(async ({ data }) => {
+
     const page = data.page ?? 0
     const pageSize = data.pageSize ?? 20
     const search = data.q?.trim()
@@ -71,7 +77,9 @@ export const getStockMovements = createServerFn({ method: 'GET' })
         .filter(Boolean)
 
       if (values.length > 1) {
-        conditions.push(inArray(stockMovementsTable.movement_type, values as any))
+        conditions.push(
+          inArray(stockMovementsTable.movement_type, values as any),
+        )
       } else if (values.length === 1) {
         conditions.push(eq(stockMovementsTable.movement_type, values[0] as any))
       }
@@ -118,9 +126,10 @@ export const getStockMovements = createServerFn({ method: 'GET' })
     }
   })
 
-export const deleteStockMovement = createServerFn({ method: 'POST' })
+export const deleteStockMovement = createServerFn().middleware([authMiddleware])
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data }) => {
+
     try {
       await db.transaction(async (tx) => {
         await deleteStockMovementTx(tx, data.id)
@@ -129,15 +138,16 @@ export const deleteStockMovement = createServerFn({ method: 'POST' })
     } catch (error) {
       console.error('[deleteStockMovement]', error)
       if (error instanceof BaseAppError) throw error
-      throw BaseAppError.create({ code: 'STOCK_MOVEMENT_DELETE_FAILED' })
+      fail('STOCK_MOVEMENT_DELETE_FAILED')
     }
   })
 
-export const updateStockMovement = createServerFn({ method: 'POST' })
+export const updateStockMovement = createServerFn().middleware([authMiddleware])
   .inputValidator(
     (data: { id: number; quantity?: number; notes?: string }) => data,
   )
   .handler(async ({ data }) => {
+
     try {
       await db.transaction(async (tx) => {
         const { id, ...updateData } = data
@@ -147,6 +157,6 @@ export const updateStockMovement = createServerFn({ method: 'POST' })
     } catch (error) {
       console.error('[updateStockMovement]', error)
       if (error instanceof BaseAppError) throw error
-      throw BaseAppError.create({ code: 'STOCK_MOVEMENT_UPDATE_FAILED' })
+      fail('STOCK_MOVEMENT_UPDATE_FAILED')
     }
   })

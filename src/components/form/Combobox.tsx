@@ -12,6 +12,8 @@ import {
 } from "../ui/command";
 import { cn } from "@/lib/utils";
 import { Field, FieldError, FieldLabel } from "../ui/field";
+import { useTranslation } from "react-i18next";
+import type { I18nErrorMessage } from "@/lib/error/core/errorTransport";
 
 export interface ComboItem {
   value: number | string;
@@ -30,7 +32,7 @@ interface ComboboxProps {
   onChange: (value: string | number) => void;
   searchable?: boolean;
   isLoading?: boolean;
-  error?: string;
+  error?: I18nErrorMessage | string;
   required?: boolean;
   // allow custom row + trigger UI
   renderItem?: (item: ComboItem, isSelected: boolean) => React.ReactNode;
@@ -51,6 +53,7 @@ export default function Combobox({
   renderItem,
   renderTriggerLabel,
 }: ComboboxProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -155,7 +158,11 @@ export default function Combobox({
         </PopoverContent>
       </Popover>
       {error && (
-        <FieldError className="text-xs absolute -bottom-4">{error}</FieldError>
+        <FieldError className="text-xs absolute -bottom-4">
+          {typeof error === "string"
+            ? error
+            : t(`${error.i18n.ns}:${error.i18n.key}`, error.params)}
+        </FieldError>
       )}
     </Field>
   );

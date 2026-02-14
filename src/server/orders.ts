@@ -1,5 +1,6 @@
 // src/server/orders.ts
 import { createServerFn } from '@tanstack/react-start'
+import { authMiddleware } from './middleware/auth'
 import {
   and,
   desc as drizzleDesc,
@@ -28,9 +29,10 @@ import {
 } from '@/db/schema'
 import { statusArray, unitArray } from '@/lib/constants'
 import { currencyArray } from '@/lib/currency'
-import { BaseAppError } from '@/lib/error/core'
+import { fail, failValidation } from '@/lib/error/core/serverError'
 
-export const getOrders = createServerFn().handler(async () => {
+export const getOrders = createServerFn().middleware([authMiddleware]).handler(async () => {
+
   const ordersRaw = await db.query.ordersTable.findMany({
     with: {
       customer: true,
@@ -80,7 +82,8 @@ export const getOrders = createServerFn().handler(async () => {
   return ordersRaw.map(addTotalAmount)
 })
 
-export const getYearRange = createServerFn().handler(async () => {
+export const getYearRange = createServerFn().middleware([authMiddleware]).handler(async () => {
+
   const result = await db
     .select({
       minYear: sql<
@@ -101,9 +104,10 @@ export const getYearRange = createServerFn().handler(async () => {
   }
 })
 
-export const getOrderById = createServerFn({ method: 'GET' })
+export const getOrderById = createServerFn().middleware([authMiddleware])
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data }) => {
+
     const order = await db.query.ordersTable.findFirst({
       with: {
         customer: true,
@@ -152,9 +156,10 @@ export const getOrderById = createServerFn({ method: 'GET' })
     return order ? addTotalAmount(order) : null
   })
 
-export const getOrderDeliveries = createServerFn({ method: 'GET' })
+export const getOrderDeliveries = createServerFn().middleware([authMiddleware])
   .inputValidator((data: { orderId: number }) => data)
   .handler(async ({ data: { orderId } }) => {
+
     const [standardRefs, customRefs] = await Promise.all([
       db
         .selectDistinct({
@@ -284,9 +289,10 @@ function normalizeParams(value?: string) {
   return trimmed && trimmed.length > 0 ? trimmed : undefined
 }
 
-export const getPaginatedOrders = createServerFn({ method: 'POST' })
+export const getPaginatedOrders = createServerFn().middleware([authMiddleware])
   .inputValidator((data) => paginatedSchema.parse(data))
   .handler(async ({ data }) => {
+
     const {
       pageIndex,
       pageSize,
@@ -429,20 +435,19 @@ export const getPaginatedOrders = createServerFn({ method: 'POST' })
     }
   })
 
-export const createOrder = createServerFn({ method: 'POST' })
+export const createOrder = createServerFn().middleware([authMiddleware])
   .inputValidator((data: OrderSubmitPayload) => data)
   .handler(async ({ data: order }) => {
+
     if (!order.order_number.trim()) {
-      throw BaseAppError.create({
-        status: 400,
-        code: 'VALIDATION_ERROR',
+      failValidation({
+        order_number: { i18n: { ns: 'validation', key: 'required' } },
       })
     }
 
     if (!Number.isInteger(order.customer_id) || order.customer_id <= 0) {
-      throw BaseAppError.create({
-        status: 400,
-        code: 'INVALID_ID',
+      failValidation({
+        customer_id: { i18n: { ns: 'validation', key: 'invalid' } },
       })
     }
 
@@ -465,11 +470,7 @@ export const createOrder = createServerFn({ method: 'POST' })
           // Check if all requested products exist
           const uniqueProductIds = new Set(productIds)
           if (products.length !== uniqueProductIds.size) {
-            throw BaseAppError.create({
-              status: 400,
-              code: 'PRODUCT_NOT_FOUND',
-              message: 'One or more products not found',
-            })
+            fail('PRODUCT_NOT_FOUND')
           }
 
           const stockMap = new Map(
@@ -595,9 +596,10 @@ const updateOrderSchema = z.object({
   }),
 })
 
-export const updateOrder = createServerFn({ method: 'POST' })
+export const updateOrder = createServerFn().middleware([authMiddleware])
   .inputValidator((data) => updateOrderSchema.parse(data))
   .handler(async ({ data: { id, data: order } }) => {
+
     await db.transaction(async (tx) => {
       const updatedOrders = await tx
         .update(ordersTable)
@@ -618,10 +620,7 @@ export const updateOrder = createServerFn({ method: 'POST' })
         .returning({ id: ordersTable.id })
 
       if (updatedOrders.length === 0) {
-        throw BaseAppError.create({
-          code: 'ORDER_NOT_FOUND',
-          status: 404,
-        })
+        fail('ORDER_NOT_FOUND')
       }
 
       await tx.delete(orderItemsTable).where(eq(orderItemsTable.order_id, id))
@@ -669,9 +668,10 @@ export const updateOrder = createServerFn({ method: 'POST' })
     return await getOrderById({ data: { id } })
   })
 
-export const removeOrder = createServerFn({ method: 'POST' })
+export const removeOrder = createServerFn().middleware([authMiddleware])
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data: { id } }) => {
+
     await db
       .update(ordersTable)
       .set({
@@ -683,8 +683,9 @@ export const removeOrder = createServerFn({ method: 'POST' })
     return { success: true }
   })
 
-export const getLastOrderNumber = createServerFn({ method: 'GET' }).handler(
+export const getLastOrderNumber = createServerFn().middleware([authMiddleware]).handler(
   async () => {
+
     const [lastOrder] = await db
       .select({
         order_number: ordersTable.order_number,
@@ -697,9 +698,8 @@ export const getLastOrderNumber = createServerFn({ method: 'GET' }).handler(
   },
 )
 
-export const getOrderFilterOptions = createServerFn({
-  method: 'GET',
-}).handler(async () => {
+export const getOrderFilterOptions = createServerFn().middleware([authMiddleware]).handler(async () => {
+
   const statusRows = await db
     .selectDistinct({ status: ordersTable.status })
     .from(ordersTable)
@@ -715,7 +715,7 @@ export const getOrderFilterOptions = createServerFn({
       customer_name: customersTable.name,
     })
     .from(ordersTable)
-    .where(isNull(customersTable.deleted_at))
+    .where(isNull(ordersTable.deleted_at))
     .innerJoin(customersTable, eq(customersTable.id, ordersTable.customer_id))
 
   const customers = customerRows

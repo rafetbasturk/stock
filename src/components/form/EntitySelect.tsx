@@ -29,7 +29,7 @@ type Props<T extends number | string> = {
   /** Called when value changes */
   onValueChange: (value: T | null) => void;
   /** Error message (if any) */
-  error?: I18nErrorMessage;
+  error?: I18nErrorMessage | string;
   /** Error setter for parent form */
   onErrorChange?: React.Dispatch<React.SetStateAction<FieldErrors>>;
   /** Whether field is required */
@@ -150,7 +150,9 @@ export default function EntitySelect<T extends number | string>({
 
       {error && (
         <FieldError className="text-xs absolute -bottom-4.5">
-          {t(`${error.i18n.ns}:${error.i18n.key}`, error.params)}
+          {typeof error === "string"
+            ? error
+            : t(`${error.i18n.ns}:${error.i18n.key}`, error.params)}
         </FieldError>
       )}
     </Field>

@@ -1,6 +1,5 @@
 // src/lib/queryClient.tsx
 import { QueryClient } from "@tanstack/react-query";
-import { handleAppError } from "@/lib/error/core";
 
 let browserQueryClient: QueryClient | undefined;
 
@@ -12,11 +11,6 @@ function makeQueryClient() {
         refetchOnWindowFocus: false,
         staleTime: 30_000,
         gcTime: 5 * 60_000,
-      },
-      mutations: {
-        onError: (error) => {
-          handleAppError(error);
-        },
       },
     },
   });

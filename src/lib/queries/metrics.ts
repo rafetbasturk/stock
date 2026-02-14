@@ -3,16 +3,11 @@ import { useQuery } from '@tanstack/react-query'
 import type { HomeSearch } from '../types/types.search'
 import type { Currency } from '@/types'
 import type { Rate } from '../currency'
-import {
-  getKeyMetrics,
-  getMonthlyDeliveries,
-  getMonthlyOrders,
-  getOrdersByStatus,
-} from '@/server/metrics'
+import { getKeyMetrics, getMonthlyOverview } from '@/server/metrics'
 
 export const useFetchMetrics = (
   filters: HomeSearch,
-  rates: Rate[],
+  rates: Array<Rate>,
   preferredCurrency: Currency,
 ) => {
   const isReady = rates.length > 0 && !!preferredCurrency
@@ -42,59 +37,21 @@ export const useFetchMetrics = (
   })
 }
 
-export const useFetchOrdersByStatus = (filters: HomeSearch) => {
-  return useQuery({
-    queryKey: [
-      'order-status',
-      filters.customerId ?? null,
-      filters.year ?? null,
-    ],
-    queryFn: () =>
-      getOrdersByStatus({
-        data: filters,
-      }),
-  })
-}
-
-export const useFetchMonthlyDeliveries = (
+export const useFetchMonthlyOverview = (
   filters: HomeSearch,
-  rates: Rate[],
+  rates: Array<Rate>,
   preferredCurrency: Currency,
 ) => {
   return useQuery({
     queryKey: [
-      'delivery-monthly',
+      'monthly-overview',
       filters.customerId ?? null,
       filters.year ?? null,
       preferredCurrency ?? null,
       rates,
     ],
     queryFn: () =>
-      getMonthlyDeliveries({
-        data: {
-          filters,
-          rates,
-          preferredCurrency,
-        },
-      }),
-  })
-}
-
-export const useFetchMonthlyOrders = (
-  filters: HomeSearch,
-  rates: Rate[],
-  preferredCurrency: Currency,
-) => {
-  return useQuery({
-    queryKey: [
-      'order-monthly',
-      filters.customerId ?? null,
-      filters.year ?? null,
-      preferredCurrency ?? null,
-      rates,
-    ],
-    queryFn: () =>
-      getMonthlyOrders({
+      getMonthlyOverview({
         data: {
           filters,
           rates,

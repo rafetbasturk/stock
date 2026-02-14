@@ -102,11 +102,11 @@ export function useProductForm({
       errors.price = { i18n: { ns: "validation", key: "invalid" } };
     }
 
-    if (form.stock_quantity < 0) {
+    if ((form.stock_quantity ?? 0) < 0) {
       errors.stock_quantity = { i18n: { ns: "validation", key: "invalid" } };
     }
 
-    if (form.min_stock_level < 0) {
+    if ((form.min_stock_level ?? 0) < 0) {
       errors.min_stock_level = { i18n: { ns: "validation", key: "invalid" } };
     }
 

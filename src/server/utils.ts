@@ -1,6 +1,6 @@
 import { orderItemsTable, ordersTable } from '@/db/schema'
 import { TR } from '@/lib/constants'
-import { BaseAppError } from '@/lib/error/core'
+import { failValidation } from '@/lib/error/core/serverError'
 import {
   Currency,
   DeliveryItem,
@@ -41,21 +41,20 @@ export function normalizeProcess(input?: string | null) {
 
 export const validateProduct = (product: InsertProduct) => {
   if (!product.code?.trim()) {
-    throw BaseAppError.create({
-      status: 400,
-      code: 'VALIDATION_ERROR',
-      message: 'Product code is required',
+    failValidation({
+      code: { i18n: { ns: 'validation', key: 'required' } },
     })
   }
   if (!product.name?.trim()) {
-    throw BaseAppError.create({
-      status: 400,
-      code: 'VALIDATION_ERROR',
-      message: 'Product name is required',
+    failValidation({
+      name: { i18n: { ns: 'validation', key: 'required' } },
     })
   }
-  if (product.customer_id <= 0)
-    throw BaseAppError.create({ status: 400, code: 'INVALID_ID' })
+  if (product.customer_id <= 0) {
+    failValidation({
+      customer_id: { i18n: { ns: 'validation', key: 'invalid' } },
+    })
+  }
 }
 
 export const editProductBeforeInsert = (product: InsertProduct) => {

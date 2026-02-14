@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { authLogin, authLogout } from '@/server/auth'
 import { useAuthStore } from '@/stores/authStore'
 import { meQuery } from '@/lib/queries/auth'
 import { LogoutReason, MutationFormErrors } from '@/lib/types'
 import { useFormMutation } from '@/hooks/useFormMutation'
-import { getAuthSessionExpiredText } from '../i18n/getAuthMessages'
 
 function safeRedirect(redirect?: string) {
   if (!redirect) return '/'
@@ -23,12 +23,18 @@ export function useLoginMutation(
   const qc = useQueryClient()
   const navigate = useNavigate()
   const login = useServerFn(authLogin)
+  const { t } = useTranslation('auth')
 
   return useFormMutation({
     mutationFn: (data: { username: string; password: string }) =>
       login({ data }),
 
-    formErrorCodes: ['INVALID_CREDENTIALS', 'USER_NOT_FOUND'],
+    formErrorCodes: [
+      'INVALID_CREDENTIALS',
+      'USER_NOT_FOUND',
+      'ACCOUNT_LOCKED',
+      'RATE_LIMIT_EXCEEDED',
+    ],
 
     onFieldError: formErrors?.setAllErrors,
 
@@ -39,7 +45,7 @@ export function useLoginMutation(
     onSuccess: (user) => {
       qc.setQueryData(meQuery.queryKey, user)
       navigate({ to: safeRedirect(redirect), replace: true })
-      toast.success(`Welcome ${user.username}`)
+      toast.success(t('welcome', { username: user.username }))
     },
   })
 }
@@ -48,6 +54,7 @@ export function useLogoutMutation() {
   const qc = useQueryClient()
   const navigate = useNavigate()
   const clearSessionStore = useAuthStore((s) => s.clearSessionStore)
+  const { t } = useTranslation('auth')
 
   return useMutation<
     void, // mutation result
@@ -65,7 +72,7 @@ export function useLogoutMutation() {
 
       // 🔔 Show toast BEFORE navigation (only for inactivity)
       if (reason === 'inactivity') {
-        toast.warning('You were logged out due to inactivity.', {
+        toast.warning(t('logout_inactivity'), {
           id: 'logout-inactivity',
           closeButton: true,
           duration: Infinity,
@@ -73,10 +80,8 @@ export function useLogoutMutation() {
       }
 
       if (reason === 'session-expired') {
-        const { title, description } = getAuthSessionExpiredText()
-
-        toast.error(title, {
-          description,
+        toast.error(t('session_expired_title'), {
+          description: t('session_expired_description'),
           id: 'logout-session-expired',
           closeButton: true,
           duration: Infinity,
@@ -94,7 +99,8 @@ export function useLogoutMutation() {
       qc.setQueryData(['auth', 'me'], null)
 
       if (reason === 'session-expired') {
-        toast.error('Your session has expired. Please sign in again.', {
+        toast.error(t('session_expired_title'), {
+          description: t('session_expired_description'),
           id: 'logout-session-expired',
           closeButton: true,
           duration: Infinity,

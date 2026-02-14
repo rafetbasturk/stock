@@ -14,6 +14,8 @@
   "VALIDATION_ERROR": "Some fields contain invalid values.",
 
   "INVALID_CREDENTIALS": "Invalid username or password.",
+  "ACCOUNT_LOCKED": "Your account is temporarily locked due to too many failed attempts.",
+  "RATE_LIMIT_EXCEEDED": "Too many login attempts. Please try again later.",
   "SESSION_INVALID": "Your session has expired.",
   "UNAUTHORIZED": "You are not authorized to perform this action.",
   "FORBIDDEN": "You do not have permission to access this resource.",

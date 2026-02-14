@@ -9,7 +9,7 @@ function RouteComponent() {
   const { id } = Route.useParams()
 
   return (
-    <div className="w-dvw h-dvh flex items-center justify-center p-2">
+    <div className="min-h-svh flex items-center justify-center p-2">
       <StockMovementForm id={Number(id)} type="OUT" />
     </div>
   )

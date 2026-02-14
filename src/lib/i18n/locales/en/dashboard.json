@@ -20,6 +20,9 @@
     "delivered_desc": "Amount from already delivered items",
     "open_order_amount": "Open Order Amount",
     "open_desc": "Amount from pending orders",
+    "total_orders_chip": "{{count}} total orders",
+    "finished_orders_chip": "{{count}} finished orders",
+    "pending_orders_chip": "{{count}} pending orders",
     "total_order_count": "Total Order Count",
     "order_count_this_month": "Order Count (This Month)",
     "open_order_count": "Open Order Count"

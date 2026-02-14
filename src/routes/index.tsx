@@ -3,7 +3,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { LucideLayoutDashboard } from 'lucide-react'
-import type { HomeSearch } from '@/lib/types/types.search'
+import { homeSearchSchema, type HomeSearch } from '@/lib/types/types.search'
 import { generateYearOptions } from '@/lib/utils'
 import { yearRangeQuery } from '@/lib/queries/orders'
 
@@ -11,31 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   DashboardFilters,
   KeyMetrics,
-  MonthlyOrdersChart,
-  OrdersByStatusChart,
+  MonthlyChart,
 } from '@/components/dashboard'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { zodValidator } from '@tanstack/zod-adapter'
 
 export const Route = createFileRoute('/')({
-  validateSearch: (search: Record<string, unknown>): HomeSearch => {
-    const result: HomeSearch = {}
-
-    if (search.customerId != null && search.customerId !== '') {
-      const customerId = Number(search.customerId)
-      if (!Number.isNaN(customerId)) {
-        result.customerId = customerId
-      }
-    }
-
-    if (search.year != null && search.year !== '') {
-      const year = Number(search.year)
-      if (!Number.isNaN(year)) {
-        result.year = year
-      }
-    }
-
-    return result
-  },
+  validateSearch: zodValidator(homeSearchSchema),
   loader: async ({ context }) => {
     const years = await context.queryClient.ensureQueryData(yearRangeQuery)
     return generateYearOptions(years.minYear, years.maxYear)
@@ -82,29 +64,16 @@ function Dashboard() {
       <div className="space-y-8">
         <KeyMetrics filters={search} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <Card className="lg:col-span-4 shadow-sm border-primary/5">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-base font-semibold">
-                {t('sections.status_chart')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <OrdersByStatusChart search={search} />
-            </CardContent>
-          </Card>
-
-          <Card className="lg:col-span-8 shadow-sm border-primary/5">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-base font-semibold">
-                {t('sections.monthly_chart')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <MonthlyOrdersChart />
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="lg:col-span-8 shadow-sm border-primary/5">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-base font-semibold">
+              {t('sections.monthly_chart')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MonthlyChart filters={search} />
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

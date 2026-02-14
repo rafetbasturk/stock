@@ -14,6 +14,8 @@
   "VALIDATION_ERROR": "Bazı alanlarda geçersiz değerler var.",
 
   "INVALID_CREDENTIALS": "Kullanıcı adı veya şifre hatalı.",
+  "ACCOUNT_LOCKED": "Çok fazla başarısız deneme nedeniyle hesabınız geçici olarak kilitlendi.",
+  "RATE_LIMIT_EXCEEDED": "Çok fazla giriş denemesi yapıldı. Lütfen daha sonra tekrar deneyin.",
   "SESSION_INVALID": "Oturum süresi doldu.",
   "UNAUTHORIZED": "Bu işlem için yetkiniz yok.",
   "FORBIDDEN": "Bu kaynağa erişim izniniz yok.",

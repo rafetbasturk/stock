@@ -16,6 +16,9 @@ import Combobox from "@/components/form/Combobox";
 import { cn } from "@/lib/utils";
 import { convertToCurrencyFormat } from "@/lib/currency";
 import type { DeliveryItem, OrderMinimal } from "../DeliveryForm";
+import type { FieldErrors } from "@/lib/error/utils/formErrors";
+import type { I18nErrorMessage } from "@/lib/error/core/errorTransport";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   orders: OrderMinimal[];
@@ -23,8 +26,8 @@ interface Props {
   onItemChange: (index: number, field: string, value: any) => void;
   removeItem: (index: number) => void;
   addItem: () => void;
-  errors: Record<string, string>;
-  setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  errors: FieldErrors;
+  setErrors: React.Dispatch<React.SetStateAction<FieldErrors>>;
 }
 
 export default function DeliveryFormItems({
@@ -36,7 +39,11 @@ export default function DeliveryFormItems({
   errors,
   setErrors,
 }: Props) {
-  const getError = (i: number, field: string) => errors[`items.${i}.${field}`];
+  const { t } = useTranslation();
+  const getError = (i: number, field: string): I18nErrorMessage | undefined =>
+    errors[`items.${i}.${field}`];
+  const renderError = (error?: I18nErrorMessage) =>
+    error ? t(`${error.i18n.ns}:${error.i18n.key}`, error.params) : "";
 
   const clearError = (i: number, field: string) =>
     setErrors((prev) => {
@@ -86,6 +93,7 @@ export default function DeliveryFormItems({
               ) : (
                 items.map((item, idx) => {
                   const order = orders.find((o) => o.id === item.order_id);
+                  const deliveredQtyError = getError(idx, "delivered_quantity");
 
                   const orderItems = [
                     ...(order?.items || []).map((oi) => {
@@ -243,10 +251,8 @@ export default function DeliveryFormItems({
                           }}
                         />
 
-                        {getError(idx, "delivered_quantity") && (
-                          <FieldError>
-                            {getError(idx, "delivered_quantity")}
-                          </FieldError>
+                        {deliveredQtyError && (
+                          <FieldError>{renderError(deliveredQtyError)}</FieldError>
                         )}
                       </TableCell>
 
@@ -283,6 +289,12 @@ export default function DeliveryFormItems({
       >
         <Plus size={15} /> Kalem Ekle
       </Button>
+
+      {errors.items && (
+        <FieldError>
+          {t(`${errors.items.i18n.ns}:${errors.items.i18n.key}`, errors.items.params)}
+        </FieldError>
+      )}
 
       {/* FOOTER TOTALS */}
       <div className="flex justify-end mt-6 text-sm">

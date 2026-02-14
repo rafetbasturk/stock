@@ -25,7 +25,6 @@ import { Route as DeliveriesIdRouteImport } from './routes/deliveries/$id'
 import { Route as CustomersIdRouteImport } from './routes/customers/$id'
 import { Route as ApiTestRouteImport } from './routes/api/test'
 import { Route as ApiSeedRouteImport } from './routes/api/seed'
-import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as ProductsIdRouteRouteImport } from './routes/products/$id/route'
 import { Route as ProductsIdIndexRouteImport } from './routes/products/$id/index'
@@ -114,11 +113,6 @@ const ApiSeedRoute = ApiSeedRouteImport.update({
   path: '/api/seed',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthSignupRoute = AuthSignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => AuthRouteRoute,
-} as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -168,7 +162,6 @@ export interface FileRoutesByFullPath {
   '/products': typeof ProductsRouteRouteWithChildren
   '/products/$id': typeof ProductsIdRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
-  '/signup': typeof AuthSignupRoute
   '/api/seed': typeof ApiSeedRoute
   '/api/test': typeof ApiTestRoute
   '/customers/$id': typeof CustomersIdRoute
@@ -189,7 +182,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof AuthLoginRoute
-  '/signup': typeof AuthSignupRoute
   '/api/seed': typeof ApiSeedRoute
   '/api/test': typeof ApiTestRoute
   '/customers/$id': typeof CustomersIdRoute
@@ -217,7 +209,6 @@ export interface FileRoutesById {
   '/products': typeof ProductsRouteRouteWithChildren
   '/products/$id': typeof ProductsIdRouteRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
-  '/_auth/signup': typeof AuthSignupRoute
   '/api/seed': typeof ApiSeedRoute
   '/api/test': typeof ApiTestRoute
   '/customers/$id': typeof CustomersIdRoute
@@ -245,7 +236,6 @@ export interface FileRouteTypes {
     | '/products'
     | '/products/$id'
     | '/login'
-    | '/signup'
     | '/api/seed'
     | '/api/test'
     | '/customers/$id'
@@ -266,7 +256,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
-    | '/signup'
     | '/api/seed'
     | '/api/test'
     | '/customers/$id'
@@ -293,7 +282,6 @@ export interface FileRouteTypes {
     | '/products'
     | '/products/$id'
     | '/_auth/login'
-    | '/_auth/signup'
     | '/api/seed'
     | '/api/test'
     | '/customers/$id'
@@ -438,13 +426,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSeedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_auth/signup': {
-      id: '/_auth/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof AuthSignupRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
     '/_auth/login': {
       id: '/_auth/login'
       path: '/login'
@@ -506,12 +487,10 @@ declare module '@tanstack/react-router' {
 
 interface AuthRouteRouteChildren {
   AuthLoginRoute: typeof AuthLoginRoute
-  AuthSignupRoute: typeof AuthSignupRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthLoginRoute: AuthLoginRoute,
-  AuthSignupRoute: AuthSignupRoute,
 }
 
 const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(

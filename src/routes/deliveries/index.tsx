@@ -21,6 +21,11 @@ import { zodValidator } from '@tanstack/zod-adapter'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+type ModalState =
+  | { type: 'closed' }
+  | { type: 'adding' }
+  | { type: 'editing'; delivery: DeliveryListRow }
+
 export const Route = createFileRoute('/deliveries/')({
   validateSearch: zodValidator(deliveriesSearchSchema),
   loaderDeps: ({ search }) => search,
@@ -42,11 +47,7 @@ function RouteComponent() {
   const navigate = useNavigate({ from: Route.fullPath })
   const search = Route.useSearch()
 
-  const [modalState, setModalState] = useState<
-    | { type: 'closed' }
-    | { type: 'adding' }
-    | { type: 'editing'; delivery: DeliveryListRow }
-  >({ type: 'closed' })
+  const [modalState, setModalState] = useState<ModalState>({ type: 'closed' })
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
 
   const closeModal = useCallback(() => setModalState({ type: 'closed' }), [])

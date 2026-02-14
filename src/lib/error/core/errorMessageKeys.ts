@@ -19,6 +19,8 @@ export const ERROR_MESSAGE_KEYS = [
 
   // 🔐 Authentication / Authorization
   "INVALID_CREDENTIALS",
+  "ACCOUNT_LOCKED",
+  "RATE_LIMIT_EXCEEDED",
   "SESSION_INVALID",
   "UNAUTHORIZED",
   "FORBIDDEN",

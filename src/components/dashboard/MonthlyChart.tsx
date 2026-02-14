@@ -8,70 +8,54 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { useSearch } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+import { useMemo } from 'react'
 import { ErrorMessage } from '../error/ErrorMessage'
 import { Skeleton } from '../ui/skeleton'
 import { LoadingSpinner } from '../LoadingSpinner'
-import {
-  useFetchMonthlyDeliveries,
-  useFetchMonthlyOrders,
-} from '@/lib/queries/metrics'
+import type { HomeSearch } from '@/lib/types'
+import { useFetchMonthlyOverview } from '@/lib/queries/metrics'
 import { useExchangeRatesStore } from '@/stores/exchangeRatesStore'
 import { convertToCurrencyFormat } from '@/lib/currency'
 import { useMounted } from '@/hooks/useMounted'
-import { useMemo } from 'react'
 
-export default function MonthlyOrdersChart() {
+interface Props {
+  filters: HomeSearch
+}
+
+export default function MonthlyChart({ filters }: Props) {
   const { t } = useTranslation('dashboard')
   const mounted = useMounted()
-  const search = useSearch({ from: '/' })
   const rates = useExchangeRatesStore((s) => s.rates)
   const preferredCurrency = useExchangeRatesStore((s) => s.preferredCurrency)
 
   const {
-    data: ordersData = [],
-    isLoading: isOrdersLoading,
-    error: ordersError,
-    isFetching: isOrdersFetching,
-    refetch: refetchOrders,
-  } = useFetchMonthlyOrders(search, rates, preferredCurrency)
+    data: monthlyData = [],
+    isLoading,
+    error,
+    isFetching,
+    refetch,
+  } = useFetchMonthlyOverview(filters, rates, preferredCurrency)
 
-  const {
-    data: deliveriesData = [],
-    isLoading: isDeliveriesLoading,
-    error: deliveriesError,
-    isFetching: isDeliveriesFetching,
-    refetch: refetchDeliveries,
-  } = useFetchMonthlyDeliveries(search, rates, preferredCurrency)
-
-  const shortMonths = t('months.short', { returnObjects: true }) as string[]
-  const longMonths = t('months.long', { returnObjects: true }) as string[]
+  const shortMonths = t('months.short', {
+    returnObjects: true,
+  }) as Array<string>
+  const longMonths = t('months.long', { returnObjects: true }) as Array<string>
 
   const chartData = useMemo(() => {
-    if (!ordersData.length && !deliveriesData.length) return []
+    if (!monthlyData.length) return []
 
-    // Merge by month index
-    return ordersData.map((orderMonth) => {
-      const deliveryMonth = deliveriesData.find(
-        (d) => d.monthIndex === orderMonth.monthIndex,
-      )
+    return monthlyData.map((month) => {
       return {
-        ...orderMonth,
-        deliveries: deliveryMonth?.deliveries ?? 0,
-        deliveredRevenue: deliveryMonth?.revenue ?? 0,
-        monthName: shortMonths[orderMonth.monthIndex],
-        fullMonthName: longMonths[orderMonth.monthIndex],
+        ...month,
+        monthName: shortMonths[month.monthIndex],
+        fullMonthName: longMonths[month.monthIndex],
       }
     })
-  }, [ordersData, deliveriesData, shortMonths, longMonths])
-
-  const isLoading = isOrdersLoading || isDeliveriesLoading
-  const isFetching = isOrdersFetching || isDeliveriesFetching
-  const error = ordersError || deliveriesError
+  }, [monthlyData, shortMonths, longMonths])
 
   if (isLoading) {
-    return <Skeleton className="h-80 rounded-xl" />
+    return <Skeleton className="h-100 rounded-xl" />
   }
 
   if (error) {
@@ -79,16 +63,13 @@ export default function MonthlyOrdersChart() {
       <ErrorMessage
         title={t('monthly_orders.load_error_title')}
         message={error.message || t('monthly_orders.load_error_message')}
-        onRetry={() => {
-          refetchOrders()
-          refetchDeliveries()
-        }}
+        onRetry={refetch}
       />
     )
   }
 
   return (
-    <div className="relative h-80">
+    <div className="relative h-100">
       {isFetching && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
           <LoadingSpinner variant="overlay" size="lg" />
@@ -209,7 +190,7 @@ export default function MonthlyOrdersChart() {
                 name={t('monthly_orders.orders_count')}
                 fill="#0ea5e9"
                 radius={[2, 2, 0, 0]}
-                barSize={15}
+                barSize={30}
               />
               <Bar
                 yAxisId="left"
@@ -217,7 +198,7 @@ export default function MonthlyOrdersChart() {
                 name={t('monthly_orders.deliveries_count')}
                 fill="#f97316"
                 radius={[2, 2, 0, 0]}
-                barSize={15}
+                barSize={30}
               />
               <Line
                 yAxisId="right"

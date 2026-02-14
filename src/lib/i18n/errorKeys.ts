@@ -7,7 +7,10 @@ export type ValidationErrorKey =
   | "max_length"
   | "invalid_format"
   | "not_multiple_of"
-  | "invalid";
+  | "invalid"
+  | "at_least_one_item"
+  | "mixed_currency_not_allowed"
+  | "delivery_quantity_exceeds_remaining";
 
 export type AuthErrorKey = "invalid_credentials";
 
@@ -20,4 +23,3 @@ export type I18nErrorKey =
   | { ns: "validation"; key: ValidationErrorKey }
   | { ns: "auth"; key: AuthErrorKey }
   | { ns: "formErrors"; key: GenericErrorKey };
-

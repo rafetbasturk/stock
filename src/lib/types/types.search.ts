@@ -1,10 +1,12 @@
 import { z } from 'zod'
 import { fallback } from '@tanstack/zod-adapter'
 
-export type HomeSearch = {
-  customerId?: number
-  year?: number
-}
+export const homeSearchSchema = z.object({
+  customerId: z.number().optional(),
+  year: z.number().optional(),
+})
+
+export type HomeSearch = z.infer<typeof homeSearchSchema>
 
 export const productSortFields = [
   'code',

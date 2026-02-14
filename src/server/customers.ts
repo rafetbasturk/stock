@@ -1,21 +1,24 @@
 // src/server/customers.ts
 import { createServerFn } from '@tanstack/react-start'
+import { authMiddleware } from './middleware/auth'
 import { and, eq, ilike, or, SQL, sql } from 'drizzle-orm'
 import z from 'zod'
 import type { InsertCustomer } from '@/types'
 import { db } from '@/db'
 import { customersTable } from '@/db/schema'
 import { customerSortFields } from '@/lib/types'
-import { BaseAppError } from '@/lib/error/core'
+import { fail, failValidation } from '@/lib/error/core/serverError'
 import { normalizeParams, notDeleted } from './utils'
 
-export const getCustomers = createServerFn().handler(async () => {
+export const getCustomers = createServerFn().middleware([authMiddleware]).handler(async () => {
+
   return await db.query.customersTable.findMany()
 })
 
-export const getCustomerById = createServerFn({ method: 'GET' })
+export const getCustomerById = createServerFn().middleware([authMiddleware])
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data }) => {
+
     return db.query.customersTable.findFirst({
       where: (p, { eq: eqFn }) => eqFn(p.id, data.id),
     })
@@ -29,9 +32,10 @@ const paginatedSchema = z.object({
   sortDir: z.enum(['asc', 'desc']).optional(),
 })
 
-export const getPaginatedCustomers = createServerFn({ method: 'POST' })
+export const getPaginatedCustomers = createServerFn().middleware([authMiddleware])
   .inputValidator((data) => paginatedSchema.parse(data))
   .handler(async ({ data }) => {
+
     const { pageIndex, pageSize, q, sortBy = 'code', sortDir = 'asc' } = data
 
     const safePageIndex = Math.max(0, pageIndex)
@@ -99,14 +103,21 @@ export const getPaginatedCustomers = createServerFn({ method: 'POST' })
     }
   })
 
-export const createCustomer = createServerFn({ method: 'POST' })
+export const createCustomer = createServerFn().middleware([authMiddleware])
   .inputValidator((data: InsertCustomer) => data)
   .handler(async ({ data: customer }) => {
-    if (!customer.code.trim() || !customer.name.trim()) {
-      throw BaseAppError.create({
-        status: 400,
-        code: 'VALIDATION_ERROR',
-      })
+
+    const fieldErrors: Record<string, { i18n: { ns: 'validation'; key: 'required' } }> = {}
+
+    if (!customer.code.trim()) {
+      fieldErrors.code = { i18n: { ns: 'validation', key: 'required' } }
+    }
+    if (!customer.name.trim()) {
+      fieldErrors.name = { i18n: { ns: 'validation', key: 'required' } }
+    }
+
+    if (Object.keys(fieldErrors).length > 0) {
+      failValidation(fieldErrors)
     }
 
     const [newCustomer] = await db
@@ -124,21 +135,25 @@ export const createCustomer = createServerFn({ method: 'POST' })
     return newCustomer
   })
 
-export const updateCustomer = createServerFn({ method: 'POST' })
+export const updateCustomer = createServerFn().middleware([authMiddleware])
   .inputValidator((data: { id: number; data: InsertCustomer }) => data)
   .handler(async ({ data: { id, data: customer } }) => {
+
     if (!Number.isInteger(id) || id <= 0) {
-      throw BaseAppError.create({
-        status: 400,
-        code: 'INVALID_ID',
-      })
+      fail('INVALID_ID')
     }
 
-    if (!customer.code.trim() || !customer.name.trim()) {
-      throw BaseAppError.create({
-        status: 400,
-        code: 'VALIDATION_ERROR',
-      })
+    const fieldErrors: Record<string, { i18n: { ns: 'validation'; key: 'required' } }> = {}
+
+    if (!customer.code.trim()) {
+      fieldErrors.code = { i18n: { ns: 'validation', key: 'required' } }
+    }
+    if (!customer.name.trim()) {
+      fieldErrors.name = { i18n: { ns: 'validation', key: 'required' } }
+    }
+
+    if (Object.keys(fieldErrors).length > 0) {
+      failValidation(fieldErrors)
     }
 
     const updatedCustomers = await db
@@ -156,18 +171,16 @@ export const updateCustomer = createServerFn({ method: 'POST' })
       .returning()
 
     if (updatedCustomers.length === 0) {
-      throw BaseAppError.create({
-        code: 'CUSTOMER_NOT_FOUND',
-        status: 404,
-      })
+      fail('CUSTOMER_NOT_FOUND')
     }
 
     return updatedCustomers[0]
   })
 
-export const removeCustomer = createServerFn({ method: 'POST' })
+export const removeCustomer = createServerFn().middleware([authMiddleware])
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data: { id } }) => {
+
     await db
       .update(customersTable)
       .set({

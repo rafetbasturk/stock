@@ -1,4 +1,4 @@
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import z from 'zod'
 import { useForm } from '@tanstack/react-form'
 import { AlertCircle, Loader2 } from 'lucide-react'
@@ -24,6 +24,7 @@ export const Route = createFileRoute('/_auth/login')({
 function RouteComponent() {
   const { t } = useTranslation('auth')
   const { t: tCommon } = useTranslation()
+  const { t: tValidation } = useTranslation('validation')
   const formErrors = useFormErrors()
   const formErrorMessage = useFormErrorMessage(formErrors.errors)
   const loginMutation = useLoginMutation(undefined, formErrors)
@@ -35,8 +36,12 @@ function RouteComponent() {
     },
     validators: {
       onChange: z.object({
-        username: z.string().min(3),
-        password: z.string().min(4),
+        username: z
+          .string()
+          .min(3, tValidation('min_length', { min: 3 })),
+        password: z
+          .string()
+          .min(6, tValidation('min_length', { min: 6 })),
       }),
     },
     onSubmit: ({ value }) => {
@@ -82,7 +87,9 @@ function RouteComponent() {
                 const hasError = isInvalid || !!fieldError
                 return (
                   <Field data-invalid={hasError}>
-                    <FieldLabel htmlFor={field.name}>{t('username')}</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>
+                      {t('username')}
+                    </FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
@@ -121,7 +128,9 @@ function RouteComponent() {
                 const hasError = isInvalid || !!fieldError
                 return (
                   <Field data-invalid={hasError}>
-                    <FieldLabel htmlFor={field.name}>{t('password')}</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>
+                      {t('password')}
+                    </FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
@@ -133,7 +142,7 @@ function RouteComponent() {
                       }}
                       aria-invalid={hasError}
                       placeholder={t('password')}
-                      autoComplete="password"
+                      autoComplete="current-password"
                       type="password"
                     />
                     {hasError && (
@@ -168,17 +177,6 @@ function RouteComponent() {
             </Button>
           </FieldGroup>
         </form>
-
-        <p className="text-center text-sm mt-3 text-muted-foreground">
-          {t('no_account')}{' '}
-          <Link
-            to="/signup"
-            className="text-primary hover:underline"
-            viewTransition={{ types: ['slide-right'] }}
-          >
-            {t('register')}
-          </Link>
-        </p>
       </CardContent>
     </Card>
   )

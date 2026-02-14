@@ -16,6 +16,11 @@ import { useDeleteCustomerMutation } from '@/lib/mutations/customers'
 import { customersQuery } from '@/lib/queries/customers'
 import { customersSearchSchema } from '@/lib/types'
 
+type ModalState =
+  | { type: 'closed' }
+  | { type: 'adding' }
+  | { type: 'editing'; customer: Customer }
+
 export const Route = createFileRoute('/customers/')({
   validateSearch: zodValidator(customersSearchSchema),
   loaderDeps: ({ search }) => search,
@@ -31,11 +36,7 @@ function CustomerList() {
   const navigate = useNavigate({ from: Route.fullPath })
   const search = Route.useSearch()
 
-  const [modalState, setModalState] = useState<
-    | { type: 'closed' }
-    | { type: 'adding' }
-    | { type: 'editing'; customer: Customer }
-  >({ type: 'closed' })
+  const [modalState, setModalState] = useState<ModalState>({ type: 'closed' })
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
 
   const closeModal = useCallback(() => setModalState({ type: 'closed' }), [])
@@ -54,7 +55,8 @@ function CustomerList() {
     () =>
       pendingDeleteId === null
         ? null
-        : (customers.find((customer) => customer.id === pendingDeleteId) ?? null),
+        : (customers.find((customer) => customer.id === pendingDeleteId) ??
+          null),
     [customers, pendingDeleteId],
   )
 

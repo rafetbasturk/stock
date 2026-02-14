@@ -58,7 +58,7 @@ export const getServerCookies = createServerFn().handler(() => {
     lang = cookieLang
   } else if (acceptLang) {
     const primaryLang = acceptLang.split(',')[0].split('-')[0].toLowerCase()
-    lang = primaryLang === 'en' ? 'en' : 'tr'
+    lang = primaryLang === 'tr' ? 'tr' : 'en'
   }
 
   const sidebarOpen = cookieSidebar !== 'false'
@@ -77,7 +77,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     }
 
     const path = location.pathname
-    const isPublic = path === '/login' || path === '/signup'
+    const isPublic = path === '/login'
 
     if (isPublic && user) {
       throw redirect({ to: '/' })
@@ -120,7 +120,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const isAuthRoute = pathname === '/login' || pathname === '/signup'
+  const isAuthRoute = pathname === '/login'
   const settings = Route.useLoaderData()
 
   useErrorToast()
@@ -133,7 +133,7 @@ function RootComponent() {
   ) : (
     <SidebarProvider defaultOpen={settings.sidebarOpen}>
       <div className="flex min-h-svh w-full">
-        <AppSidebar settings={settings as any} />
+        <AppSidebar settings={settings} />
         <main className="flex-1 overflow-hidden">
           <SidebarTrigger className="md:hidden" />
           <Outlet />

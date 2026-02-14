@@ -1,12 +1,13 @@
 // src/server/products.ts
 import { createServerFn } from '@tanstack/react-start'
+import { authMiddleware } from './middleware/auth'
 import { and, eq, ilike, inArray, or, sql } from 'drizzle-orm'
 import z from 'zod'
 import { editProductBeforeInsert, notDeleted, validateProduct } from './utils'
-import { createStockMovementTx } from './stock.service'
+import { createStockMovementTx } from './services/stockService'
 import type { SQL } from 'drizzle-orm'
 import type { InsertProduct } from '@/types'
-import { throwTransportError } from '@/lib/error/core/serverError'
+import { fail, throwTransportError } from '@/lib/error/core/serverError'
 import { db } from '@/db'
 import {
   customersTable,
@@ -15,9 +16,9 @@ import {
   productsTable,
 } from '@/db/schema'
 import { productSortFields } from '@/lib/types/types.search'
-import { BaseAppError } from '@/lib/error/core'
 
-export const getProducts = createServerFn().handler(async () => {
+export const getProducts = createServerFn().middleware([authMiddleware]).handler(async () => {
+
   return await db.query.productsTable.findMany({
     where: notDeleted(productsTable),
     columns: {
@@ -31,9 +32,10 @@ export const getProducts = createServerFn().handler(async () => {
   })
 })
 
-export const getProductById = createServerFn({ method: 'GET' })
+export const getProductById = createServerFn().middleware([authMiddleware])
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data }) => {
+
     const product = await db.query.productsTable.findFirst({
       with: {
         customer: true,
@@ -46,11 +48,7 @@ export const getProductById = createServerFn({ method: 'GET' })
         andFn(eqFn(p.id, data.id), notDeleted(p)),
     })
 
-    if (!product)
-      throw BaseAppError.create({
-        code: 'PRODUCT_NOT_FOUND',
-        status: 404,
-      })
+    if (!product) fail('PRODUCT_NOT_FOUND')
 
     return product
   })
@@ -65,9 +63,10 @@ const paginatedSchema = z.object({
   sortDir: z.enum(['asc', 'desc']).optional(),
 })
 
-export const getPaginated = createServerFn({ method: 'POST' })
+export const getPaginated = createServerFn().middleware([authMiddleware])
   .inputValidator((data) => paginatedSchema.parse(data))
   .handler(async ({ data }) => {
+
     const {
       pageIndex,
       pageSize,
@@ -198,9 +197,11 @@ export const getPaginated = createServerFn({ method: 'POST' })
     }
   })
 
-export const createProduct = createServerFn({ method: 'POST' })
+export const createProduct = createServerFn().middleware([authMiddleware])
   .inputValidator((data: InsertProduct) => data)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const user = context.user
+
     validateProduct(data)
     editProductBeforeInsert(data)
 
@@ -222,7 +223,7 @@ export const createProduct = createServerFn({ method: 'POST' })
           movement_type: 'IN',
           reference_type: 'adjustment',
           reference_id: newProduct.id,
-          created_by: 1, // session user will be added later
+          created_by: user.id,
           notes: 'Initial stock',
         })
       }
@@ -231,30 +232,24 @@ export const createProduct = createServerFn({ method: 'POST' })
     })
   })
 
-export const adjustProductStock = createServerFn({ method: 'POST' })
+export const adjustProductStock = createServerFn().middleware([authMiddleware])
   .inputValidator(
     (data: { product_id: number; quantity: number; notes?: string }) => data,
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const user = context.user
+
     return db.transaction(async (tx) => {
       const product = await tx.query.productsTable.findFirst({
         where: eq(productsTable.id, data.product_id),
         columns: { stock_quantity: true },
       })
 
-      if (!product)
-        throw BaseAppError.create({
-          code: 'PRODUCT_NOT_FOUND',
-          status: 404,
-        })
+      if (!product) fail('PRODUCT_NOT_FOUND')
 
       const newStock = product.stock_quantity + data.quantity
 
-      if (newStock < 0)
-        throw BaseAppError.create({
-          code: 'INSUFFICIENT_STOCK',
-          status: 400,
-        })
+      if (newStock < 0) fail('INSUFFICIENT_STOCK')
 
       await createStockMovementTx(tx, {
         product_id: data.product_id,
@@ -262,7 +257,7 @@ export const adjustProductStock = createServerFn({ method: 'POST' })
         movement_type: 'ADJUSTMENT',
         reference_type: 'adjustment',
         reference_id: data.product_id,
-        created_by: 1,
+        created_by: user.id,
         notes: data.notes,
       })
 
@@ -270,7 +265,7 @@ export const adjustProductStock = createServerFn({ method: 'POST' })
     })
   })
 
-export const updateProduct = createServerFn({ method: 'POST' })
+export const updateProduct = createServerFn().middleware([authMiddleware])
   .inputValidator(
     (data: {
       id: number
@@ -283,7 +278,9 @@ export const updateProduct = createServerFn({ method: 'POST' })
       }
     }) => data,
   )
-  .handler(async ({ data: { id, data: product } }) => {
+  .handler(async ({ data: { id, data: product }, context }) => {
+    const user = context.user
+
     validateProduct(product)
     editProductBeforeInsert(product)
 
@@ -301,10 +298,7 @@ export const updateProduct = createServerFn({ method: 'POST' })
         .returning()
 
       if (updateResult.length === 0) {
-        throw BaseAppError.create({
-          code: 'PRODUCT_NOT_FOUND',
-          status: 404,
-        })
+        fail('PRODUCT_NOT_FOUND')
       }
 
       // Find open orders with this product
@@ -350,7 +344,7 @@ export const updateProduct = createServerFn({ method: 'POST' })
           movement_type: stockAction.type,
           reference_type: 'adjustment',
           reference_id: id,
-          created_by: 1,
+          created_by: user.id,
           notes: stockAction.notes?.trim() || null,
         })
       }
@@ -361,26 +355,19 @@ export const updateProduct = createServerFn({ method: 'POST' })
     return result
   })
 
-export const removeProduct = createServerFn({ method: 'POST' })
+export const removeProduct = createServerFn().middleware([authMiddleware])
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data: { id } }) => {
+
     try {
       return await db.transaction(async (tx) => {
         const product = await tx.query.productsTable.findFirst({
           where: eq(productsTable.id, id),
         })
 
-        if (!product)
-          throw BaseAppError.create({
-            code: 'PRODUCT_NOT_FOUND',
-            status: 404,
-          })
+        if (!product) fail('PRODUCT_NOT_FOUND')
 
-        if (product.stock_quantity !== 0)
-          throw BaseAppError.create({
-            code: 'PRODUCT_HAS_STOCK',
-            status: 400,
-          })
+        if (product.stock_quantity !== 0) fail('PRODUCT_HAS_STOCK')
 
         await tx
           .update(productsTable)
@@ -397,9 +384,8 @@ export const removeProduct = createServerFn({ method: 'POST' })
     }
   })
 
-export const getProductFilterOptions = createServerFn({
-  method: 'GET',
-}).handler(async () => {
+export const getProductFilterOptions = createServerFn().middleware([authMiddleware]).handler(async () => {
+
   const rows = await db
     .selectDistinct({ material: productsTable.material })
     .from(productsTable)

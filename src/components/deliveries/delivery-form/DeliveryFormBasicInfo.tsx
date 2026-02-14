@@ -4,13 +4,13 @@ import { Calendar } from "@/components/ui/calendar";
 import CustomerInput from "@/components/form/CustomerInput";
 import InputField from "@/components/form/InputField";
 import { Field, FieldLabel, FieldSet } from "@/components/ui/field";
+import type { FieldErrors } from "@/lib/error/utils/formErrors";
 
 interface Props {
   form: any;
   onChange: (field: string, value: any) => void;
   customerIds: number[];
-  errors: Record<string, string>;
-  setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  errors: FieldErrors;
 }
 
 export default function DeliveryFormBasicInfo({
@@ -18,7 +18,6 @@ export default function DeliveryFormBasicInfo({
   onChange,
   customerIds,
   errors,
-  setErrors,
 }: Props) {
   return (
     <div className="flex flex-col sm:flex-row gap-6">
@@ -32,7 +31,6 @@ export default function DeliveryFormBasicInfo({
           label="Müşteri"
           filterIds={customerIds}
           error={errors.customer_id}
-          onErrorChange={setErrors}
         />
 
         {/* DELIVERY NUMBER */}

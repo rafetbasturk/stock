@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
-import { AppError } from "@/lib/error/core/AppError";
 import { meQuery } from "@/lib/queries/auth";
 import { useLogoutMutation } from "@/lib/mutations/auth";
 
@@ -14,12 +14,13 @@ const SESSION_POLICY = {
 
 export function useSessionPolicy() {
   const logout = useLogoutMutation();
+  const { t } = useTranslation("auth");
 
   const inactivityTimer = useRef<number | null>(null);
   const warningTimer = useRef<number | null>(null);
   const warningShown = useRef(false);
 
-  const { data: me, error } = useQuery({
+  const { data: me } = useQuery({
     ...meQuery,
     refetchInterval: SESSION_POLICY.heartbeatIntervalMs,
     refetchIntervalInBackground: true,
@@ -53,14 +54,11 @@ export function useSessionPolicy() {
 
         warningShown.current = true;
 
-        toast.warning(
-          "Your session will expire in 1 minute due to inactivity.",
-          {
-            id: "session-expiring",
-            closeButton: true,
-            duration: SESSION_POLICY.warningBeforeMs,
-          }
-        );
+        toast.warning(t("session_expiring"), {
+          id: "session-expiring",
+          closeButton: true,
+          duration: SESSION_POLICY.warningBeforeMs,
+        });
       }, SESSION_POLICY.inactivityLimitMs - SESSION_POLICY.warningBeforeMs);
 
       // 🚪 Logout timer
@@ -86,18 +84,5 @@ export function useSessionPolicy() {
       events.forEach((e) => window.removeEventListener(e, resetTimers));
       clearTimers();
     };
-  }, [isAuthenticated, logout]);
-
-  /* ---------------------------
-   * 2️⃣ Server session expiry
-   * --------------------------- */
-  useEffect(() => {
-    if (!error) return;
-
-    const appError = AppError.from(error);
-
-    if (appError.code === "SESSION_INVALID") {
-      logout.mutate("session-expired");
-    }
-  }, [error, logout]);
+  }, [isAuthenticated, logout, t]);
 }

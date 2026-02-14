@@ -57,6 +57,20 @@
       "when": 1770708620943,
       "tag": "0007_thick_selene",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1771052650979,
+      "tag": "0008_outstanding_stepford_cuckoos",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1771056170482,
+      "tag": "0009_premium_paladin",
+      "breakpoints": true
     }
   ]
 }

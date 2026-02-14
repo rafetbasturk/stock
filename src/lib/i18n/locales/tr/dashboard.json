@@ -17,9 +17,12 @@
     "total_order_amount": "Toplam Sipariş Tutarı",
     "total_desc": "Tüm siparişlerden toplam tutarı",
     "delivered_order_amount": "Teslim Edilen Sipariş Tutarı",
-    "delivered_desc": "Teslimatı tamamlanmış ürünlerin geliri",
+    "delivered_desc": "Teslimatı tamamlanmış ürünlerin tutarı",
     "open_order_amount": "Açık Sipariş Tutarı",
     "open_desc": "Bekleyen siparişlerin tutarı",
+    "total_orders_chip": "{{count}} toplam sipariş",
+    "finished_orders_chip": "{{count}} tamamlanan sipariş",
+    "pending_orders_chip": "{{count}} açık sipariş",
     "total_order_count": "Toplam Sipariş Sayısı",
     "order_count_this_month": "Sipariş Sayısı (Bu Ay)",
     "open_order_count": "Açık Sipariş Sayısı"
