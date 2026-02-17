@@ -1,16 +1,18 @@
 // src/server/customers.ts
 import { createServerFn } from '@tanstack/react-start'
 import { and, eq, ilike, or, SQL, sql } from 'drizzle-orm'
-import z from 'zod'
 import type { InsertCustomer } from '@/types'
+import { customersSearchSchema } from '@/lib/types'
 import { db } from '@/db'
 import { customersTable, ordersTable } from '@/db/schema'
-import { customerSortFields } from '@/lib/types'
-import { fail, failValidation } from '@/lib/error/core/serverError'
-import { normalizeParams, notDeleted } from './utils'
+import { fail } from '@/lib/error/core/serverError'
+import { normalizeParams, notDeleted, validateCustomerInput } from './utils'
 
 export const getAllCustomers = createServerFn().handler(async () => {
-  return await db.query.customersTable.findMany()
+  return await db.query.customersTable.findMany({
+    where: notDeleted(customersTable),
+    limit: 1000,
+  })
 })
 
 export const getCustomerById = createServerFn()
@@ -21,16 +23,8 @@ export const getCustomerById = createServerFn()
     })
   })
 
-const paginatedSchema = z.object({
-  pageIndex: z.number().int().min(0),
-  pageSize: z.number().int().min(10).max(100),
-  q: z.string().trim().min(1).optional(),
-  sortBy: z.enum(customerSortFields).optional(),
-  sortDir: z.enum(['asc', 'desc']).optional(),
-})
-
 export const getPaginatedCustomers = createServerFn()
-  .inputValidator((data) => paginatedSchema.parse(data))
+  .inputValidator((data) => customersSearchSchema.parse(data))
   .handler(async ({ data }) => {
     const { pageIndex, pageSize, q, sortBy = 'code', sortDir = 'asc' } = data
 
@@ -102,21 +96,7 @@ export const getPaginatedCustomers = createServerFn()
 export const createCustomer = createServerFn()
   .inputValidator((data: InsertCustomer) => data)
   .handler(async ({ data: customer }) => {
-    const fieldErrors: Record<
-      string,
-      { i18n: { ns: 'validation'; key: 'required' } }
-    > = {}
-
-    if (!customer.code.trim()) {
-      fieldErrors.code = { i18n: { ns: 'validation', key: 'required' } }
-    }
-    if (!customer.name.trim()) {
-      fieldErrors.name = { i18n: { ns: 'validation', key: 'required' } }
-    }
-
-    if (Object.keys(fieldErrors).length > 0) {
-      failValidation(fieldErrors)
-    }
+    validateCustomerInput(customer)
 
     const [newCustomer] = await db
       .insert(customersTable)
@@ -140,21 +120,7 @@ export const updateCustomer = createServerFn()
       fail('INVALID_ID')
     }
 
-    const fieldErrors: Record<
-      string,
-      { i18n: { ns: 'validation'; key: 'required' } }
-    > = {}
-
-    if (!customer.code.trim()) {
-      fieldErrors.code = { i18n: { ns: 'validation', key: 'required' } }
-    }
-    if (!customer.name.trim()) {
-      fieldErrors.name = { i18n: { ns: 'validation', key: 'required' } }
-    }
-
-    if (Object.keys(fieldErrors).length > 0) {
-      failValidation(fieldErrors)
-    }
+    validateCustomerInput(customer)
 
     const updatedCustomers = await db
       .update(customersTable)
@@ -180,6 +146,15 @@ export const updateCustomer = createServerFn()
 export const removeCustomer = createServerFn()
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data: { id } }) => {
+    // Check for active orders before deleting
+    const activeOrder = await db.query.ordersTable.findFirst({
+      where: and(eq(ordersTable.customer_id, id), notDeleted(ordersTable)),
+    })
+
+    if (activeOrder) {
+      fail('CUSTOMER_HAS_ACTIVE_ORDERS')
+    }
+
     await db
       .update(customersTable)
       .set({

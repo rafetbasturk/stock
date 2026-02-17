@@ -1,6 +1,7 @@
 // src/lib/queries/products.ts
 import { keepPreviousData, queryOptions } from '@tanstack/react-query'
 import type { ProductsSearch } from '../types/types.search'
+import { normalizeProductsSearch } from '../types/types.search'
 import {
   getPaginated,
   getProductById,
@@ -8,28 +9,21 @@ import {
   getProducts,
 } from '@/server/products'
 
-const normalizedSearch = (search: ProductsSearch) => ({
-  pageIndex: search.pageIndex ?? 0,
-  pageSize: search.pageSize ?? 100,
-  q: search.q ?? '',
-  sortBy: search.sortBy ?? 'code',
-  sortDir: search.sortDir ?? 'asc',
-  material: search.material ?? '',
-  customerId: search.customerId ?? '',
-})
-
 export const productQueryKeys = {
   all: ['products'] as const,
 
   lists: () => [...productQueryKeys.all, 'list'] as const,
 
   list: (search: ProductsSearch) =>
-    [...productQueryKeys.lists(), normalizedSearch(search)] as const,
+    [...productQueryKeys.lists(), normalizeProductsSearch(search)] as const,
 
   paginatedLists: () => [...productQueryKeys.all, 'paginated'] as const,
 
   paginatedList: (search: ProductsSearch) =>
-    [...productQueryKeys.paginatedLists(), normalizedSearch(search)] as const,
+    [
+      ...productQueryKeys.paginatedLists(),
+      normalizeProductsSearch(search),
+    ] as const,
 
   details: () => [...productQueryKeys.all, 'detail'] as const,
 

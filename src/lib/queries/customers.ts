@@ -11,6 +11,8 @@ type CustomerListFilters = {
   distinct?: boolean
 }
 
+import { normalizeCustomersSearch } from '../types'
+
 export const customerQueryKeys = {
   all: ['customers'] as const,
 
@@ -27,13 +29,7 @@ export const customerQueryKeys = {
   paginatedList: (s: CustomersSearch) =>
     [
       ...customerQueryKeys.paginatedLists(),
-      {
-        pageIndex: s.pageIndex ?? 0,
-        pageSize: s.pageSize ?? 100,
-        q: s.q ?? '',
-        sortBy: s.sortBy ?? 'code',
-        sortDir: s.sortDir ?? 'asc',
-      },
+      normalizeCustomersSearch(s),
     ] as const,
 
   details: () => [...customerQueryKeys.all, 'detail'] as const,

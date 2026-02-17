@@ -137,13 +137,13 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function RootComponent() {
   const { settings } = Route.useRouteContext()
-  const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const isAuthRoute = pathname === '/login'
+  const matches = useRouterState({ select: (s) => s.matches })
+  const isAuthLayout = matches.some((m) => m.routeId === '/_auth')
 
   useErrorToast()
   useSessionPolicy()
 
-  const content = isAuthRoute ? (
+  const content = isAuthLayout ? (
     <div className="min-h-svh flex items-center justify-center p-4">
       <Outlet />
     </div>

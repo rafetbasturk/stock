@@ -9,11 +9,13 @@ import {
   inArray,
   isNull,
   lte,
+  notInArray,
   or,
   sql,
 } from 'drizzle-orm'
 import z from 'zod'
-import { addTotalAmount, notDeleted } from './utils'
+import { addTotalAmount, normalizeParams, notDeleted } from './utils'
+import { ordersSearchSchema } from '@/lib/types/types.search'
 import type { SQL } from 'drizzle-orm'
 import type { OrderSubmitPayload } from '@/types'
 import { db } from '@/db'
@@ -259,33 +261,8 @@ export const getOrderDeliveries = createServerFn()
     return deliveries.map(addTotalAmount)
   })
 
-const orderSortFields = [
-  'order_number',
-  'order_date',
-  'status',
-  'currency',
-  'customer',
-] as const
-
-const paginatedSchema = z.object({
-  pageIndex: z.number().int().min(0),
-  pageSize: z.number().int().min(10).max(100),
-  q: z.string().trim().optional(),
-  sortBy: z.enum(orderSortFields).optional(),
-  sortDir: z.enum(['asc', 'desc']).optional(),
-  status: z.string().trim().optional(),
-  customerId: z.string().trim().optional(),
-  startDate: z.string().trim().optional(),
-  endDate: z.string().trim().optional(),
-})
-
-function normalizeParams(value?: string) {
-  const trimmed = value?.trim()
-  return trimmed && trimmed.length > 0 ? trimmed : undefined
-}
-
 export const getPaginatedOrders = createServerFn()
-  .inputValidator((data) => paginatedSchema.parse(data))
+  .inputValidator((data) => ordersSearchSchema.parse(data))
   .handler(async ({ data }) => {
     const {
       pageIndex,
@@ -592,6 +569,7 @@ export const updateOrder = createServerFn()
   .inputValidator((data) => updateOrderSchema.parse(data))
   .handler(async ({ data: { id, data: order } }) => {
     await db.transaction(async (tx) => {
+      // 1. Update Order Header
       const updatedOrders = await tx
         .update(ordersTable)
         .set({
@@ -614,45 +592,139 @@ export const updateOrder = createServerFn()
         fail('ORDER_NOT_FOUND')
       }
 
-      await tx.delete(orderItemsTable).where(eq(orderItemsTable.order_id, id))
-      await tx
-        .delete(customOrderItemsTable)
-        .where(eq(customOrderItemsTable.order_id, id))
-
+      // 2. Sync Items
       if (order.is_custom_order) {
-        const customItemsToInsert = order.customItems
-          .filter((item) => (item.name?.trim().length ?? 0) > 0)
-          .map((item) => ({
+        // --- Custom Order Items Sync ---
+        const existingCustomItems =
+          await tx.query.customOrderItemsTable.findMany({
+            where: and(
+              eq(customOrderItemsTable.order_id, id),
+              isNull(customOrderItemsTable.deleted_at),
+            ),
+          })
+
+        const itemIdsToKeep = new Set<number>()
+        const customItemsToInsert: any[] = []
+
+        for (const item of order.customItems) {
+          if (!item.name?.trim()) continue
+
+          const itemData = {
             order_id: id,
-            name: item.name?.trim() || '',
-            unit: unitArray.includes(item.unit as (typeof unitArray)[number])
-              ? (item.unit as (typeof unitArray)[number])
-              : 'adet',
+            name: item.name.trim(),
+            unit: (unitArray.includes(item.unit as any)
+              ? item.unit
+              : 'adet') as any,
             quantity: Math.max(1, item.quantity ?? 1),
             unit_price: Math.max(0, item.unit_price ?? 0),
             currency: order.currency ?? 'TRY',
             notes: item.notes?.trim() || null,
-          }))
+            updated_at: sql`now()`,
+          }
+
+          if (item.id && existingCustomItems.some((ei) => ei.id === item.id)) {
+            itemIdsToKeep.add(item.id)
+            await tx
+              .update(customOrderItemsTable)
+              .set(itemData)
+              .where(eq(customOrderItemsTable.id, item.id))
+          } else {
+            customItemsToInsert.push(itemData)
+          }
+        }
+
+        // Soft-delete removed items
+        await tx
+          .update(customOrderItemsTable)
+          .set({ deleted_at: sql`now()`, updated_at: sql`now()` })
+          .where(
+            and(
+              eq(customOrderItemsTable.order_id, id),
+              isNull(customOrderItemsTable.deleted_at),
+              itemIdsToKeep.size > 0
+                ? notInArray(
+                    customOrderItemsTable.id,
+                    Array.from(itemIdsToKeep),
+                  )
+                : sql`true`,
+            ),
+          )
 
         if (customItemsToInsert.length > 0) {
           await tx.insert(customOrderItemsTable).values(customItemsToInsert)
         }
-      } else {
-        const itemsToInsert = order.items
-          .filter(
-            (item) => Number.isInteger(item.product_id) && item.product_id > 0,
+
+        // Ensure standard items are soft-deleted if we switched to custom
+        await tx
+          .update(orderItemsTable)
+          .set({ deleted_at: sql`now()`, updated_at: sql`now()` })
+          .where(
+            and(
+              eq(orderItemsTable.order_id, id),
+              isNull(orderItemsTable.deleted_at),
+            ),
           )
-          .map((item) => ({
+      } else {
+        // --- Standard Order Items Sync ---
+        const existingItems = await tx.query.orderItemsTable.findMany({
+          where: and(
+            eq(orderItemsTable.order_id, id),
+            isNull(orderItemsTable.deleted_at),
+          ),
+        })
+
+        const itemIdsToKeep = new Set<number>()
+        const itemsToInsert: any[] = []
+
+        for (const item of order.items) {
+          const itemData = {
             order_id: id,
             product_id: item.product_id,
             quantity: Math.max(1, item.quantity),
             unit_price: Math.max(0, item.unit_price),
             currency: order.currency ?? 'TRY',
-          }))
+            updated_at: sql`now()`,
+          }
+
+          if (item.id && existingItems.some((ei) => ei.id === item.id)) {
+            itemIdsToKeep.add(item.id)
+            await tx
+              .update(orderItemsTable)
+              .set(itemData)
+              .where(eq(orderItemsTable.id, item.id))
+          } else {
+            itemsToInsert.push(itemData)
+          }
+        }
+
+        // Soft-delete removed items
+        await tx
+          .update(orderItemsTable)
+          .set({ deleted_at: sql`now()`, updated_at: sql`now()` })
+          .where(
+            and(
+              eq(orderItemsTable.order_id, id),
+              isNull(orderItemsTable.deleted_at),
+              itemIdsToKeep.size > 0
+                ? notInArray(orderItemsTable.id, Array.from(itemIdsToKeep))
+                : sql`true`,
+            ),
+          )
 
         if (itemsToInsert.length > 0) {
           await tx.insert(orderItemsTable).values(itemsToInsert)
         }
+
+        // Ensure custom items are soft-deleted if we switched to standard
+        await tx
+          .update(customOrderItemsTable)
+          .set({ deleted_at: sql`now()`, updated_at: sql`now()` })
+          .where(
+            and(
+              eq(customOrderItemsTable.order_id, id),
+              isNull(customOrderItemsTable.deleted_at),
+            ),
+          )
       }
     })
 
@@ -662,13 +734,33 @@ export const updateOrder = createServerFn()
 export const removeOrder = createServerFn()
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data: { id } }) => {
-    await db
-      .update(ordersTable)
-      .set({
-        deleted_at: sql`now()`,
-        updated_at: sql`now()`,
-      })
-      .where(eq(ordersTable.id, id))
+    await db.transaction(async (tx) => {
+      // 1. Soft delete order items
+      await tx
+        .update(orderItemsTable)
+        .set({
+          deleted_at: sql`now()`,
+          updated_at: sql`now()`,
+        })
+        .where(eq(orderItemsTable.order_id, id))
+
+      await tx
+        .update(customOrderItemsTable)
+        .set({
+          deleted_at: sql`now()`,
+          updated_at: sql`now()`,
+        })
+        .where(eq(customOrderItemsTable.order_id, id))
+
+      // 2. Soft delete order header
+      await tx
+        .update(ordersTable)
+        .set({
+          deleted_at: sql`now()`,
+          updated_at: sql`now()`,
+        })
+        .where(eq(ordersTable.id, id))
+    })
 
     return { success: true }
   })
@@ -702,7 +794,7 @@ export const getOrderFilterOptions = createServerFn().handler(async () => {
       customer_name: customersTable.name,
     })
     .from(ordersTable)
-    .where(isNull(ordersTable.deleted_at))
+    .where(notDeleted(ordersTable))
     .innerJoin(customersTable, eq(customersTable.id, ordersTable.customer_id))
 
   const customers = customerRows

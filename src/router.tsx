@@ -16,6 +16,9 @@ export const getRouter = () => {
       queryClient,
       settings: undefined!,
     },
+    defaultPreload: 'intent',
+    defaultPreloadDelay: 100,
+    defaultPreloadStaleTime: 30000,
     Wrap: ({ children }) => (
       <QueryClientProvider client={queryClient}>
         <AppProviders>{children}</AppProviders>

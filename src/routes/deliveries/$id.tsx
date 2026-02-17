@@ -53,7 +53,7 @@ function RouteComponent() {
     <div className="space-y-6">
       <PageHeader title={delivery.delivery_number} description={delivery.customer.name} />
 
-      <Card className="overflow-hidden border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
+      <Card className="overflow-hidden border-primary/20 bg-linear-to-r from-primary/10 via-primary/5 to-transparent">
         <CardContent className="p-5 sm:p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="space-y-3">

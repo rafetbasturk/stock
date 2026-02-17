@@ -59,7 +59,7 @@ export interface DataTableFilter {
   isVirtual?: boolean
 }
 
-type TableSearch = Record<string, string | undefined>
+type TableSearch = Record<string, string | number | undefined>
 
 interface DataTableProps<TData, TValue> {
   data: TData[]
@@ -115,7 +115,7 @@ export default function DataTable<TData, TValue>({
     if (search.sortBy) {
       return [
         {
-          id: search.sortBy,
+          id: String(search.sortBy),
           desc: search.sortDir === 'desc',
         },
       ]
@@ -182,9 +182,9 @@ export default function DataTable<TData, TValue>({
   } = useTableFilters({
     table,
     filters: customFilters,
-    search,
+    search: search as any,
     globalFilter,
-  })
+  } as any)
 
   const safePageSize = Math.max(1, Number(serverPageSize) || 100)
   const safeTotal = Math.max(0, Number(total) || 0)
@@ -214,8 +214,8 @@ export default function DataTable<TData, TValue>({
                   <DateRangeFilter
                     key={filter.columnId}
                     label={filter.label}
-                    start={search.startDate}
-                    end={search.endDate}
+                    start={search.startDate as string | undefined}
+                    end={search.endDate as string | undefined}
                     onChange={(updates) =>
                       onSearchChange({
                         pageIndex: '0',
@@ -238,7 +238,7 @@ export default function DataTable<TData, TValue>({
                     }}
                     selectedValues={
                       search[filter.columnId]
-                        ? search[filter.columnId]!.split(',')
+                        ? String(search[filter.columnId])!.split(',')
                         : []
                     }
                     onChange={(colId, values) => {
@@ -258,7 +258,7 @@ export default function DataTable<TData, TValue>({
                 return (
                   <Select
                     key={filter.columnId}
-                    value={search[filter.columnId] ?? 'all'}
+                    value={String(search[filter.columnId] ?? 'all')}
                     onValueChange={(v) => {
                       handleSingleFilterChange(filter.columnId, v)
 
@@ -290,7 +290,7 @@ export default function DataTable<TData, TValue>({
                   <Input
                     key={filter.columnId}
                     placeholder={filter.label}
-                    value={search[filter.columnId] || ''}
+                    value={String(search[filter.columnId] || '')}
                     onChange={(e) =>
                       onSearchChange({
                         pageIndex: '0',

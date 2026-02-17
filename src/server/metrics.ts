@@ -78,7 +78,12 @@ export const getKeyMetrics = createServerFn()
           currency: orderItemsTable.currency,
         })
         .from(orderItemsTable)
-        .where(inArray(orderItemsTable.order_id, orderIds))
+        .where(
+          and(
+            inArray(orderItemsTable.order_id, orderIds),
+            notDeleted(orderItemsTable),
+          ),
+        )
 
       const customOrderItems = await db
         .select({
@@ -88,7 +93,12 @@ export const getKeyMetrics = createServerFn()
           currency: customOrderItemsTable.currency,
         })
         .from(customOrderItemsTable)
-        .where(inArray(customOrderItemsTable.order_id, orderIds))
+        .where(
+          and(
+            inArray(customOrderItemsTable.order_id, orderIds),
+            notDeleted(customOrderItemsTable),
+          ),
+        )
 
       const allItems = [...orderItems, ...customOrderItems]
 
@@ -127,6 +137,10 @@ export const getKeyMetrics = createServerFn()
           custom_currency: customOrderItemsTable.currency,
         })
         .from(deliveryItemsTable)
+        .innerJoin(
+          deliveriesTable,
+          eq(deliveryItemsTable.delivery_id, deliveriesTable.id),
+        )
         .leftJoin(
           orderItemsTable,
           eq(deliveryItemsTable.order_item_id, orderItemsTable.id),
@@ -135,6 +149,7 @@ export const getKeyMetrics = createServerFn()
           customOrderItemsTable,
           eq(deliveryItemsTable.custom_order_item_id, customOrderItemsTable.id),
         )
+        .where(and(notDeleted(deliveryItemsTable), notDeleted(deliveriesTable)))
 
       const deliveredMap = new Map<number, number>()
 
@@ -293,7 +308,12 @@ export const getMonthlyOverview = createServerFn()
             currency: orderItemsTable.currency,
           })
           .from(orderItemsTable)
-          .where(inArray(orderItemsTable.order_id, orderIds)),
+          .where(
+            and(
+              inArray(orderItemsTable.order_id, orderIds),
+              notDeleted(orderItemsTable),
+            ),
+          ),
 
         db
           .select({
@@ -303,7 +323,12 @@ export const getMonthlyOverview = createServerFn()
             currency: customOrderItemsTable.currency,
           })
           .from(customOrderItemsTable)
-          .where(inArray(customOrderItemsTable.order_id, orderIds)),
+          .where(
+            and(
+              inArray(customOrderItemsTable.order_id, orderIds),
+              notDeleted(customOrderItemsTable),
+            ),
+          ),
       ])
 
       //
@@ -326,7 +351,7 @@ export const getMonthlyOverview = createServerFn()
           custom_currency: customOrderItemsTable.currency,
         })
         .from(deliveryItemsTable)
-        .where(and(...deliveriesWhere))
+        .where(and(...deliveriesWhere, notDeleted(deliveryItemsTable)))
         .leftJoin(
           deliveriesTable,
           eq(deliveryItemsTable.delivery_id, deliveriesTable.id),

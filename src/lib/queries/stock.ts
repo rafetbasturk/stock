@@ -28,11 +28,11 @@ export const stockQuery = (search: StockSearch) =>
     queryFn: () =>
       getStockMovements({
         data: {
-          page: search.pageIndex,
+          pageIndex: search.pageIndex,
           pageSize: search.pageSize,
           q: search.q,
           movementType: search.movementType,
-          product_id: search.productId,
+          productId: search.productId,
         },
       }),
     staleTime: 1000 * 60 * 10,

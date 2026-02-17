@@ -37,7 +37,12 @@ export const settingsMiddleware = createMiddleware().server(
 
     return next({
       context: {
-        settings: { lang, theme } satisfies AppSettings,
+        settings: {
+          lang,
+          theme,
+          sidebarOpen: true,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        } satisfies AppSettings,
       },
     })
   },

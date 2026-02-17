@@ -6,7 +6,10 @@ import { useTranslation } from 'react-i18next'
 
 import type { OrdersSearch } from '@/lib/types'
 import type { OrderListRow } from '@/types'
-import { ordersSearchSchema } from '@/lib/types'
+import {
+  normalizeOrdersSearch,
+  ordersSearchSchema,
+} from '@/lib/types/types.search'
 import { debounce } from '@/lib/debounce'
 import { useDeleteOrderMutation } from '@/lib/mutations/orders'
 import {
@@ -22,15 +25,11 @@ import { OrderListHeader } from '@/components/orders/OrderListHeader'
 import { OrdersDataTable } from '@/components/orders/OrdersDataTable'
 import { OrderDeleteDialog } from '@/components/orders/OrderDeleteDialog'
 import { DataTableFilter } from '@/components/DataTable'
-
-type ModalState =
-  | { type: 'closed' }
-  | { type: 'adding' }
-  | { type: 'editing'; order: OrderListRow }
+import { OrdersModalState } from '@/lib/types/types.modal'
 
 export const Route = createFileRoute('/orders/')({
   validateSearch: zodValidator(ordersSearchSchema),
-  loaderDeps: ({ search }) => search,
+  loaderDeps: ({ search }) => normalizeOrdersSearch(search),
   loader: async ({ context, deps }) => {
     return await Promise.all([
       context.queryClient.prefetchQuery(lastOrderNumberQuery),
@@ -47,7 +46,9 @@ function OrderList() {
   const navigate = useNavigate({ from: Route.fullPath })
   const search = Route.useSearch()
 
-  const [modalState, setModalState] = useState<ModalState>({ type: 'closed' })
+  const [modalState, setModalState] = useState<OrdersModalState>({
+    type: 'closed',
+  })
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
 
   const closeModal = useCallback(() => setModalState({ type: 'closed' }), [])
@@ -139,7 +140,7 @@ function OrderList() {
   )
 
   const handleSearchChange = useCallback(
-    (updates: Record<string, string | undefined>) => {
+    (updates: Record<string, string | number | undefined>) => {
       navigate({
         search: (prev: OrdersSearch) => {
           const merged = { ...prev, ...updates } as Record<string, any>

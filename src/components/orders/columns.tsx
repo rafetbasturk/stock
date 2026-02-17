@@ -109,16 +109,18 @@ export const getColumns = (
         const colors =
           status === 'HAZIR'
             ? 'bg-indigo-800 text-indigo-50'
-            : status === 'ÜRETİM'
-              ? 'bg-orange-800 text-orange-50'
-              : status === 'KAYIT'
-                ? 'bg-stone-800 text-stone-50'
-                : status === 'BİTTİ'
-                  ? 'bg-green-800 text-green-50'
-                  : 'bg-slate-200 text-slate-900'
+            : status === 'KISMEN HAZIR'
+              ? 'bg-indigo-600 text-indigo-100'
+              : status === 'ÜRETİM'
+                ? 'bg-orange-800 text-orange-50'
+                : status === 'KAYIT'
+                  ? 'bg-stone-800 text-stone-50'
+                  : status === 'BİTTİ'
+                    ? 'bg-green-800 text-green-50'
+                    : 'bg-slate-200 text-slate-900'
 
         return (
-          <Badge variant="default" className={`capitalize w-full ${colors}`}>
+          <Badge variant="outline" className={`capitalize w-full ${colors}`}>
             {status}
           </Badge>
         )

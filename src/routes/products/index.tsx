@@ -11,7 +11,10 @@ import type { ProductsSearch } from '@/lib/types/types.search'
 import { debounce } from '@/lib/debounce'
 import { useDeleteProductMutation } from '@/lib/mutations/products'
 import { getFilterOptions, productsQuery } from '@/lib/queries/products'
-import { productsSearchSchema } from '@/lib/types/types.search'
+import {
+  normalizeProductsSearch,
+  productsSearchSchema,
+} from '@/lib/types/types.search'
 
 import { getColumns } from '@/components/products/columns'
 import ProductForm from '@/components/products/ProductForm'
@@ -20,22 +23,15 @@ import { ProductListHeader } from '@/components/products/ProductListHeader'
 import { ProductsDataTable } from '@/components/products/ProductsDataTable'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { StockAdjustmentDialog } from '@/components/stock/StockAdjustmentDialog'
-
-type ModalState =
-  | { type: 'closed' }
-  | { type: 'adding' }
-  | { type: 'editing'; product: ProductListRow }
-  | { type: 'adjusting'; product: ProductListRow }
+import { ProductsModalState } from '@/lib/types/types.modal'
 
 export const Route = createFileRoute('/products/')({
   validateSearch: zodValidator(productsSearchSchema),
-  loaderDeps: ({ search }) => search,
+  loaderDeps: ({ search }) => normalizeProductsSearch(search),
   loader: async ({ context, deps }) => {
     return await Promise.all([
       context.queryClient.prefetchQuery(getFilterOptions()),
-      context.queryClient.ensureQueryData(
-        productsQuery(deps as ProductsSearch),
-      ),
+      context.queryClient.ensureQueryData(productsQuery(deps)),
     ])
   },
   component: ProductList,
@@ -48,7 +44,9 @@ function ProductList() {
   const search = Route.useSearch()
 
   // Modal state using discriminated union
-  const [modalState, setModalState] = useState<ModalState>({ type: 'closed' })
+  const [modalState, setModalState] = useState<ProductsModalState>({
+    type: 'closed',
+  })
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
 
   const closeModal = useCallback(() => setModalState({ type: 'closed' }), [])
@@ -121,15 +119,6 @@ function ProductList() {
   const customFilters: Array<DataTableFilter> = useMemo(
     () => [
       {
-        columnId: 'customer',
-        label: t('products.filters.customer'),
-        type: 'multi',
-        options: filterOptions.customers.map((c) => ({
-          value: String(c.id),
-          label: c.name,
-        })),
-      },
-      {
         columnId: 'material',
         label: t('products.filters.material'),
         type: 'multi',
@@ -146,7 +135,7 @@ function ProductList() {
 
   // Handle search changes with proper type safety
   const handleSearchChange = useCallback(
-    (updates: Record<string, string | undefined>) => {
+    (updates: Record<string, string | number | undefined>) => {
       navigate({
         search: (prev: ProductsSearch) => {
           const merged = { ...prev, ...updates } as Record<string, any>

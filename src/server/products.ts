@@ -2,11 +2,11 @@
 import { createServerFn } from '@tanstack/react-start'
 import { notFound } from '@tanstack/react-router'
 import { and, eq, ilike, inArray, or, sql } from 'drizzle-orm'
-import z from 'zod'
 import {
   editProductBeforeInsert,
   normalizeParams,
   notDeleted,
+  recalculateOrderReadyStatus,
   validateProduct,
 } from './utils'
 import { requireAuth } from './auth/requireAuth'
@@ -21,7 +21,7 @@ import {
   ordersTable,
   productsTable,
 } from '@/db/schema'
-import { productSortFields } from '@/lib/types/types.search'
+import { productsSearchSchema } from '@/lib/types/types.search'
 
 export const getProducts = createServerFn().handler(async () => {
   return await db.query.productsTable.findMany({
@@ -58,18 +58,8 @@ export const getProductById = createServerFn()
     return product
   })
 
-const paginatedSchema = z.object({
-  pageIndex: z.number().int().min(0),
-  pageSize: z.number().int().min(10).max(100),
-  q: z.string().trim().optional(),
-  sortBy: z.enum(productSortFields).optional(),
-  sortDir: z.enum(['asc', 'desc']).optional(),
-  material: z.string().trim().optional(),
-  customerId: z.string().trim().optional(),
-})
-
 export const getPaginated = createServerFn()
-  .inputValidator(paginatedSchema.parse)
+  .inputValidator((data) => productsSearchSchema.parse(data))
   .handler(async ({ data }) => {
     const {
       pageIndex,
@@ -340,16 +330,11 @@ export const updateProduct = createServerFn()
         )
         .groupBy(ordersTable.id)
 
-      // Update order status if needed
+      // Update order status if needed (RECALCULATE accurately)
       if (openOrdersWithProduct.length > 0) {
-        const orderIds = openOrdersWithProduct.map((order) => order.order_id)
-        await tx
-          .update(ordersTable)
-          .set({
-            status: 'HAZIR',
-            updated_at: sql`now()`,
-          })
-          .where(inArray(ordersTable.id, orderIds))
+        for (const order of openOrdersWithProduct) {
+          await recalculateOrderReadyStatus(tx, order.order_id)
+        }
       }
 
       const stockActionQuantity = Math.trunc(Number(stockAction?.quantity ?? 0))
@@ -407,6 +392,7 @@ export const getProductFilterOptions = createServerFn().handler(async () => {
   const rows = await db
     .selectDistinct({ material: productsTable.material })
     .from(productsTable)
+    .where(notDeleted(productsTable))
 
   const customerRows = await db
     .selectDistinct({
@@ -414,6 +400,7 @@ export const getProductFilterOptions = createServerFn().handler(async () => {
       name: customersTable.name,
     })
     .from(productsTable)
+    .where(notDeleted(productsTable))
     .innerJoin(customersTable, eq(productsTable.customer_id, customersTable.id))
 
   const materials = rows

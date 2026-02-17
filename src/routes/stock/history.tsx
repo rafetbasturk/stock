@@ -53,7 +53,6 @@ function RouteComponent() {
         columnId: 'movementType',
         label: t('movement_type_filter'),
         type: 'multi',
-        isVirtual: true,
         options: [
           { value: 'IN', label: t('stock_in') },
           { value: 'OUT', label: t('stock_out') },
@@ -84,7 +83,7 @@ function RouteComponent() {
   )
 
   const handleSearchChange = useCallback(
-    (updates: Record<string, string | undefined>) => {
+    (updates: Record<string, string | number | undefined>) => {
       navigate({
         search: (prev) => {
           const merged = {
@@ -129,7 +128,7 @@ function RouteComponent() {
         stocks={result.data}
         columns={columns}
         total={result.total}
-        search={search as Record<string, string | undefined>}
+        search={search}
         customFilters={customFilters}
         pageIndex={search.pageIndex}
         pageSize={search.pageSize}
@@ -185,10 +184,13 @@ function RouteComponent() {
         onClose={() => setModalState({ type: 'closed', movement: null })}
         onConfirm={() => {
           if (modalState.movement) {
-            deleteMutation.mutate(modalState.movement.id, {
-              onSuccess: () =>
-                setModalState({ type: 'closed', movement: null }),
-            })
+            deleteMutation.mutate(
+              { id: modalState.movement.id },
+              {
+                onSuccess: () =>
+                  setModalState({ type: 'closed', movement: null }),
+              },
+            )
           }
         }}
       />

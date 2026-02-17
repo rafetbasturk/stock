@@ -7,6 +7,7 @@
   "CUSTOMER_CREATION_FAILED": "Müşteri oluşturulamadı.",
   "CUSTOMER_UPDATE_FAILED": "Müşteri güncellenemedi.",
   "CUSTOMER_NOT_FOUND": "Müşteri bulunamadı.",
+  "CUSTOMER_HAS_ACTIVE_ORDERS": "Müşteri aktif siparişleri vardır ve silinemez.",
 
   "ORDER_CREATION_FAILED": "Sipariş oluşturulamadı.",
   "ORDER_UPDATE_FAILED": "Sipariş güncellenemedi.",

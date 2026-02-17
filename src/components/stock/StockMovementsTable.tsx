@@ -38,8 +38,8 @@ export function StockMovementsTable({ productId }: Props) {
     queryFn: () =>
       getStockMovements({
         data: {
-          product_id: productId,
-          page,
+          productId: productId,
+          pageIndex: page,
           pageSize: 20,
         },
       }),
@@ -72,7 +72,9 @@ export function StockMovementsTable({ productId }: Props) {
         </p>
 
         {query.isFetching && !query.isLoading && (
-          <span className="text-xs text-muted-foreground">{t('processing')}</span>
+          <span className="text-xs text-muted-foreground">
+            {t('processing')}
+          </span>
         )}
       </div>
 
@@ -137,7 +139,9 @@ export function StockMovementsTable({ productId }: Props) {
                           <PackageSearch />
                         </EmptyMedia>
                         <EmptyTitle>{t('stock_history')}</EmptyTitle>
-                        <EmptyDescription>{t('stock_history_desc')}</EmptyDescription>
+                        <EmptyDescription>
+                          {t('stock_history_desc')}
+                        </EmptyDescription>
                       </EmptyHeader>
                     </Empty>
                   </TableCell>
@@ -149,13 +153,19 @@ export function StockMovementsTable({ productId }: Props) {
                 movements.map((movement) => (
                   <TableRow key={movement.id} className="hover:bg-accent/50">
                     <TableCell className="whitespace-nowrap text-muted-foreground">
-                      {new Date(movement.created_at).toLocaleString(i18n.language)}
+                      {new Date(movement.created_at).toLocaleString(
+                        i18n.language,
+                      )}
                     </TableCell>
 
                     <TableCell>
                       <MovementBadge
                         type={movement.movement_type as MovementType}
-                        label={movementTypeLabels[movement.movement_type as MovementType]}
+                        label={
+                          movementTypeLabels[
+                            movement.movement_type as MovementType
+                          ]
+                        }
                       />
                     </TableCell>
 
@@ -170,7 +180,8 @@ export function StockMovementsTable({ productId }: Props) {
                     <TableCell className="text-xs text-muted-foreground">
                       {movement.reference_type ? (
                         <span className="inline-flex items-center gap-1 rounded-md border px-2 py-1">
-                          {movement.reference_type} #{movement.reference_id ?? '-'}
+                          {movement.reference_type} #
+                          {movement.reference_id ?? '-'}
                         </span>
                       ) : (
                         '-'
@@ -203,13 +214,7 @@ function QuantityCell({ quantity }: { quantity: number }) {
   )
 }
 
-function MovementBadge({
-  type,
-  label,
-}: {
-  type: MovementType
-  label: string
-}) {
+function MovementBadge({ type, label }: { type: MovementType; label: string }) {
   const classes: Record<MovementType, string> = {
     IN: 'bg-emerald-100 text-emerald-700 border-emerald-200',
     OUT: 'bg-red-100 text-red-700 border-red-200',

@@ -12,6 +12,7 @@ import {
   DashboardFilters,
   KeyMetrics,
   MonthlyChart,
+  StockIntegrityAlert,
 } from '@/components/dashboard'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { zodValidator } from '@tanstack/zod-adapter'
@@ -60,6 +61,8 @@ function Dashboard() {
           onSearchChange={handleSearchChange}
         />
       </div>
+
+      <StockIntegrityAlert />
 
       <div className="space-y-8">
         <KeyMetrics filters={search} />

@@ -14,16 +14,12 @@ import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { debounce } from '@/lib/debounce'
 import { useDeleteCustomerMutation } from '@/lib/mutations/customers'
 import { customersPaginatedQuery } from '@/lib/queries/customers'
-import { customersSearchSchema } from '@/lib/types'
-
-type ModalState =
-  | { type: 'closed' }
-  | { type: 'adding' }
-  | { type: 'editing'; customer: Customer }
+import { customersSearchSchema, normalizeCustomersSearch } from '@/lib/types'
+import { CustomersModalState } from '@/lib/types/types.modal'
 
 export const Route = createFileRoute('/customers/')({
   validateSearch: zodValidator(customersSearchSchema),
-  loaderDeps: ({ search }) => search,
+  loaderDeps: ({ search }) => normalizeCustomersSearch(search),
   loader: async ({ context, deps }) => {
     return await context.queryClient.ensureQueryData(
       customersPaginatedQuery(deps),
@@ -38,7 +34,7 @@ function CustomerList() {
   const navigate = useNavigate({ from: Route.fullPath })
   const search = Route.useSearch()
 
-  const [modalState, setModalState] = useState<ModalState>({ type: 'closed' })
+  const [modalState, setModalState] = useState<CustomersModalState>({ type: 'closed' })
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
 
   const closeModal = useCallback(() => setModalState({ type: 'closed' }), [])

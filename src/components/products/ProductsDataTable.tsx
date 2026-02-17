@@ -5,7 +5,7 @@ import type { DataTableFilter } from '@/components/DataTable'
 import DataTable from '@/components/DataTable'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 
-type SearchUpdates = Record<string, string | undefined>
+type SearchUpdates = Record<string, string | number | undefined>
 
 interface ProductsDataTableProps {
   products: Array<ProductListRow>

@@ -10,17 +10,7 @@ import {
   getYearRange,
 } from '@/server/orders'
 
-const normalizedSearch = (search: OrdersSearch) => ({
-  pageIndex: search.pageIndex ?? 0,
-  pageSize: search.pageSize ?? 100,
-  q: search.q ?? '',
-  sortBy: search.sortBy ?? 'order_number',
-  sortDir: search.sortDir ?? 'desc',
-  status: search.status ?? '',
-  customerId: search.customerId ?? '',
-  startDate: search.startDate ?? '',
-  endDate: search.endDate ?? '',
-})
+import { normalizeOrdersSearch } from '../types/types.search'
 
 export const orderQueryKeys = {
   all: ['orders'] as const,
@@ -28,12 +18,15 @@ export const orderQueryKeys = {
   lists: () => [...orderQueryKeys.all, 'list'] as const,
 
   list: (search: OrdersSearch) =>
-    [...orderQueryKeys.lists(), normalizedSearch(search)] as const,
+    [...orderQueryKeys.lists(), normalizeOrdersSearch(search)] as const,
 
   paginatedLists: () => [...orderQueryKeys.all, 'paginated'] as const,
 
   paginatedList: (search: OrdersSearch) =>
-    [...orderQueryKeys.paginatedLists(), normalizedSearch(search)] as const,
+    [
+      ...orderQueryKeys.paginatedLists(),
+      normalizeOrdersSearch(search),
+    ] as const,
 
   details: () => [...orderQueryKeys.all, 'detail'] as const,
 

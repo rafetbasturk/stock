@@ -1,15 +1,20 @@
-import { orderItemsTable, ordersTable } from '@/db/schema'
+import {
+  customOrderItemsTable,
+  deliveryItemsTable,
+  orderItemsTable,
+  ordersTable,
+} from '@/db/schema'
 import { TR } from '@/lib/constants'
 import { failValidation } from '@/lib/error/core/serverError'
 import {
   Currency,
-  DeliveryItem,
   DeliveryListRow,
   DeliveryWithItems,
+  InsertCustomer,
   InsertProduct,
   OrderWithItems,
 } from '@/types'
-import { eq, isNull, sql } from 'drizzle-orm'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
 export function normalizeText(input?: string | null) {
   const s = (input ?? '')
@@ -175,38 +180,155 @@ export const normalizeDateForDB = (value: any): Date => {
 }
 
 export async function updateOrderStatusIfComplete(tx: any, orderId: number) {
-  // Get order items with delivered quantities
-  const items = await tx.query.orderItemsTable.findMany({
-    where: eq(orderItemsTable.order_id, orderId),
-    with: {
-      deliveries: true, // deliveryItems
-    },
+  // 1. Get order type
+  const order = await tx.query.ordersTable.findFirst({
+    where: eq(ordersTable.id, orderId),
+    columns: { is_custom_order: true },
   })
 
   let allShipped = true
+  let hasItems = false
 
-  for (const item of items) {
-    const deliveredTotal = (item.deliveries ?? []).reduce(
-      (sum: number, di: DeliveryItem) => sum + (di.delivered_quantity ?? 0),
-      0,
-    )
-
-    if (deliveredTotal < item.quantity) {
-      allShipped = false
-      break
+  if (order?.is_custom_order) {
+    const customItems = await tx.query.customOrderItemsTable.findMany({
+      where: and(
+        eq(customOrderItemsTable.order_id, orderId),
+        isNull(customOrderItemsTable.deleted_at),
+      ),
+      with: {
+        deliveries: {
+          where: isNull(deliveryItemsTable.deleted_at),
+        },
+      },
+    })
+    hasItems = customItems.length > 0
+    for (const item of customItems) {
+      const deliveredTotal = (item.deliveries ?? []).reduce(
+        (sum: number, di: any) => sum + (di.delivered_quantity ?? 0),
+        0,
+      )
+      if (deliveredTotal < item.quantity) {
+        allShipped = false
+        break
+      }
+    }
+  } else {
+    const items = await tx.query.orderItemsTable.findMany({
+      where: and(
+        eq(orderItemsTable.order_id, orderId),
+        isNull(orderItemsTable.deleted_at),
+      ),
+      with: {
+        deliveries: {
+          where: isNull(deliveryItemsTable.deleted_at),
+        },
+      },
+    })
+    hasItems = items.length > 0
+    for (const item of items) {
+      const deliveredTotal = (item.deliveries ?? []).reduce(
+        (sum: number, di: any) => sum + (di.delivered_quantity ?? 0),
+        0,
+      )
+      if (deliveredTotal < item.quantity) {
+        allShipped = false
+        break
+      }
     }
   }
+
+  // If order has no active items (e.g. all deleted), we might want to stay in 'ÜRETİM' or similar,
+  // but 'BİTTİ' (COMPLETED) is a reasonable fallback if nothing is left to ship.
+  // Actually, if it has no items, it shouldn't probably be 'BİTTİ' if it was just created.
+  // But usually, an order without items is an invalid state or cancelled.
 
   await tx
     .update(ordersTable)
     .set({
-      status: allShipped ? 'BİTTİ' : 'ÜRETİM',
+      status: hasItems && allShipped ? 'BİTTİ' : 'ÜRETİM',
       updated_at: sql`now()`,
     })
     .where(eq(ordersTable.id, orderId))
 }
 
+export async function recalculateOrderReadyStatus(tx: any, orderId: number) {
+  // 1. Get order type and items
+  const order = await tx.query.ordersTable.findFirst({
+    where: eq(ordersTable.id, orderId),
+    columns: { is_custom_order: true, status: true },
+    with: {
+      items: {
+        where: isNull(orderItemsTable.deleted_at),
+        with: {
+          product: true,
+        },
+      },
+    },
+  })
+
+  // Skip if not found or status shouldn't be auto-recalculated (e.g. BİTTİ or İPTAL)
+  if (
+    !order ||
+    order.is_custom_order ||
+    order.status === 'BİTTİ' ||
+    order.status === 'İPTAL'
+  ) {
+    return
+  }
+
+  let fulfilledCount = 0
+  const totalCount = order.items.length
+
+  if (totalCount > 0) {
+    for (const item of order.items) {
+      if (item.product && item.product.stock_quantity >= item.quantity) {
+        fulfilledCount++
+      }
+    }
+  }
+
+  let newStatus: string
+  if (totalCount === 0) {
+    newStatus = 'KAYIT'
+  } else if (fulfilledCount === totalCount) {
+    newStatus = 'HAZIR'
+  } else if (fulfilledCount > 0) {
+    newStatus = 'KISMEN HAZIR'
+  } else {
+    newStatus = 'KAYIT'
+  }
+
+  if (order.status !== newStatus) {
+    await tx
+      .update(ordersTable)
+      .set({
+        status: newStatus,
+        updated_at: sql`now()`,
+      })
+      .where(eq(ordersTable.id, orderId))
+  }
+}
+
 export function normalizeParams(value?: string) {
   const trimmed = value?.trim()
   return trimmed && trimmed.length > 0 ? trimmed : undefined
+}
+
+// Shared validation helper
+export function validateCustomerInput(customer: InsertCustomer) {
+  const fieldErrors: Record<
+    string,
+    { i18n: { ns: 'validation'; key: 'required' } }
+  > = {}
+
+  if (!customer.code.trim()) {
+    fieldErrors.code = { i18n: { ns: 'validation', key: 'required' } }
+  }
+  if (!customer.name.trim()) {
+    fieldErrors.name = { i18n: { ns: 'validation', key: 'required' } }
+  }
+
+  if (Object.keys(fieldErrors).length > 0) {
+    failValidation(fieldErrors)
+  }
 }

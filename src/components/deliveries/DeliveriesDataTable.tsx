@@ -6,7 +6,7 @@ import DataTable from '@/components/DataTable'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { DeliveryProductsHistoryTable } from './DeliveryProductsHistoryTable'
 
-type SearchUpdates = Record<string, string | undefined>
+type SearchUpdates = Record<string, string | number | undefined>
 
 interface TableProps {
   deliveries: Array<DeliveryListRow>

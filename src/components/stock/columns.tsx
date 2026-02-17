@@ -66,7 +66,13 @@ export const getColumns = (
       enableSorting: false,
       cell: ({ row }) => (
         <div className="text-muted-foreground">
-          {new Date(row.original.created_at).toLocaleString()}
+          {new Date(row.original.created_at).toLocaleDateString('tr-TR', {
+            hour: 'numeric',
+            minute: 'numeric',
+            day: 'numeric',
+            month: 'numeric',
+            year: 'numeric',
+          })}
         </div>
       ),
     },

@@ -1,4 +1,4 @@
-import { relations, sql } from 'drizzle-orm'
+import { relations, sql, isNull } from 'drizzle-orm'
 import {
   pgTable,
   serial,
@@ -6,7 +6,6 @@ import {
   text,
   timestamp,
   boolean,
-  unique,
   index,
   check,
   uniqueIndex,
@@ -27,15 +26,23 @@ const timestamps = {
   deleted_at: timestamp('deleted_at'),
 }
 
-export const customersTable = pgTable('customers', {
-  id: serial('id').primaryKey(),
-  code: text('code').unique().notNull(),
-  name: text('name').notNull(),
-  email: text('email'),
-  phone: text('phone'),
-  address: text('address'),
-  ...timestamps,
-})
+export const customersTable = pgTable(
+  'customers',
+  {
+    id: serial('id').primaryKey(),
+    code: text('code').notNull(),
+    name: text('name').notNull(),
+    email: text('email'),
+    phone: text('phone'),
+    address: text('address'),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex('idx_customers_code_unique')
+      .on(table.code)
+      .where(isNull(table.deleted_at)),
+  ],
+)
 
 export const productsTable = pgTable(
   'products',
@@ -102,7 +109,9 @@ export const ordersTable = pgTable(
     ...timestamps,
   },
   (table) => [
-    unique().on(table.order_number, table.customer_id),
+    uniqueIndex('idx_orders_number_customer_unique')
+      .on(table.order_number, table.customer_id)
+      .where(isNull(table.deleted_at)),
     index('idx_orders_order_number').on(table.order_number),
     index('idx_orders_order_date').on(table.order_date),
     index('idx_orders_customer').on(table.customer_id),
@@ -182,7 +191,9 @@ export const deliveriesTable = pgTable(
     ...timestamps,
   },
   (table) => [
-    unique().on(table.customer_id, table.delivery_number),
+    uniqueIndex('idx_deliveries_number_customer_unique')
+      .on(table.customer_id, table.delivery_number)
+      .where(isNull(table.deleted_at)),
     index('idx_deliveries_customer').on(table.customer_id),
     index('idx_deliveries_delivery_date').on(table.delivery_date),
     index('idx_deliveries_deleted').on(table.deleted_at),

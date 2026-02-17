@@ -7,6 +7,7 @@
   "CUSTOMER_CREATION_FAILED": "Failed to create customer.",
   "CUSTOMER_UPDATE_FAILED": "Failed to update customer.",
   "CUSTOMER_NOT_FOUND": "Customer not found.",
+  "CUSTOMER_HAS_ACTIVE_ORDERS": "Customer has active orders and cannot be deleted.",
 
   "ORDER_CREATION_FAILED": "Failed to create order.",
   "ORDER_UPDATE_FAILED": "Failed to update order.",

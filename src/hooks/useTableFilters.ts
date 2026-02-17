@@ -5,7 +5,7 @@ import type { Table } from '@tanstack/react-table'
 import type { DataTableFilter } from '@/components/DataTable'
 import { useTranslation } from 'react-i18next'
 
-type TableSearch = Record<string, string | undefined>
+type TableSearch = Record<string, string | number | undefined>
 
 interface UseTableFiltersProps<TData> {
   table: Table<TData>
@@ -70,9 +70,7 @@ export function useTableFilters<TData>({
     const end = search.endDate
 
     if (start || end) {
-      items.push(
-        `${t('active_filters.date')}: ${start ?? '…'} - ${end ?? '…'}`,
-      )
+      items.push(`${t('active_filters.date')}: ${start ?? '…'} - ${end ?? '…'}`)
     }
 
     /*
@@ -113,7 +111,7 @@ export function useTableFilters<TData>({
       */
 
       if (filter.type === 'multi') {
-        const values = raw.split(',')
+        const values = String(raw).split(',')
 
         const labels = filter.options?.length
           ? values.map(

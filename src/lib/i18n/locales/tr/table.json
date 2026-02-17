@@ -5,6 +5,7 @@
     "search": "Arama",
     "date": "Tarih"
   },
+  "selected": "seçenek seçili",
   "columns": "Sütunlar",
   "no_results": "Sonuç bulunamadı.",
   "records_count": "{{count}} kayıt",

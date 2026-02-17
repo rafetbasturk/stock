@@ -12,6 +12,7 @@ import { db } from '@/db'
 import { stockMovementsTable } from '@/db/schema'
 import { BaseAppError } from '@/lib/error/core'
 import { fail } from '@/lib/error/core/serverError'
+import { stockSearchSchema } from '@/lib/types'
 
 export const createStockMovement = createServerFn()
   .inputValidator((data: InsertStockMovement) => data)
@@ -37,30 +38,18 @@ export const createStockMovement = createServerFn()
   })
 
 export const getStockMovements = createServerFn()
-  .inputValidator(
-    (data: {
-      product_id?: number
-      page?: number
-      pageSize?: number
-      q?: string
-      movementType?: string
-    }) => data,
-  )
+  .inputValidator((data) => stockSearchSchema.parse(data))
   .handler(async ({ data }) => {
-
-    const page = data.page ?? 0
-    const pageSize = data.pageSize ?? 20
-    const search = data.q?.trim()
-    const movementType = data.movementType?.trim()
+    const { pageIndex, pageSize, q, movementType, productId } = data
 
     const conditions: Array<SQL> = []
 
-    if (data.product_id) {
-      conditions.push(eq(stockMovementsTable.product_id, data.product_id))
+    if (productId) {
+      conditions.push(eq(stockMovementsTable.product_id, productId))
     }
 
-    if (search) {
-      const like = `%${search}%`
+    if (q) {
+      const like = `%${q}%`
       conditions.push(
         or(
           ilike(stockMovementsTable.notes, like),
@@ -130,7 +119,7 @@ export const getStockMovements = createServerFn()
         },
         orderBy: (m, { desc }) => [desc(m.created_at)],
         limit: pageSize,
-        offset: page * pageSize,
+        offset: pageIndex * pageSize,
       }),
 
       db
@@ -155,7 +144,7 @@ export const getStockMovements = createServerFn()
       total,
       inCount,
       outCount,
-      page,
+      pageIndex,
       pageSize,
       pageCount: Math.ceil(total / pageSize),
     }
@@ -164,7 +153,6 @@ export const getStockMovements = createServerFn()
 export const deleteStockMovement = createServerFn()
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data }) => {
-
     try {
       await db.transaction(async (tx) => {
         await deleteStockMovementTx(tx, data.id)
@@ -182,7 +170,6 @@ export const updateStockMovement = createServerFn()
     (data: { id: number; quantity?: number; notes?: string }) => data,
   )
   .handler(async ({ data }) => {
-
     try {
       await db.transaction(async (tx) => {
         const { id, ...updateData } = data

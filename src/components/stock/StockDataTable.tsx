@@ -2,6 +2,7 @@ import { LoadingSpinner } from '../LoadingSpinner'
 import DataTable, { DataTableFilter } from '../DataTable'
 import { ColumnDef } from '@tanstack/react-table'
 import { MovementRow } from '@/types'
+import { StockSearch } from '@/lib/types'
 
 interface TableProps {
   stocks: Array<MovementRow>
@@ -9,10 +10,10 @@ interface TableProps {
   pageIndex: number
   pageSize: number
   isFetching: boolean
-  search: Record<string, string | undefined>
+  search: StockSearch
   columns: Array<ColumnDef<MovementRow>>
   customFilters?: Array<DataTableFilter>
-  onSearchChange: (updates: Record<string, string | undefined>) => void
+  onSearchChange: (updates: Record<string, string | number | undefined>) => void
   onPageChange: (pageIndex: number) => void
   onPageSizeChange: (pageSize: number) => void
   onRowClick: (row: MovementRow) => void
@@ -41,7 +42,7 @@ export function StockDataTable({
         columns={columns}
         data={stocks}
         total={total}
-        search={search as Record<string, string | undefined>}
+        search={search}
         customFilters={customFilters}
         serverPageIndex={pageIndex}
         serverPageSize={pageSize}
