@@ -1,6 +1,5 @@
 // src/server/deliveries.ts
 import { createServerFn } from '@tanstack/react-start'
-import { authMiddleware } from './middleware/auth'
 import {
   and,
   desc as drizzleDesc,
@@ -23,12 +22,14 @@ import {
   notDeleted,
   updateOrderStatusIfComplete,
 } from './utils'
+import { requireAuth } from './auth/requireAuth'
 import { db } from '@/db'
 import {
   customersTable,
   deliveriesTable,
   deliveryItemsTable,
   orderItemsTable,
+  productsTable,
 } from '@/db/schema'
 import { fail, failValidation } from '@/lib/error/core/serverError'
 import { BaseAppError } from '@/lib/error/core'
@@ -45,14 +46,17 @@ export interface CreateDeliveryInput {
   )[]
 }
 
-export const createDelivery = createServerFn().middleware([authMiddleware])
+export const createDelivery = createServerFn()
   .inputValidator((data: CreateDeliveryInput) => data)
-  .handler(async ({ data, context }) => {
-    const user = context.user
+  .handler(async ({ data }) => {
+    const user = await requireAuth()
 
     const { customer_id, delivery_number, delivery_date, notes, items } = data
 
-    const fieldErrors: Record<string, { i18n: { ns: 'validation'; key: 'required' } }> = {}
+    const fieldErrors: Record<
+      string,
+      { i18n: { ns: 'validation'; key: 'required' } }
+    > = {}
 
     if (!customer_id) {
       fieldErrors.customer_id = { i18n: { ns: 'validation', key: 'required' } }
@@ -99,8 +103,7 @@ export const createDelivery = createServerFn().middleware([authMiddleware])
         if (standardItems.length > 0) {
           const ids = standardItems.map((i) => i.order_item_id)
 
-          if (new Set(ids).size !== ids.length)
-            fail('DUPLICATE_ORDER_ITEM')
+          if (new Set(ids).size !== ids.length) fail('DUPLICATE_ORDER_ITEM')
 
           standardOrderItems = await tx.query.orderItemsTable.findMany({
             where: and(
@@ -128,15 +131,13 @@ export const createDelivery = createServerFn().middleware([authMiddleware])
             fail('ORDER_ITEM_NOT_FOUND')
 
           for (const item of standardItems) {
-            if (item.delivered_quantity <= 0)
-              fail('INVALID_DELIVERY_QUANTITY')
+            if (item.delivered_quantity <= 0) fail('INVALID_DELIVERY_QUANTITY')
 
             const orderItem = standardOrderItems.find(
               (oi) => oi.id === item.order_item_id,
             )
 
-            if (!orderItem?.product)
-              fail('ORDER_ITEM_MISSING_PRODUCT')
+            if (!orderItem?.product) fail('ORDER_ITEM_MISSING_PRODUCT')
 
             if (orderItem.order_id) affectedOrderIds.add(orderItem.order_id)
           }
@@ -183,11 +184,9 @@ export const createDelivery = createServerFn().middleware([authMiddleware])
           for (const item of standardItems) {
             const orderItem = orderItemMap.get(item.order_item_id)
 
-            if (!orderItem)
-              fail('ORDER_ITEM_NOT_FOUND')
+            if (!orderItem) fail('ORDER_ITEM_NOT_FOUND')
 
-            if (!orderItem.product_id)
-              fail('ORDER_ITEM_INVALID')
+            if (!orderItem.product_id) fail('ORDER_ITEM_INVALID')
 
             await createStockMovementTx(tx, {
               product_id: orderItem.product_id,
@@ -249,8 +248,7 @@ export const createDelivery = createServerFn().middleware([authMiddleware])
     }
   })
 
-export const getDeliveries = createServerFn().middleware([authMiddleware]).handler(async () => {
-
+export const getDeliveries = createServerFn().handler(async () => {
   const deliveriesRaw = await db.query.deliveriesTable.findMany({
     with: {
       customer: true,
@@ -304,10 +302,9 @@ export const getDeliveries = createServerFn().middleware([authMiddleware]).handl
   return deliveriesRaw.map(addTotalAmount)
 })
 
-export const getDeliveryById = createServerFn().middleware([authMiddleware])
+export const getDeliveryById = createServerFn()
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data }) => {
-
     const delivery = await db.query.deliveriesTable.findFirst({
       with: {
         customer: true,
@@ -364,10 +361,9 @@ const paginatedSchema = z.object({
   endDate: z.string().trim().optional(),
 })
 
-export const getPaginatedDeliveries = createServerFn().middleware([authMiddleware])
+export const getPaginatedDeliveries = createServerFn()
   .inputValidator((data) => paginatedSchema.parse(data))
   .handler(async ({ data }) => {
-
     const {
       pageIndex,
       pageSize,
@@ -528,10 +524,9 @@ export const getPaginatedDeliveries = createServerFn().middleware([authMiddlewar
     }
   })
 
-export const removeDelivery = createServerFn().middleware([authMiddleware])
+export const removeDelivery = createServerFn()
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data: { id } }) => {
-
     await db
       .update(deliveriesTable)
       .set({
@@ -543,26 +538,22 @@ export const removeDelivery = createServerFn().middleware([authMiddleware])
     return { success: true }
   })
 
-export const getLastDeliveryNumber = createServerFn().middleware([authMiddleware]).handler(
-  async () => {
+export const getLastDeliveryNumber = createServerFn().handler(async () => {
+  const [lastDelivery] = await db
+    .select({
+      delivery_number: deliveriesTable.delivery_number,
+    })
+    .from(deliveriesTable)
+    .orderBy(
+      drizzleDesc(deliveriesTable.created_at),
+      drizzleDesc(deliveriesTable.id),
+    )
+    .limit(1)
 
-    const [lastDelivery] = await db
-      .select({
-        delivery_number: deliveriesTable.delivery_number,
-      })
-      .from(deliveriesTable)
-      .orderBy(
-        drizzleDesc(deliveriesTable.created_at),
-        drizzleDesc(deliveriesTable.id),
-      )
-      .limit(1)
+  return lastDelivery.delivery_number
+})
 
-    return lastDelivery.delivery_number
-  },
-)
-
-export const getDeliveryFilterOptions = createServerFn().middleware([authMiddleware]).handler(async () => {
-
+export const getDeliveryFilterOptions = createServerFn().handler(async () => {
   const customerRows = await db
     .selectDistinct({
       customer_id: deliveriesTable.customer_id,
@@ -587,3 +578,245 @@ export const getDeliveryFilterOptions = createServerFn().middleware([authMiddlew
     customers,
   }
 })
+
+const updateDeliveryItemSchema = z.union([
+  z.object({
+    id: z.number().int().positive().optional(),
+    order_item_id: z.number().int().positive(),
+    delivered_quantity: z.number().int().positive(),
+  }),
+  z.object({
+    id: z.number().int().positive().optional(),
+    custom_order_item_id: z.number().int().positive(),
+    delivered_quantity: z.number().int().positive(),
+  }),
+])
+
+export const updateDeliverySchema = z.object({
+  id: z.number().int().positive(),
+  data: z.object({
+    delivery_number: z.string().trim().min(1),
+    delivery_date: z.date(),
+    notes: z.string().nullable().optional(),
+    items: z.array(updateDeliveryItemSchema).min(1),
+  }),
+})
+
+export const updateDelivery = createServerFn()
+  .inputValidator((data) => updateDeliverySchema.parse(data))
+  .handler(async ({ data: { id: deliveryId, data } }) => {
+    const { delivery_number, delivery_date, notes, items } = data
+
+    try {
+      await db.transaction(async (tx) => {
+        // -------------------------------------------------------
+        // 1️⃣ Restore stock of OLD items
+        // -------------------------------------------------------
+
+        const oldItems = await tx.query.deliveryItemsTable.findMany({
+          where: eq(deliveryItemsTable.delivery_id, deliveryId),
+          columns: {
+            delivered_quantity: true,
+          },
+          with: {
+            orderItem: {
+              columns: {
+                id: true,
+                order_id: true,
+                product_id: true,
+              },
+            },
+          },
+        })
+
+        if (oldItems.length === 0) {
+          fail('DELIVERY_NOT_FOUND')
+        }
+
+        const affectedOrderIds = new Set<number>()
+
+        for (const old of oldItems) {
+          const orderItem = old.orderItem
+
+          if (orderItem?.product_id) {
+            await tx
+              .update(productsTable)
+              .set({
+                stock_quantity: sql`${productsTable.stock_quantity} + ${old.delivered_quantity}`,
+              })
+              .where(eq(productsTable.id, orderItem.product_id))
+          }
+
+          if (orderItem?.order_id) {
+            affectedOrderIds.add(orderItem.order_id)
+          }
+        }
+
+        // -------------------------------------------------------
+        // 2️⃣ Split standard vs custom items
+        // -------------------------------------------------------
+
+        const standardItems = items.filter(
+          (
+            i,
+          ): i is {
+            order_item_id: number
+            delivered_quantity: number
+          } => 'order_item_id' in i,
+        )
+
+        let standardOrderItems: {
+          id: number
+          order_id: number
+          product_id: number | null
+          product: {
+            id: number
+            stock_quantity: number
+            code: string | null
+            name: string | null
+          } | null
+        }[] = []
+
+        if (standardItems.length > 0) {
+          const ids = standardItems.map((i) => i.order_item_id)
+
+          standardOrderItems = await tx.query.orderItemsTable.findMany({
+            where: inArray(orderItemsTable.id, ids),
+            columns: {
+              id: true,
+              order_id: true,
+              product_id: true,
+            },
+            with: {
+              product: {
+                columns: {
+                  id: true,
+                  stock_quantity: true,
+                  code: true,
+                  name: true,
+                },
+              },
+            },
+          })
+
+          // stock validation
+          const insufficient: {
+            product_id: number
+            code?: string | null
+            name?: string | null
+          }[] = []
+
+          for (const item of standardItems) {
+            const orderItem = standardOrderItems.find(
+              (oi) => oi.id === item.order_item_id,
+            )
+
+            if (!orderItem?.product) {
+              fail('ORDER_ITEM_MISSING_PRODUCT')
+            }
+
+            if (orderItem.product.stock_quantity < item.delivered_quantity) {
+              insufficient.push({
+                product_id: orderItem.product.id,
+                code: orderItem.product.code,
+                name: orderItem.product.name,
+              })
+            }
+
+            if (orderItem.order_id) {
+              affectedOrderIds.add(orderItem.order_id)
+            }
+          }
+
+          if (insufficient.length > 0) {
+            fail('INSUFFICIENT_STOCK')
+          }
+        }
+
+        // -------------------------------------------------------
+        // 3️⃣ Update delivery header
+        // -------------------------------------------------------
+
+        const updated = await tx
+          .update(deliveriesTable)
+          .set({
+            delivery_number: delivery_number.trim(),
+            delivery_date,
+            notes: notes?.trim() || null,
+            updated_at: sql`now()`,
+          })
+          .where(eq(deliveriesTable.id, deliveryId))
+          .returning({ id: deliveriesTable.id })
+
+        if (updated.length === 0) {
+          fail('DELIVERY_NOT_FOUND')
+        }
+
+        // -------------------------------------------------------
+        // 4️⃣ Delete old items
+        // -------------------------------------------------------
+
+        await tx
+          .delete(deliveryItemsTable)
+          .where(eq(deliveryItemsTable.delivery_id, deliveryId))
+
+        // -------------------------------------------------------
+        // 5️⃣ Insert new items
+        // -------------------------------------------------------
+
+        await tx.insert(deliveryItemsTable).values(
+          items.map((item) => ({
+            delivery_id: deliveryId,
+            order_item_id: 'order_item_id' in item ? item.order_item_id : null,
+            custom_order_item_id:
+              'custom_order_item_id' in item ? item.custom_order_item_id : null,
+            delivered_quantity: item.delivered_quantity,
+          })),
+        )
+
+        // -------------------------------------------------------
+        // 6️⃣ Deduct stock for standard items
+        // -------------------------------------------------------
+
+        const orderItemMap = new Map(
+          standardOrderItems.map((oi) => [oi.id, oi]),
+        )
+
+        for (const item of standardItems) {
+          const orderItem = orderItemMap.get(item.order_item_id)
+
+          if (orderItem?.product_id) {
+            await tx
+              .update(productsTable)
+              .set({
+                stock_quantity: sql`${productsTable.stock_quantity} - ${item.delivered_quantity}`,
+              })
+              .where(eq(productsTable.id, orderItem.product_id))
+          }
+        }
+
+        // -------------------------------------------------------
+        // 7️⃣ Update affected order statuses
+        // -------------------------------------------------------
+
+        for (const orderId of affectedOrderIds) {
+          await updateOrderStatusIfComplete(tx, orderId)
+        }
+      })
+
+      // -------------------------------------------------------
+      // 8️⃣ Return fresh delivery
+      // -------------------------------------------------------
+
+      return await getDeliveryById({
+        data: { id: deliveryId },
+      })
+    } catch (error) {
+      console.error('[updateDelivery]', error)
+
+      throw BaseAppError.create({
+        code: 'DELIVERY_UPDATE_FAILED',
+        details: error instanceof Error ? error.message : String(error),
+      })
+    }
+  })

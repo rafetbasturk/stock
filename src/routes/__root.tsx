@@ -10,7 +10,11 @@ import {
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { createServerFn } from '@tanstack/react-start'
-import { getCookie, getRequestHeader } from '@tanstack/react-start/server'
+import {
+  getCookie,
+  getRequestHeader,
+  setCookie,
+} from '@tanstack/react-start/server'
 import { useMemo } from 'react'
 import { I18nextProvider, useTranslation } from 'react-i18next'
 import { Toaster } from 'sonner'
@@ -29,6 +33,8 @@ import { meQuery } from '@/lib/queries/auth'
 import enRoot from '@/lib/i18n/locales/en/root.json'
 import trRoot from '@/lib/i18n/locales/tr/root.json'
 import { createSettingsScript } from '@/lib/settings/settingsScript'
+import { ClientOnly } from '@tanstack/react-router'
+import { SetTimeZoneCookie } from '@/components/SetTimeZoneCookie'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -45,6 +51,7 @@ export const getServerCookies = createServerFn().handler(() => {
   const acceptLang = getRequestHeader('accept-language')
   const cookieTheme = getCookie('theme')
   const cookieSidebar = getCookie('sidebar_state')
+  const cookieTimeZone = getCookie('tz')
 
   const theme: AppSettings['theme'] =
     cookieTheme === 'light' ||
@@ -54,20 +61,31 @@ export const getServerCookies = createServerFn().handler(() => {
       : 'system'
 
   let lang: AppSettings['lang'] = 'tr'
+
   if (cookieLang === 'tr' || cookieLang === 'en') {
     lang = cookieLang
   } else if (acceptLang) {
     const primaryLang = acceptLang.split(',')[0].split('-')[0].toLowerCase()
     lang = primaryLang === 'tr' ? 'tr' : 'en'
+
+    setCookie('lang', lang, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365, // 1 year
+      sameSite: 'lax',
+    })
   }
 
   const sidebarOpen = cookieSidebar !== 'false'
 
-  return { lang, theme, sidebarOpen }
+  const timeZone = cookieTimeZone || 'UTC'
+
+  return { lang, theme, sidebarOpen, timeZone }
 })
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async ({ context, location }) => {
+    const settings = await getServerCookies()
+
     let user = null
 
     try {
@@ -89,7 +107,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       })
     }
 
-    return { user }
+    return { user, settings }
   },
   head: () => ({
     meta: [
@@ -108,7 +126,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       },
     ],
   }),
-  loader: () => getServerCookies(),
   shellComponent: RootDocument,
   component: RootComponent,
   notFoundComponent: RootNotFound,
@@ -119,9 +136,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 })
 
 function RootComponent() {
+  const { settings } = Route.useRouteContext()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const isAuthRoute = pathname === '/login'
-  const settings = Route.useLoaderData()
 
   useErrorToast()
   useSessionPolicy()
@@ -146,7 +163,8 @@ function RootComponent() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const settings = Route.useLoaderData()
+  const { settings } = Route.useRouteContext()
+
   const i18n = useMemo(() => createI18n(settings.lang), [settings.lang])
 
   return (
@@ -158,20 +176,25 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <I18nextProvider i18n={i18n}>
+          <ClientOnly fallback={null}>
+            <SetTimeZoneCookie />
+          </ClientOnly>
           {children}
           <Toaster position="bottom-right" closeButton />
-          <TanStackDevtools
-            config={{
-              position: 'bottom-right',
-            }}
-            plugins={[
-              {
-                name: 'Tanstack Router',
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-              TanStackQueryDevtools,
-            ]}
-          />
+          <ClientOnly>
+            <TanStackDevtools
+              config={{
+                position: 'bottom-right',
+              }}
+              plugins={[
+                {
+                  name: 'Tanstack Router',
+                  render: <TanStackRouterDevtoolsPanel />,
+                },
+                TanStackQueryDevtools,
+              ]}
+            />
+          </ClientOnly>
           <Scripts />
         </I18nextProvider>
       </body>

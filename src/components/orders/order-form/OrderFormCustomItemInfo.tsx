@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/table'
 import InputField from '@/components/form/InputField'
 import { convertToCurrencyFormat } from '@/lib/currency'
+import { formatNumberForDisplay, parseLocaleNumber } from '@/lib/inputUtils'
 
 const getItemKey = (
   item: OrderFormState['customItems'][number],
@@ -34,6 +35,9 @@ type Props = {
     value: any,
   ) => void
 }
+
+const toCentsFromInput = (value: string) =>
+  Math.round(parseLocaleNumber(value) * 100)
 
 export default function OrderFormCustomItemInfo({
   form,
@@ -132,16 +136,23 @@ export default function OrderFormCustomItemInfo({
                   <TableCell className="text-right">
                     <InputField
                       name={`customItems[${index}].unit_price`}
-                      type="number"
-                      step="0.01"
-                      value={(item.unit_price ?? 0) / 100}
-                      onChange={(e) =>
+                      type="text"
+                      inputMode="decimal"
+                      value={formatNumberForDisplay(
+                        item.unit_price_raw ?? (item.unit_price ?? 0) / 100,
+                      )}
+                      onChange={(e) => {
+                        onCustomItemChange(
+                          index,
+                          'unit_price_raw',
+                          e.target.value,
+                        )
                         onCustomItemChange(
                           index,
                           'unit_price',
-                          Math.round(Number(e.target.value) * 100),
+                          toCentsFromInput(e.target.value),
                         )
-                      }
+                      }}
                     />
                   </TableCell>
                   <TableCell className="text-right font-medium">
@@ -250,17 +261,20 @@ export default function OrderFormCustomItemInfo({
                 />
                 <InputField
                   name={`customItems[${index}].unit_price-mobile`}
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   label={t('form.table.unit_price')}
-                  step="0.01"
-                  value={(item.unit_price ?? 0) / 100}
-                  onChange={(e) =>
+                  value={formatNumberForDisplay(
+                    item.unit_price_raw ?? (item.unit_price ?? 0) / 100,
+                  )}
+                  onChange={(e) => {
+                    onCustomItemChange(index, 'unit_price_raw', e.target.value)
                     onCustomItemChange(
                       index,
                       'unit_price',
-                      Math.round(Number(e.target.value) * 100),
+                      toCentsFromInput(e.target.value),
                     )
-                  }
+                  }}
                   placeholder={t('form.placeholders.unit_price')}
                 />
               </div>

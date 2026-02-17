@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import type { Table } from '@tanstack/react-table'
 import type { DataTableFilter } from '@/components/DataTable'
+import { useTranslation } from 'react-i18next'
 
 type TableSearch = Record<string, string | undefined>
 
@@ -19,12 +20,16 @@ export function useTableFilters<TData>({
   search = {},
   globalFilter,
 }: UseTableFiltersProps<TData>) {
+  const { t } = useTranslation('table')
+  const hasColumn = (columnId: string) =>
+    table.getAllLeafColumns().some((column) => column.id === columnId)
   /*
   These still update React Table state for UI behavior,
   but URL remains authoritative
   */
 
   const handleSingleFilterChange = (columnId: string, value: string) => {
+    if (!hasColumn(columnId)) return
     table
       .getColumn(columnId)
       ?.setFilterValue(value === 'all' || value === '' ? undefined : value)
@@ -34,6 +39,7 @@ export function useTableFilters<TData>({
     columnId: string,
     selectedValues: string[],
   ) => {
+    if (!hasColumn(columnId)) return
     table
       .getColumn(columnId)
       ?.setFilterValue(selectedValues.length ? selectedValues : undefined)
@@ -53,7 +59,7 @@ export function useTableFilters<TData>({
     const q = globalFilter?.trim()
 
     if (q) {
-      items.push(`Ara: ${q}`)
+      items.push(`${t('active_filters.search')}: ${q}`)
     }
 
     /*
@@ -64,7 +70,9 @@ export function useTableFilters<TData>({
     const end = search.endDate
 
     if (start || end) {
-      items.push(`Tarih: ${start ?? '…'} - ${end ?? '…'}`)
+      items.push(
+        `${t('active_filters.date')}: ${start ?? '…'} - ${end ?? '…'}`,
+      )
     }
 
     /*
@@ -120,7 +128,7 @@ export function useTableFilters<TData>({
     }
 
     return items
-  }, [filters, search, globalFilter])
+  }, [filters, search, globalFilter, t])
 
   const hasActiveFilters = activeFilters.length > 0
 

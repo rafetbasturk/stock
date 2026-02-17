@@ -43,6 +43,7 @@ export type OrderFormState = InsertOrder & {
     unit?: string
     quantity?: number
     unit_price?: number
+    unit_price_raw?: string
     currency?: Currency | null
     notes?: string | null
     tempId?: string
@@ -80,7 +81,7 @@ export default function OrderForm({
   isSubmitting,
 }: OrderFormProps) {
   const { data: products = [], isLoading } = useSelectProducts()
-  const { data: lastOrderNumber } = useQuery(lastOrderNumberQuery())
+  const { data: lastOrderNumber } = useQuery(lastOrderNumberQuery)
 
   const rates = useExchangeRatesStore.use.rates()
 
@@ -149,6 +150,7 @@ export default function OrderForm({
               return {
                 ...item,
                 unit_price: convertedPrice,
+                unit_price_raw: undefined,
                 currency: toCurrency,
               }
             }
@@ -164,6 +166,7 @@ export default function OrderForm({
           return {
             ...item,
             unit_price: convertedPrice,
+            unit_price_raw: undefined,
             currency: toCurrency,
           }
         }),
@@ -175,6 +178,7 @@ export default function OrderForm({
             toCurrency,
             rates,
           ),
+          unit_price_raw: undefined,
           currency: toCurrency,
         })),
       }))
@@ -184,7 +188,7 @@ export default function OrderForm({
   }, [form.currency, prevCurrency, rates, products, setForm, setPrevCurrency])
 
   const handleItemChange = useCallback(
-    (idx: number, field: keyof NewOrderItem, value: any) => {
+    (idx: number, field: keyof OrderFormState['items'][number], value: any) => {
       setForm((prev) => {
         const newItems = [...prev.items]
         newItems[idx] = { ...newItems[idx], [field]: value }
@@ -199,6 +203,7 @@ export default function OrderForm({
               rates,
             )
             newItems[idx].unit_price = converted
+            newItems[idx].unit_price_raw = undefined
             newItems[idx].currency = form.currency || 'TRY'
           }
         }
@@ -222,6 +227,7 @@ export default function OrderForm({
           unit: 'adet',
           quantity: 1,
           unit_price: 0,
+          unit_price_raw: undefined,
           currency: prev.currency ?? 'TRY',
           notes: '',
         },

@@ -1,6 +1,10 @@
 {
   "search_placeholder": "Search...",
   "clear_filters": "Clear Filters ({{count}})",
+  "active_filters": {
+    "search": "Search",
+    "date": "Date"
+  },
   "columns": "Columns",
   "no_results": "No results found.",
   "records_count": "{{count}} records",

@@ -12,6 +12,7 @@ import {
   Layers,
   LayoutGrid,
   Maximize2,
+  MessageCircleWarningIcon,
   Ruler,
   Tag,
   User,
@@ -40,26 +41,16 @@ export const Route = createFileRoute('/products/$id/')({
         },
       })
     }
+
     return await context.queryClient.ensureQueryData(productQuery(productId))
   },
+  notFoundComponent: ProductNotFound,
 })
 
 function RouteComponent() {
   const { t, i18n } = useTranslation('details')
   const { id } = Route.useParams()
-  const productId = parseProductId(id)
-  if (productId === null) {
-    throw redirect({
-      to: '/products',
-      search: {
-        pageIndex: 0,
-        pageSize: 100,
-        sortBy: 'code',
-        sortDir: 'asc',
-      },
-    })
-  }
-  const { data: product } = useSuspenseQuery(productQuery(productId))
+  const { data: product } = useSuspenseQuery(productQuery(Number(id)))
   const [isEditing, setIsEditing] = useState(false)
 
   if (!product) return null
@@ -85,7 +76,7 @@ function RouteComponent() {
           <>
             <Link to="/products/$id/activities" params={{ id }}>
               <Button size="sm" variant="outline">
-                {t("actions.stock_activity")}
+                {t('actions.stock_activity')}
               </Button>
             </Link>
             <Button
@@ -290,6 +281,18 @@ function DetailItem({
         <p className="text-sm font-medium text-foreground">
           {value || <span className="text-muted-foreground/40">-</span>}
         </p>
+      </div>
+    </div>
+  )
+}
+
+function ProductNotFound() {
+  const { t } = useTranslation('details')
+  return (
+    <div className="space-x-6">
+      <PageHeader title={t('products.not_found')} />
+      <div className="h-40 flex items-center justify-center">
+        <MessageCircleWarningIcon size={60} />
       </div>
     </div>
   )

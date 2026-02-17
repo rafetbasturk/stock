@@ -1,66 +1,80 @@
-import { useMutation } from "@tanstack/react-query";
-import type { MutationFormErrors } from "@/lib/types";
-import { AppError } from "@/lib/error/core";
+import { useMutation } from '@tanstack/react-query'
+import type { MutationFormErrors } from '@/lib/types'
+import { AppError } from '@/lib/error/core'
 
-type UseFormMutationOptions<TData, TResult> = {
-  mutationFn: (data: TData) => Promise<TResult>;
-  formErrorCodes?: Array<string>;
+type AnyFn = (...args: any[]) => Promise<any>
 
-  onFieldError?: MutationFormErrors["setAllErrors"];
-  onOptimistic?: () => void;
-  onRollback?: () => void;
-  onSuccess?: (result: TResult) => void;
-};
+type UseFormMutationOptions<TMutationFn extends AnyFn> = {
+  mutationFn: TMutationFn
 
-export function useFormMutation<TData, TVariables>({
+  formErrorCodes?: string[]
+
+  onFieldError?: MutationFormErrors['setAllErrors']
+
+  onOptimistic?: (variables: Parameters<TMutationFn>[0]) => void
+
+  onRollback?: (variables: Parameters<TMutationFn>[0]) => void
+
+  onSuccess?: (
+    data: Awaited<ReturnType<TMutationFn>>,
+    variables: Parameters<TMutationFn>[0],
+    context: unknown,
+  ) => void
+}
+
+export function useFormMutation<TMutationFn extends AnyFn>({
   mutationFn,
   onSuccess,
   onFieldError,
   formErrorCodes = [],
   onOptimistic,
   onRollback,
-}: UseFormMutationOptions<TData, TVariables>) {
-  return useMutation({
+}: UseFormMutationOptions<TMutationFn>) {
+  return useMutation<
+    Awaited<ReturnType<TMutationFn>>,
+    unknown,
+    Parameters<TMutationFn>[0]
+  >({
     mutationFn,
 
-    onMutate: () => {
-      onOptimistic?.();
+    onMutate: (variables) => {
+      onOptimistic?.(variables)
+      return undefined
     },
 
-    onSuccess,
+    onSuccess: (data, variables, context) => {
+      onSuccess?.(data, variables, context)
+    },
 
-    onError: (error) => {
-      onRollback?.();
+    onError: (error, variables) => {
+      onRollback?.(variables)
 
-      const appError = AppError.from(error);
+      const appError = AppError.from(error)
 
-      console.error(appError.details);
+      console.error(appError.details)
 
-      // 1️⃣ Validation → field errors
       if (
-        appError.code === "VALIDATION_ERROR" &&
+        appError.code === 'VALIDATION_ERROR' &&
         appError.details &&
-        typeof appError.details === "object"
+        typeof appError.details === 'object'
       ) {
-        (error as any).__handledBySafeMutation = true;
-        onFieldError?.(appError.details.fieldErrors);
-        return;
+        ;(error as any).__handledBySafeMutation = true
+        onFieldError?.(appError.details.fieldErrors)
+        return
       }
 
-      // 2️⃣ Domain/form errors
       if (formErrorCodes.includes(appError.code)) {
-        (error as any).__handledBySafeMutation = true;
+        ;(error as any).__handledBySafeMutation = true
 
         onFieldError?.({
           _form: {
             i18n: {
-              ns: "formErrors",
+              ns: 'formErrors',
               key: appError.code,
             },
           },
-        });
-        return;
+        })
       }
     },
-  });
+  })
 }

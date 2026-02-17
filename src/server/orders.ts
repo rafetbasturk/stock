@@ -1,6 +1,5 @@
 // src/server/orders.ts
 import { createServerFn } from '@tanstack/react-start'
-import { authMiddleware } from './middleware/auth'
 import {
   and,
   desc as drizzleDesc,
@@ -31,8 +30,7 @@ import { statusArray, unitArray } from '@/lib/constants'
 import { currencyArray } from '@/lib/currency'
 import { fail, failValidation } from '@/lib/error/core/serverError'
 
-export const getOrders = createServerFn().middleware([authMiddleware]).handler(async () => {
-
+export const getOrders = createServerFn().handler(async () => {
   const ordersRaw = await db.query.ordersTable.findMany({
     with: {
       customer: true,
@@ -82,8 +80,7 @@ export const getOrders = createServerFn().middleware([authMiddleware]).handler(a
   return ordersRaw.map(addTotalAmount)
 })
 
-export const getYearRange = createServerFn().middleware([authMiddleware]).handler(async () => {
-
+export const getYearRange = createServerFn().handler(async () => {
   const result = await db
     .select({
       minYear: sql<
@@ -104,10 +101,9 @@ export const getYearRange = createServerFn().middleware([authMiddleware]).handle
   }
 })
 
-export const getOrderById = createServerFn().middleware([authMiddleware])
+export const getOrderById = createServerFn()
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data }) => {
-
     const order = await db.query.ordersTable.findFirst({
       with: {
         customer: true,
@@ -156,10 +152,9 @@ export const getOrderById = createServerFn().middleware([authMiddleware])
     return order ? addTotalAmount(order) : null
   })
 
-export const getOrderDeliveries = createServerFn().middleware([authMiddleware])
+export const getOrderDeliveries = createServerFn()
   .inputValidator((data: { orderId: number }) => data)
   .handler(async ({ data: { orderId } }) => {
-
     const [standardRefs, customRefs] = await Promise.all([
       db
         .selectDistinct({
@@ -273,8 +268,8 @@ const orderSortFields = [
 ] as const
 
 const paginatedSchema = z.object({
-  pageIndex: z.number().int(),
-  pageSize: z.number().int(),
+  pageIndex: z.number().int().min(0),
+  pageSize: z.number().int().min(10).max(100),
   q: z.string().trim().optional(),
   sortBy: z.enum(orderSortFields).optional(),
   sortDir: z.enum(['asc', 'desc']).optional(),
@@ -289,10 +284,9 @@ function normalizeParams(value?: string) {
   return trimmed && trimmed.length > 0 ? trimmed : undefined
 }
 
-export const getPaginatedOrders = createServerFn().middleware([authMiddleware])
+export const getPaginatedOrders = createServerFn()
   .inputValidator((data) => paginatedSchema.parse(data))
   .handler(async ({ data }) => {
-
     const {
       pageIndex,
       pageSize,
@@ -359,7 +353,6 @@ export const getPaginatedOrders = createServerFn().middleware([authMiddleware])
     const whereExpr: SQL =
       conditions.length === 1 ? conditions[0] : and(...conditions)!
 
-    // Ranking
     const rankingExpr = normalizedQ
       ? sql<number>`
         (
@@ -435,10 +428,9 @@ export const getPaginatedOrders = createServerFn().middleware([authMiddleware])
     }
   })
 
-export const createOrder = createServerFn().middleware([authMiddleware])
+export const createOrder = createServerFn()
   .inputValidator((data: OrderSubmitPayload) => data)
   .handler(async ({ data: order }) => {
-
     if (!order.order_number.trim()) {
       failValidation({
         order_number: { i18n: { ns: 'validation', key: 'required' } },
@@ -596,10 +588,9 @@ const updateOrderSchema = z.object({
   }),
 })
 
-export const updateOrder = createServerFn().middleware([authMiddleware])
+export const updateOrder = createServerFn()
   .inputValidator((data) => updateOrderSchema.parse(data))
   .handler(async ({ data: { id, data: order } }) => {
-
     await db.transaction(async (tx) => {
       const updatedOrders = await tx
         .update(ordersTable)
@@ -668,10 +659,9 @@ export const updateOrder = createServerFn().middleware([authMiddleware])
     return await getOrderById({ data: { id } })
   })
 
-export const removeOrder = createServerFn().middleware([authMiddleware])
+export const removeOrder = createServerFn()
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data: { id } }) => {
-
     await db
       .update(ordersTable)
       .set({
@@ -683,23 +673,20 @@ export const removeOrder = createServerFn().middleware([authMiddleware])
     return { success: true }
   })
 
-export const getLastOrderNumber = createServerFn().middleware([authMiddleware]).handler(
-  async () => {
+export const getLastOrderNumber = createServerFn().handler(async () => {
+  const [lastOrder] = await db
+    .select({
+      order_number: ordersTable.order_number,
+    })
+    .from(ordersTable)
+    .where(notDeleted(ordersTable))
+    .orderBy(drizzleDesc(ordersTable.created_at), drizzleDesc(ordersTable.id))
+    .limit(1)
 
-    const [lastOrder] = await db
-      .select({
-        order_number: ordersTable.order_number,
-      })
-      .from(ordersTable)
-      .orderBy(drizzleDesc(ordersTable.created_at), drizzleDesc(ordersTable.id))
-      .limit(1)
+  return lastOrder.order_number
+})
 
-    return lastOrder.order_number
-  },
-)
-
-export const getOrderFilterOptions = createServerFn().middleware([authMiddleware]).handler(async () => {
-
+export const getOrderFilterOptions = createServerFn().handler(async () => {
   const statusRows = await db
     .selectDistinct({ status: ordersTable.status })
     .from(ordersTable)

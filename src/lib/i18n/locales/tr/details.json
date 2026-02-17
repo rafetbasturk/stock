@@ -38,7 +38,8 @@
       "critical_stock_level": "Kritik Stok Seviyesi ({{value}})",
       "minimum_stock": "Minimum Stok",
       "unit_price": "Birim Fiyat"
-    }
+    },
+    "not_found": "Ürün bulunamadı"
   },
   "orders": {
     "updated_success": "Sipariş güncellendi",
@@ -63,6 +64,12 @@
       "subtotal": "Ara Toplam",
       "tax": "KDV",
       "total": "Genel Toplam"
+    },
+    "summary": {
+      "title": "Sipariş Özeti",
+      "items": "Sipariş kalemi sayısı",
+      "shipments": "Sevk adedi",
+      "delivered_quantity": "Gönderilen adet"
     }
   },
   "deliveries": {

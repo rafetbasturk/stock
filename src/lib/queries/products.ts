@@ -1,77 +1,71 @@
 // src/lib/queries/products.ts
-import { keepPreviousData, queryOptions } from "@tanstack/react-query";
-import type { ProductsSearch } from "../types/types.search";
+import { keepPreviousData, queryOptions } from '@tanstack/react-query'
+import type { ProductsSearch } from '../types/types.search'
 import {
   getPaginated,
   getProductById,
   getProductFilterOptions,
   getProducts,
-} from "@/server/products";
+} from '@/server/products'
 
-function toMaterialArray(material?: string) {
-  if (!material) return undefined;
-  const parts = material
-    .split("|")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return parts.length ? parts : undefined;
+const normalizedSearch = (search: ProductsSearch) => ({
+  pageIndex: search.pageIndex ?? 0,
+  pageSize: search.pageSize ?? 100,
+  q: search.q ?? '',
+  sortBy: search.sortBy ?? 'code',
+  sortDir: search.sortDir ?? 'asc',
+  material: search.material ?? '',
+  customerId: search.customerId ?? '',
+})
+
+export const productQueryKeys = {
+  all: ['products'] as const,
+
+  lists: () => [...productQueryKeys.all, 'list'] as const,
+
+  list: (search: ProductsSearch) =>
+    [...productQueryKeys.lists(), normalizedSearch(search)] as const,
+
+  paginatedLists: () => [...productQueryKeys.all, 'paginated'] as const,
+
+  paginatedList: (search: ProductsSearch) =>
+    [...productQueryKeys.paginatedLists(), normalizedSearch(search)] as const,
+
+  details: () => [...productQueryKeys.all, 'detail'] as const,
+
+  detail: (id: number) => [...productQueryKeys.details(), id] as const,
+
+  filterOptions: () => [...productQueryKeys.all, 'filterOptions'] as const,
+
+  select: () => [...productQueryKeys.all, 'select'] as const,
 }
-
-// Optional: canonical key so order doesn't matter (e.g. "B|A" equals "A|B")
-function materialKey(material?: string) {
-  const arr = toMaterialArray(material);
-  return arr ? [...arr].sort().join("|") : "";
-}
-
-function toCustomerId(customer?: string) {
-  if (!customer) return undefined;
-  const id = Number(customer);
-  return Number.isInteger(id) && id > 0 ? id : undefined;
-}
-
-export const productsQueryKey = (s: ProductsSearch) =>
-  [
-    "products",
-    "list",
-    s.pageIndex ?? 0,
-    s.pageSize ?? 100,
-    s.q ?? "",
-    s.sortBy ?? "code",
-    s.sortDir ?? "asc",
-    materialKey(s.material),
-    s.customer ?? "",
-  ] as const;
 
 export const productsQuery = (search: ProductsSearch) =>
   queryOptions({
-    queryKey: productsQueryKey(search),
+    queryKey: productQueryKeys.paginatedList(search),
     queryFn: () =>
       getPaginated({
-        data: {
-          ...search,
-          material: toMaterialArray(search.material),
-          customer: toCustomerId(search.customer),
-        },
+        data: search,
       }),
     staleTime: 1000 * 60 * 10,
     placeholderData: keepPreviousData,
-  });
+  })
 
 export const selectProductsQuery = queryOptions({
-  queryKey: ["products", "select"],
+  queryKey: productQueryKeys.select(),
   queryFn: getProducts,
   staleTime: 1000 * 60 * 10,
-});
+})
 
 export const productQuery = (id: number) =>
   queryOptions({
-    queryKey: ["products", "detail", id],
+    queryKey: productQueryKeys.detail(id),
     queryFn: () => getProductById({ data: { id } }),
-  });
+  })
 
 export const getFilterOptions = () =>
   queryOptions({
-    queryKey: ["products-filter-options"],
+    queryKey: productQueryKeys.filterOptions(),
     queryFn: getProductFilterOptions,
     staleTime: Infinity,
-  });
+  })

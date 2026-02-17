@@ -82,7 +82,7 @@ export default function KeyMetrics({ filters }: Props) {
         description={t('metrics.delivered_desc')}
         footerRight={
           <Badge variant="secondary" className="font-medium tracking-wide">
-            {t('metrics.finished_orders_chip', {
+            {t('metrics.completed_orders_chip', {
               count: data.totalOrders - data.pendingOrders,
             })}
           </Badge>

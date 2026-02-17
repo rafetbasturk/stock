@@ -95,7 +95,7 @@ export default function OrderFormBasicInfo({
           <EntitySelect
             name="customer_id"
             label={t('form.fields.customer')}
-            value={form.customer_id > 0 ? form.customer_id : null}
+            value={form.customer_id > 0 ? form.customer_id : 1}
             error={formErrors.customer_id}
             onValueChange={(value) =>
               {

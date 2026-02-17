@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query'
+import { type QueryClient, useQueryClient } from '@tanstack/react-query'
 import { useServerFn } from '@tanstack/react-start'
 import { toast } from 'sonner'
 import type { MutationFormErrors } from '@/lib/types'
@@ -8,6 +8,13 @@ import {
   removeCustomer,
   updateCustomer,
 } from '@/server/customers'
+import { customerQueryKeys } from '../queries/customers'
+
+export const invalidateCustomerQueries = async (qc: QueryClient) =>
+  await Promise.all([
+    qc.invalidateQueries({ queryKey: customerQueryKeys.lists() }),
+    qc.invalidateQueries({ queryKey: customerQueryKeys.paginatedLists() }),
+  ])
 
 export function useCreateCustomerMutation(
   onSuccess?: (data: any) => void,
@@ -29,28 +36,29 @@ export function useCreateCustomerMutation(
       formErrors?.resetErrors()
     },
 
-    onSuccess: (newCustomer) => {
-      // Invalidate the customers list to refetch with new data
-      // The keepPreviousData option keeps old data visible during refetch
-      qc.invalidateQueries({ queryKey: ['customers', 'list'] })
-
-      // Show success immediately (don't wait for refetch)
+    onSuccess: async (newCustomer) => {
+      await invalidateCustomerQueries(qc)
       toast.success('Müşteri başarıyla oluşturuldu')
       onSuccess?.(newCustomer)
     },
   })
 }
 
+type ServerFnData<T extends (...args: any) => any> = Parameters<T>[0]['data']
+
 export function useDeleteCustomerMutation(onSuccess?: () => void) {
   const qc = useQueryClient()
   const removeCustomerFn = useServerFn(removeCustomer)
 
   return useFormMutation({
-    mutationFn: (data: Parameters<typeof removeCustomerFn>[0]['data']) =>
+    mutationFn: (data: ServerFnData<typeof removeCustomerFn>) =>
       removeCustomerFn({ data }),
 
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['customers', 'list'] })
+    onSuccess: async (_, variables) => {
+      await invalidateCustomerQueries(qc)
+      qc.removeQueries({
+        queryKey: customerQueryKeys.detail(variables.id),
+      })
       toast.success('Müşteri silindi')
       onSuccess?.()
     },
@@ -77,18 +85,15 @@ export function useUpdateCustomerMutation(
       formErrors?.resetErrors()
     },
 
-    onSuccess: (updatedCustomer) => {
-      // Update the specific customer detail query immediately with returned data
-      // This makes the detail view update instantly without refetching
+    onSuccess: async (updatedCustomer) => {
+      if (!updatedCustomer) return
+
+      await invalidateCustomerQueries(qc)
       qc.setQueryData(
-        ['customers', 'detail', updatedCustomer.id],
+        customerQueryKeys.detail(updatedCustomer.id),
         updatedCustomer,
       )
 
-      // Also invalidate the customers list so it refreshes in background
-      qc.invalidateQueries({ queryKey: ['customers', 'list'] })
-
-      // Show success immediately (don't wait for list refetch)
       toast.success('Müşteri başarıyla güncellendi')
       onSuccess?.(updatedCustomer)
     },

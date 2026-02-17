@@ -1,6 +1,10 @@
 {
   "search_placeholder": "Ara...",
   "clear_filters": "Filtreleri Temizle ({{count}})",
+  "active_filters": {
+    "search": "Arama",
+    "date": "Tarih"
+  },
   "columns": "Sütunlar",
   "no_results": "Sonuç bulunamadı.",
   "records_count": "{{count}} kayıt",

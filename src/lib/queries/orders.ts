@@ -10,24 +10,30 @@ import {
   getYearRange,
 } from '@/server/orders'
 
+const normalizedSearch = (search: OrdersSearch) => ({
+  pageIndex: search.pageIndex ?? 0,
+  pageSize: search.pageSize ?? 100,
+  q: search.q ?? '',
+  sortBy: search.sortBy ?? 'order_number',
+  sortDir: search.sortDir ?? 'desc',
+  status: search.status ?? '',
+  customerId: search.customerId ?? '',
+  startDate: search.startDate ?? '',
+  endDate: search.endDate ?? '',
+})
+
 export const orderQueryKeys = {
   all: ['orders'] as const,
 
   lists: () => [...orderQueryKeys.all, 'list'] as const,
 
   list: (search: OrdersSearch) =>
-    [
-      ...orderQueryKeys.lists(),
-      search.pageIndex ?? 0,
-      search.pageSize ?? 100,
-      search.q ?? '',
-      search.sortBy ?? 'order_number',
-      search.sortDir ?? 'asc',
-      search.status ?? '',
-      search.customerId ?? '',
-      search.startDate ?? '',
-      search.endDate ?? '',
-    ] as const,
+    [...orderQueryKeys.lists(), normalizedSearch(search)] as const,
+
+  paginatedLists: () => [...orderQueryKeys.all, 'paginated'] as const,
+
+  paginatedList: (search: OrdersSearch) =>
+    [...orderQueryKeys.paginatedLists(), normalizedSearch(search)] as const,
 
   details: () => [...orderQueryKeys.all, 'detail'] as const,
 
@@ -36,18 +42,18 @@ export const orderQueryKeys = {
   deliveries: (id: number) =>
     [...orderQueryKeys.detail(id), 'deliveries'] as const,
 
-  lastNumber: () => ['last-order-number'] as const,
+  lastNumber: () => [...orderQueryKeys.all, 'lastNumber'] as const,
 
-  filterOptions: () => ['orders-filter-options'] as const,
+  filterOptions: () => [...orderQueryKeys.all, 'filterOptions'] as const,
 
-  yearRange: () => ['year-range'] as const,
+  yearRange: () => [...orderQueryKeys.all, 'yearRange'] as const,
 
-  select: () => [...orderQueryKeys.all, 'select'],
+  select: () => [...orderQueryKeys.all, 'select'] as const,
 }
 
 export const ordersQuery = (search: OrdersSearch) =>
   queryOptions({
-    queryKey: orderQueryKeys.list(search),
+    queryKey: orderQueryKeys.paginatedList(search),
     queryFn: () =>
       getPaginatedOrders({
         data: search,
@@ -55,11 +61,6 @@ export const ordersQuery = (search: OrdersSearch) =>
     staleTime: 1000 * 60 * 10,
     placeholderData: keepPreviousData,
   })
-
-export const ordersSelectQuery = queryOptions({
-  queryKey: orderQueryKeys.select(),
-  queryFn: getOrders,
-})
 
 export const orderQuery = (id: number) =>
   queryOptions({
@@ -73,18 +74,21 @@ export const orderDeliveriesQuery = (orderId: number) =>
     queryFn: () => getOrderDeliveries({ data: { orderId } }),
   })
 
-export const lastOrderNumberQuery = () =>
-  queryOptions({
-    queryKey: orderQueryKeys.lastNumber(),
-    queryFn: getLastOrderNumber,
-  })
+export const ordersSelectQuery = queryOptions({
+  queryKey: orderQueryKeys.select(),
+  queryFn: getOrders,
+})
 
-export const getFilterOptions = () =>
-  queryOptions({
-    queryKey: orderQueryKeys.filterOptions(),
-    queryFn: getOrderFilterOptions,
-    staleTime: Infinity,
-  })
+export const lastOrderNumberQuery = queryOptions({
+  queryKey: orderQueryKeys.lastNumber(),
+  queryFn: getLastOrderNumber,
+})
+
+export const getFilterOptions = queryOptions({
+  queryKey: orderQueryKeys.filterOptions(),
+  queryFn: getOrderFilterOptions,
+  staleTime: Infinity,
+})
 
 export const yearRangeQuery = queryOptions({
   queryKey: orderQueryKeys.yearRange(),

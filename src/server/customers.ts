@@ -1,24 +1,21 @@
 // src/server/customers.ts
 import { createServerFn } from '@tanstack/react-start'
-import { authMiddleware } from './middleware/auth'
 import { and, eq, ilike, or, SQL, sql } from 'drizzle-orm'
 import z from 'zod'
 import type { InsertCustomer } from '@/types'
 import { db } from '@/db'
-import { customersTable } from '@/db/schema'
+import { customersTable, ordersTable } from '@/db/schema'
 import { customerSortFields } from '@/lib/types'
 import { fail, failValidation } from '@/lib/error/core/serverError'
 import { normalizeParams, notDeleted } from './utils'
 
-export const getCustomers = createServerFn().middleware([authMiddleware]).handler(async () => {
-
+export const getAllCustomers = createServerFn().handler(async () => {
   return await db.query.customersTable.findMany()
 })
 
-export const getCustomerById = createServerFn().middleware([authMiddleware])
+export const getCustomerById = createServerFn()
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data }) => {
-
     return db.query.customersTable.findFirst({
       where: (p, { eq: eqFn }) => eqFn(p.id, data.id),
     })
@@ -32,10 +29,9 @@ const paginatedSchema = z.object({
   sortDir: z.enum(['asc', 'desc']).optional(),
 })
 
-export const getPaginatedCustomers = createServerFn().middleware([authMiddleware])
+export const getPaginatedCustomers = createServerFn()
   .inputValidator((data) => paginatedSchema.parse(data))
   .handler(async ({ data }) => {
-
     const { pageIndex, pageSize, q, sortBy = 'code', sortDir = 'asc' } = data
 
     const safePageIndex = Math.max(0, pageIndex)
@@ -103,11 +99,13 @@ export const getPaginatedCustomers = createServerFn().middleware([authMiddleware
     }
   })
 
-export const createCustomer = createServerFn().middleware([authMiddleware])
+export const createCustomer = createServerFn()
   .inputValidator((data: InsertCustomer) => data)
   .handler(async ({ data: customer }) => {
-
-    const fieldErrors: Record<string, { i18n: { ns: 'validation'; key: 'required' } }> = {}
+    const fieldErrors: Record<
+      string,
+      { i18n: { ns: 'validation'; key: 'required' } }
+    > = {}
 
     if (!customer.code.trim()) {
       fieldErrors.code = { i18n: { ns: 'validation', key: 'required' } }
@@ -135,15 +133,17 @@ export const createCustomer = createServerFn().middleware([authMiddleware])
     return newCustomer
   })
 
-export const updateCustomer = createServerFn().middleware([authMiddleware])
+export const updateCustomer = createServerFn()
   .inputValidator((data: { id: number; data: InsertCustomer }) => data)
   .handler(async ({ data: { id, data: customer } }) => {
-
     if (!Number.isInteger(id) || id <= 0) {
       fail('INVALID_ID')
     }
 
-    const fieldErrors: Record<string, { i18n: { ns: 'validation'; key: 'required' } }> = {}
+    const fieldErrors: Record<
+      string,
+      { i18n: { ns: 'validation'; key: 'required' } }
+    > = {}
 
     if (!customer.code.trim()) {
       fieldErrors.code = { i18n: { ns: 'validation', key: 'required' } }
@@ -177,10 +177,9 @@ export const updateCustomer = createServerFn().middleware([authMiddleware])
     return updatedCustomers[0]
   })
 
-export const removeCustomer = createServerFn().middleware([authMiddleware])
+export const removeCustomer = createServerFn()
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data: { id } }) => {
-
     await db
       .update(customersTable)
       .set({
@@ -190,3 +189,26 @@ export const removeCustomer = createServerFn().middleware([authMiddleware])
       .where(eq(customersTable.id, id))
     return { success: true }
   })
+
+export const getDistinctCustomers = createServerFn().handler(async () => {
+  const customerRows = await db
+    .selectDistinct({
+      customer_id: ordersTable.customer_id,
+      customer_name: customersTable.name,
+      customer_code: customersTable.code,
+    })
+    .from(ordersTable)
+    .where(notDeleted(ordersTable))
+    .innerJoin(customersTable, eq(customersTable.id, ordersTable.customer_id))
+
+  const customers = customerRows
+    .map((row) => ({
+      id: row.customer_id,
+      name: row.customer_name.trim(),
+      code: row.customer_code.trim(),
+    }))
+    .filter((row) => row.name.length > 0)
+    .sort((a, b) => a.code.localeCompare(b.code, 'tr', { sensitivity: 'base' }))
+
+  return customers
+})

@@ -45,5 +45,6 @@
     "total_movements": "Toplam Hareket",
     "stock_in_rows": "Stok Giriş Satırı",
     "stock_out_rows": "Stok Çıkış Satırı"
-  }
+  },
+  "product_unavailable": "Ürün artık mevcut değil."
 }

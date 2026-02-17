@@ -163,3 +163,15 @@ export interface PaginatedResult<T> {
   pageSize: number
   total: number
 }
+
+export type MovementRow = StockMovement & {
+  createdBy: {
+    id: number
+    username: string
+  }
+  product: {
+    code: string
+    name: string
+    deleted_at: Date | null
+  }
+}

@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query'
+import { QueryClient, useQueryClient } from '@tanstack/react-query'
 import { useServerFn } from '@tanstack/react-start'
 import { toast } from 'sonner'
 import type { MutationFormErrors } from '@/lib/types'
@@ -6,6 +6,16 @@ import type { OrderSubmitPayload } from '@/types'
 import { useFormMutation } from '@/hooks/useFormMutation'
 import { createOrder, removeOrder, updateOrder } from '@/server/orders'
 import { orderQueryKeys } from '../queries/orders'
+
+type ServerFnData<T extends (...args: any) => any> = Parameters<T>[0]['data']
+
+export const invalidateOrderQueries = async (qc: QueryClient) =>
+  await Promise.all([
+    qc.invalidateQueries({ queryKey: orderQueryKeys.lists() }),
+    qc.invalidateQueries({ queryKey: orderQueryKeys.paginatedLists() }),
+    qc.invalidateQueries({ queryKey: orderQueryKeys.lastNumber() }),
+    qc.invalidateQueries({ queryKey: orderQueryKeys.filterOptions() }),
+  ])
 
 export function useCreateOrderMutation(
   onSuccess?: (data: any) => void,
@@ -15,7 +25,7 @@ export function useCreateOrderMutation(
   const createOrderFn = useServerFn(createOrder)
 
   return useFormMutation({
-    mutationFn: (data: Parameters<typeof createOrderFn>[0]['data']) =>
+    mutationFn: (data: ServerFnData<typeof createOrderFn>) =>
       createOrderFn({ data }),
 
     formErrorCodes: ['VALIDATION_ERROR', 'INVALID_ID'],
@@ -26,9 +36,8 @@ export function useCreateOrderMutation(
       formErrors?.resetErrors()
     },
 
-    onSuccess: (newOrder) => {
-      qc.invalidateQueries({ queryKey: orderQueryKeys.lists() })
-      qc.invalidateQueries({ queryKey: orderQueryKeys.lastNumber() })
+    onSuccess: async (newOrder) => {
+      await invalidateOrderQueries(qc)
       toast.success('Sipariş başarıyla oluşturuldu')
       onSuccess?.(newOrder)
     },
@@ -40,11 +49,16 @@ export function useDeleteOrderMutation(onSuccess?: () => void) {
   const removeOrderFn = useServerFn(removeOrder)
 
   return useFormMutation({
-    mutationFn: (data: Parameters<typeof removeOrderFn>[0]['data']) =>
+    mutationFn: (data: ServerFnData<typeof removeOrderFn>) =>
       removeOrderFn({ data }),
 
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: orderQueryKeys.lists() })
+    onSuccess: (_, variables) => {
+      invalidateOrderQueries(qc)
+
+      qc.removeQueries({
+        queryKey: orderQueryKeys.detail(variables.id),
+      })
+
       toast.success('Sipariş silindi')
       onSuccess?.()
     },
@@ -70,13 +84,15 @@ export function useUpdateOrderMutation(
       formErrors?.resetErrors()
     },
 
-    onSuccess: (updatedOrder) => {
+    onSuccess: async (updatedOrder) => {
       if (!updatedOrder) return
-      qc.setQueryData(orderQueryKeys.detail(updatedOrder.id), updatedOrder)
+
+      await invalidateOrderQueries(qc)
       qc.invalidateQueries({
-        queryKey: orderQueryKeys.lists(),
-        refetchType: 'active',
+        queryKey: orderQueryKeys.deliveries(updatedOrder.id),
       })
+      qc.setQueryData(orderQueryKeys.detail(updatedOrder.id), updatedOrder)
+
       toast.success('Sipariş başarıyla güncellendi')
       onSuccess?.(updatedOrder)
     },

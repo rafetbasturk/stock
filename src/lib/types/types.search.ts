@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { fallback } from '@tanstack/zod-adapter'
 
 export const homeSearchSchema = z.object({
   customerId: z.number().optional(),
@@ -21,9 +20,9 @@ export const productSortFields = [
 export type ProductSortField = (typeof productSortFields)[number]
 
 const sharedSearchSchema = z.object({
-  pageIndex: fallback(z.coerce.number().int().min(0), 0),
-  pageSize: fallback(z.coerce.number().int().min(10).max(100), 100),
-  sortDir: fallback(z.enum(['asc', 'desc']), 'asc'),
+  pageIndex: z.coerce.number().int().min(0).catch(0),
+  pageSize: z.coerce.number().int().min(10).max(100).catch(100),
+  sortDir: z.enum(['asc', 'desc']).catch('asc'),
   q: z
     .preprocess((v) => {
       if (typeof v !== 'string') return undefined
@@ -35,7 +34,7 @@ const sharedSearchSchema = z.object({
 
 export const productsSearchSchema = z.object({
   ...sharedSearchSchema.shape,
-  sortBy: fallback(z.enum(productSortFields), 'code'),
+  sortBy: z.enum(productSortFields).catch('code'),
   material: z
     .preprocess((v) => {
       if (v == null) return undefined
@@ -47,9 +46,10 @@ export const productsSearchSchema = z.object({
       return undefined
     }, z.string())
     .optional(),
-  customer: z
+  customerId: z
     .preprocess((v) => {
       if (v == null) return undefined
+      if (Array.isArray(v)) return v.join('|')
       if (typeof v === 'string') {
         const t = v.trim()
         return t.length ? t : undefined
@@ -71,7 +71,7 @@ export const customerSortFields = [
 
 export const customersSearchSchema = z.object({
   ...sharedSearchSchema.shape,
-  sortBy: fallback(z.enum(customerSortFields), 'code'),
+  sortBy: z.enum(customerSortFields).catch('code'),
 })
 
 export type CustomersSearch = z.infer<typeof customersSearchSchema>
@@ -85,8 +85,8 @@ export const orderSortFields = [
 
 export const ordersSearchSchema = z.object({
   ...sharedSearchSchema.shape,
-  sortBy: fallback(z.enum(orderSortFields), 'order_date'),
-  sortDir: fallback(z.enum(['asc', 'desc']), 'desc'),
+  sortBy: z.enum(orderSortFields).catch('order_date'),
+  sortDir: z.enum(['asc', 'desc']).catch('desc'),
   status: z
     .preprocess((v) => {
       if (v == null) return undefined
@@ -135,8 +135,8 @@ export const deliveriesSortFields = [
 
 export const deliveriesSearchSchema = z.object({
   ...sharedSearchSchema.shape,
-  sortBy: fallback(z.enum(deliveriesSortFields), 'delivery_number'),
-  sortDir: fallback(z.enum(['asc', 'desc']), 'desc'),
+  sortBy: z.enum(deliveriesSortFields).catch('delivery_number'),
+  sortDir: z.enum(['asc', 'desc']).catch('desc'),
   customerId: z
     .preprocess((v) => {
       if (v == null) return undefined
@@ -175,8 +175,8 @@ export const stockMovementTypes = [
 ] as const
 
 export const stockSearchSchema = z.object({
-  pageIndex: fallback(z.coerce.number().int().min(0), 0),
-  pageSize: fallback(z.coerce.number().int().min(10).max(100), 20),
+  pageIndex: z.coerce.number().int().min(0).catch(0),
+  pageSize: z.coerce.number().int().min(10).max(100).catch(100),
   q: z
     .preprocess((v) => {
       if (typeof v !== 'string') return undefined
@@ -195,7 +195,7 @@ export const stockSearchSchema = z.object({
       return undefined
     }, z.string())
     .optional(),
-  productId: fallback(z.coerce.number().int().positive().optional(), undefined),
+  productId: z.coerce.number().int().positive().optional(),
 })
 
 export type StockSearch = z.infer<typeof stockSearchSchema>

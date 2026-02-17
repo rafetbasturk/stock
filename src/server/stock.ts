@@ -1,11 +1,11 @@
 import { createServerFn } from '@tanstack/react-start'
-import { authMiddleware } from './middleware/auth'
-import { and, eq, inArray, sql } from 'drizzle-orm'
+import { and, eq, ilike, or, sql } from 'drizzle-orm'
 import {
   createStockMovementTx,
   deleteStockMovementTx,
   updateStockMovementTx,
 } from './services/stockService'
+import { requireAuth } from './auth/requireAuth'
 import type { SQL } from 'drizzle-orm'
 import type { InsertStockMovement } from '@/types'
 import { db } from '@/db'
@@ -13,10 +13,10 @@ import { stockMovementsTable } from '@/db/schema'
 import { BaseAppError } from '@/lib/error/core'
 import { fail } from '@/lib/error/core/serverError'
 
-export const createStockMovement = createServerFn().middleware([authMiddleware])
+export const createStockMovement = createServerFn()
   .inputValidator((data: InsertStockMovement) => data)
-  .handler(async ({ data, context }) => {
-    const user = context.user
+  .handler(async ({ data }) => {
+    const user = await requireAuth()
 
     try {
       await db.transaction(async (tx) => {
@@ -36,7 +36,7 @@ export const createStockMovement = createServerFn().middleware([authMiddleware])
     }
   })
 
-export const getStockMovements = createServerFn().middleware([authMiddleware])
+export const getStockMovements = createServerFn()
   .inputValidator(
     (data: {
       product_id?: number
@@ -62,11 +62,27 @@ export const getStockMovements = createServerFn().middleware([authMiddleware])
     if (search) {
       const like = `%${search}%`
       conditions.push(
-        sql`(
-          ${stockMovementsTable.notes} ILIKE ${like}
-          OR CAST(${stockMovementsTable.reference_type} AS TEXT) ILIKE ${like}
-          OR CAST(${stockMovementsTable.reference_id} AS TEXT) ILIKE ${like}
-        )`,
+        or(
+          ilike(stockMovementsTable.notes, like),
+          sql`CAST(${stockMovementsTable.reference_type} AS TEXT) ILIKE ${like}`,
+          sql`CAST(${stockMovementsTable.reference_id} AS TEXT) ILIKE ${like}`,
+          sql`CAST(${stockMovementsTable.movement_type} AS TEXT) ILIKE ${like}`,
+          sql`EXISTS (
+            SELECT 1
+            FROM "products" p
+            WHERE p.id = ${stockMovementsTable.product_id}
+            AND (
+              p.code ILIKE ${like}
+              OR p.name ILIKE ${like}
+            )
+          )`,
+          sql`EXISTS (
+            SELECT 1
+            FROM "users" u
+            WHERE u.id = ${stockMovementsTable.created_by}
+            AND u.username ILIKE ${like}
+          )`,
+        )!,
       )
     }
 
@@ -78,16 +94,23 @@ export const getStockMovements = createServerFn().middleware([authMiddleware])
 
       if (values.length > 1) {
         conditions.push(
-          inArray(stockMovementsTable.movement_type, values as any),
+          or(
+            ...values.map(
+              (value) =>
+                sql`CAST(${stockMovementsTable.movement_type} AS TEXT) = ${value}`,
+            ),
+          )!,
         )
       } else if (values.length === 1) {
-        conditions.push(eq(stockMovementsTable.movement_type, values[0] as any))
+        conditions.push(
+          sql`CAST(${stockMovementsTable.movement_type} AS TEXT) = ${values[0]}`,
+        )
       }
     }
 
     const where = conditions.length ? and(...conditions) : undefined
 
-    const [rows, totalResult] = await Promise.all([
+    const [rows, totalResult, summaryResult] = await Promise.all([
       db.query.stockMovementsTable.findMany({
         where,
         with: {
@@ -95,6 +118,7 @@ export const getStockMovements = createServerFn().middleware([authMiddleware])
             columns: {
               code: true,
               name: true,
+              deleted_at: true,
             },
           },
           createdBy: {
@@ -113,20 +137,31 @@ export const getStockMovements = createServerFn().middleware([authMiddleware])
         .select({ count: sql<number>`count(*)` })
         .from(stockMovementsTable)
         .where(where),
+      db
+        .select({
+          inCount: sql<number>`count(*) filter (where ${stockMovementsTable.quantity} > 0)`,
+          outCount: sql<number>`count(*) filter (where ${stockMovementsTable.quantity} < 0)`,
+        })
+        .from(stockMovementsTable)
+        .where(where),
     ])
 
     const total = totalResult[0]?.count ?? 0
+    const inCount = summaryResult[0]?.inCount ?? 0
+    const outCount = summaryResult[0]?.outCount ?? 0
 
     return {
       data: rows,
       total,
+      inCount,
+      outCount,
       page,
       pageSize,
       pageCount: Math.ceil(total / pageSize),
     }
   })
 
-export const deleteStockMovement = createServerFn().middleware([authMiddleware])
+export const deleteStockMovement = createServerFn()
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data }) => {
 
@@ -142,7 +177,7 @@ export const deleteStockMovement = createServerFn().middleware([authMiddleware])
     }
   })
 
-export const updateStockMovement = createServerFn().middleware([authMiddleware])
+export const updateStockMovement = createServerFn()
   .inputValidator(
     (data: { id: number; quantity?: number; notes?: string }) => data,
   )

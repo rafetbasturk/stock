@@ -63,7 +63,11 @@ function RouteComponent() {
   const totalItems = order.items.length + order.customItems.length
   const totalDeliveredQuantity = deliveries.reduce(
     (sum, delivery) =>
-      sum + delivery.items.reduce((inner, item) => inner + item.delivered_quantity, 0),
+      sum +
+      delivery.items.reduce(
+        (inner, item) => inner + item.delivered_quantity,
+        0,
+      ),
     0,
   )
 
@@ -73,7 +77,11 @@ function RouteComponent() {
         title={order.order_number}
         description={order.customer.name}
         actions={
-          <Button size="sm" onClick={() => setIsEditing(true)} className="gap-2">
+          <Button
+            size="sm"
+            onClick={() => setIsEditing(true)}
+            className="gap-2"
+          >
             <Edit className="size-4" />
             {t('actions.edit')}
           </Button>
@@ -88,7 +96,9 @@ function RouteComponent() {
                 {t('orders.card_title')}
               </p>
               <div className="flex flex-wrap items-center gap-2">
-                <Badge className={cn('px-2.5 py-1', statusBadgeClass(order.status))}>
+                <Badge
+                  className={cn('px-2.5 py-1', statusBadgeClass(order.status))}
+                >
                   {order.status}
                 </Badge>
                 <Badge variant="outline" className="px-2.5 py-1">
@@ -98,7 +108,8 @@ function RouteComponent() {
                   <Badge variant="secondary" className="px-2.5 py-1">
                     {deliveries.length}{' '}
                     {t('orders.deliveries_count', {
-                      defaultValue: deliveries.length > 1 ? 'deliveries' : 'delivery',
+                      defaultValue:
+                        deliveries.length > 1 ? 'deliveries' : 'delivery',
                     })}
                   </Badge>
                 )}
@@ -150,7 +161,9 @@ function RouteComponent() {
             <DetailItem
               icon={Calendar}
               label={t('orders.fields.order_date')}
-              value={new Date(order.order_date).toLocaleDateString(i18n.language)}
+              value={new Date(order.order_date).toLocaleDateString(
+                i18n.language,
+              )}
             />
             <DetailItem
               icon={MapPin}
@@ -163,24 +176,24 @@ function RouteComponent() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">
-              {t('orders.summary_title', { defaultValue: 'Summary' })}
+              {t('orders.summary.title', { defaultValue: 'Summary' })}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <SummaryRow
-              label={t('orders.summary_items', { defaultValue: 'Order items' })}
+              label={t('orders.summary.items', { defaultValue: 'Order items' })}
               value={String(totalItems)}
             />
             <SummaryRow
-              label={t('orders.summary_shipments', { defaultValue: 'Shipments' })}
+              label={t('orders.summary.shipments', {
+                defaultValue: 'Shipments',
+              })}
               value={String(deliveries.length)}
             />
             <SummaryRow
-              label={
-                t('orders.summary_delivered_quantity', {
-                  defaultValue: 'Delivered quantity',
-                })
-              }
+              label={t('orders.summary.delivered_quantity', {
+                defaultValue: 'Delivered quantity',
+              })}
               value={String(totalDeliveredQuantity)}
             />
             <Separator />
@@ -225,7 +238,9 @@ function RouteComponent() {
                   <tr key={item.id}>
                     <td className="p-4 align-middle">
                       <div className="font-medium">{item.product.name}</div>
-                      <div className="text-xs text-muted-foreground">{item.product.code}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {item.product.code}
+                      </div>
                     </td>
                     <td className="p-4 text-right align-middle">
                       {item.quantity} {item.product.unit}
@@ -251,7 +266,9 @@ function RouteComponent() {
                     <td className="p-4 align-middle">
                       <div className="font-medium">{item.name}</div>
                       {item.notes && (
-                        <div className="text-xs text-muted-foreground">{item.notes}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {item.notes}
+                        </div>
                       )}
                     </td>
                     <td className="p-4 text-right align-middle">
@@ -275,7 +292,10 @@ function RouteComponent() {
                 ))}
                 {totalItems === 0 && (
                   <tr>
-                    <td colSpan={4} className="p-6 text-center text-muted-foreground">
+                    <td
+                      colSpan={4}
+                      className="p-6 text-center text-muted-foreground"
+                    >
                       {t('common.empty')}
                     </td>
                   </tr>
@@ -323,9 +343,13 @@ function RouteComponent() {
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="font-medium text-foreground">{delivery.delivery_number}</p>
+                      <p className="font-medium text-foreground">
+                        {delivery.delivery_number}
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(delivery.delivery_date).toLocaleDateString(i18n.language)}
+                        {new Date(delivery.delivery_date).toLocaleDateString(
+                          i18n.language,
+                        )}
                       </p>
                     </div>
                     <div className="text-right">
@@ -338,7 +362,9 @@ function RouteComponent() {
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {delivery.items.length}{' '}
-                        {t('orders.delivery_items_label', { defaultValue: 'line(s)' })}
+                        {t('orders.delivery_items_label', {
+                          defaultValue: 'line(s)',
+                        })}
                       </p>
                     </div>
                   </div>
@@ -418,7 +444,9 @@ function DetailItem({
         </p>
         <p className="text-sm font-medium text-foreground">
           {value || (
-            <span className="text-muted-foreground/40">{t('common.empty')}</span>
+            <span className="text-muted-foreground/40">
+              {t('common.empty')}
+            </span>
           )}
         </p>
       </div>
@@ -438,7 +466,11 @@ function SummaryRow({
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="text-sm text-muted-foreground">{label}</span>
-      <span className={cn('text-sm font-medium text-foreground', valueClassName)}>{value}</span>
+      <span
+        className={cn('text-sm font-medium text-foreground', valueClassName)}
+      >
+        {value}
+      </span>
     </div>
   )
 }

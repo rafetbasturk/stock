@@ -14,7 +14,10 @@ import type {
   Status,
   DeliveryWithItems,
 } from '@/types'
-import { useCreateDeliveryMutation } from '@/lib/mutations/deliveries'
+import {
+  useCreateDeliveryMutation,
+  useUpdateDeliveryMutation,
+} from '@/lib/mutations/deliveries'
 import type { FieldErrors } from '@/lib/error/utils/formErrors'
 
 function incrementDeliveryNumber(num: string) {
@@ -266,6 +269,9 @@ export function DeliveryForm({
   }, [form.customer_id, filteredOrders])
 
   const createMutation = useCreateDeliveryMutation(onClose)
+  const updateMutation = useUpdateDeliveryMutation(onClose)
+
+  const submitting = createMutation.isPending || updateMutation.isPending
 
   // --------------------------------------------
   // BASIC FIELD CHANGE
@@ -493,6 +499,11 @@ export function DeliveryForm({
       })),
     }
 
+    if (delivery?.id) {
+      updateMutation.mutate({ id: delivery.id, data: payload })
+      return
+    }
+
     createMutation.mutate(payload)
   }
 
@@ -503,7 +514,7 @@ export function DeliveryForm({
 
         <DeliveryFormHeader
           deliveryId={delivery?.id}
-          isSubmitting={createMutation.isPending}
+          isSubmitting={submitting}
         />
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">

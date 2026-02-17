@@ -21,7 +21,7 @@
     "open_order_amount": "Açık Sipariş Tutarı",
     "open_desc": "Bekleyen siparişlerin tutarı",
     "total_orders_chip": "{{count}} toplam sipariş",
-    "finished_orders_chip": "{{count}} tamamlanan sipariş",
+    "completed_orders_chip": "{{count}} tamamlanan sipariş",
     "pending_orders_chip": "{{count}} açık sipariş",
     "total_order_count": "Toplam Sipariş Sayısı",
     "order_count_this_month": "Sipariş Sayısı (Bu Ay)",

@@ -38,7 +38,8 @@
       "critical_stock_level": "Critical Stock Level ({{value}})",
       "minimum_stock": "Minimum Stock",
       "unit_price": "Unit Price"
-    }
+    },
+    "not_found": "Product not found"
   },
   "orders": {
     "updated_success": "Order updated",
@@ -63,6 +64,12 @@
       "subtotal": "Subtotal",
       "tax": "Tax",
       "total": "Grand Total"
+    },
+    "summary": {
+      "title": "Summary",
+      "items": "Order items count",
+      "shipments": "Shipments count",
+      "delivered_quantity": "Delivered quantity"
     }
   },
   "deliveries": {

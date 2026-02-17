@@ -1,52 +1,71 @@
-// src/lib/queries/customers.ts
 import { keepPreviousData, queryOptions, useQuery } from '@tanstack/react-query'
 import type { CustomersSearch } from '../types'
 import {
+  getAllCustomers,
   getCustomerById,
-  getCustomers,
   getPaginatedCustomers,
+  getDistinctCustomers,
 } from '@/server/customers'
 
-export const fetchCustomers = queryOptions({
-  queryKey: ['customers'],
-  queryFn: getCustomers,
-  staleTime: 1000 * 60 * 10,
-})
-
-export function useFetchCustomers() {
-  return useQuery({
-    queryKey: ['customers'],
-    queryFn: getCustomers,
-    staleTime: 1000 * 60 * 10,
-  })
+type CustomerListFilters = {
+  distinct?: boolean
 }
 
-export const customersQueryKey = (s: CustomersSearch) =>
-  [
-    'customers',
-    'list',
-    s.pageIndex ?? 0,
-    s.pageSize ?? 100,
-    s.q ?? '',
-    s.sortBy ?? 'code',
-    s.sortDir ?? 'asc',
-  ] as const
+export const customerQueryKeys = {
+  all: ['customers'] as const,
 
-export const customersQuery = (search: CustomersSearch) =>
+  lists: () => [...customerQueryKeys.all, 'list'] as const,
+
+  list: (filters?: { distinct?: boolean }) =>
+    [
+      ...customerQueryKeys.lists(),
+      { distinct: filters?.distinct ?? false },
+    ] as const,
+
+  paginatedLists: () => [...customerQueryKeys.all, 'paginated'] as const,
+
+  paginatedList: (s: CustomersSearch) =>
+    [
+      ...customerQueryKeys.paginatedLists(),
+      {
+        pageIndex: s.pageIndex ?? 0,
+        pageSize: s.pageSize ?? 100,
+        q: s.q ?? '',
+        sortBy: s.sortBy ?? 'code',
+        sortDir: s.sortDir ?? 'asc',
+      },
+    ] as const,
+
+  details: () => [...customerQueryKeys.all, 'detail'] as const,
+
+  detail: (id: number) => [...customerQueryKeys.details(), id] as const,
+}
+
+export const customersListQuery = (filters?: CustomerListFilters) =>
   queryOptions({
-    queryKey: customersQueryKey(search),
-    queryFn: () =>
-      getPaginatedCustomers({
-        data: {
-          ...search,
-        },
-      }),
+    queryKey: customerQueryKeys.list(filters),
+    queryFn: filters?.distinct ? getDistinctCustomers : getAllCustomers,
+    staleTime: 1000 * 60 * 10,
+  })
+
+export function useFetchCustomers(filters?: CustomerListFilters) {
+  return useQuery(customersListQuery(filters))
+}
+
+export const customersPaginatedQuery = (search: CustomersSearch) =>
+  queryOptions({
+    queryKey: customerQueryKeys.paginatedList(search),
+    queryFn: () => getPaginatedCustomers({ data: search }),
     staleTime: 1000 * 60 * 10,
     placeholderData: keepPreviousData,
   })
 
+export function useCustomersPaginated(search: CustomersSearch) {
+  return useQuery(customersPaginatedQuery(search))
+}
+
 export const customerQuery = (id: number) =>
   queryOptions({
-    queryKey: ['customers', 'detail', id],
+    queryKey: customerQueryKeys.detail(id),
     queryFn: () => getCustomerById({ data: { id } }),
   })

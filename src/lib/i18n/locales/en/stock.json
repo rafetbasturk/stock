@@ -45,5 +45,6 @@
     "total_movements": "Total Movements",
     "stock_in_rows": "Stock In Rows",
     "stock_out_rows": "Stock Out Rows"
-  }
+  },
+  "product_unavailable": "Product is no longer available."
 }

@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import OrderFormCustomItemInfo from './OrderFormCustomItemInfo'
 import OrderFormProductInfo from './OrderFormProductInfo'
-import type { NewOrderItem } from '@/types'
 import type { FormErrors, OrderFormState, SelectProduct } from '../OrderForm'
 import { FieldLegend, FieldSeparator, FieldSet } from '@/components/ui/field'
 import { Label } from '@/components/ui/label'
@@ -13,7 +12,11 @@ type Props = {
   products?: Array<SelectProduct>
   isLoading: boolean
   toggleCustomMode: (checked: boolean) => void
-  onItemChange: (idx: number, field: keyof NewOrderItem, value: any) => void
+  onItemChange: (
+    idx: number,
+    field: keyof OrderFormState['items'][number],
+    value: any,
+  ) => void
   removeItem: (index: number) => void
   addItem: () => void
   onCustomItemChange: (

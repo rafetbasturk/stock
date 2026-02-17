@@ -69,7 +69,7 @@ export default function MonthlyChart({ filters }: Props) {
   }
 
   return (
-    <div className="relative h-100">
+    <div className="relative w-7xl h-100">
       {isFetching && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
           <LoadingSpinner variant="overlay" size="lg" />
@@ -78,7 +78,7 @@ export default function MonthlyChart({ filters }: Props) {
 
       {mounted ? (
         chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width={"100%"} height={400}>
             <ComposedChart data={chartData}>
               {/* ... chart components ... */}
               <XAxis dataKey="monthName" fontSize={12} />

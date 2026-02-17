@@ -2,7 +2,6 @@ import { Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useOrderCalculations } from './hooks/useOrderCalculations'
 import EmptyOrderProducts from './EmptyOrderProducts'
-import type { NewOrderItem } from '@/types'
 import type { FormErrors, OrderFormState, SelectProduct } from '../OrderForm'
 import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field'
@@ -18,23 +17,31 @@ import {
 import EntityCombobox from '@/components/form/EntityCombobox'
 import InputField from '@/components/form/InputField'
 import { convertToCurrencyFormat } from '@/lib/currency'
+import { formatNumberForDisplay, parseLocaleNumber } from '@/lib/inputUtils'
 
 const getItemKey = (item: OrderFormState['items'][number], index: number) => {
   return `item-${item.id || item.tempId || index}`
 }
 
-const calculateItemTotal = (item: NewOrderItem) => {
+const calculateItemTotal = (item: OrderFormState['items'][number]) => {
   const quantity = Number(item.quantity)
   const unitPrice = Number(item.unit_price)
   return quantity * unitPrice
 }
+
+const toCentsFromInput = (value: string) =>
+  Math.round(parseLocaleNumber(value) * 100)
 
 type Props = {
   form: OrderFormState
   errorHelpers: FormErrors
   products?: Array<SelectProduct>
   isLoading: boolean
-  onItemChange: (idx: number, field: keyof NewOrderItem, value: any) => void
+  onItemChange: (
+    idx: number,
+    field: keyof OrderFormState['items'][number],
+    value: any,
+  ) => void
   removeItem: (index: number) => void
   addItem: () => void
 }
@@ -110,16 +117,20 @@ export default function OrderFormProductInfo({
                   <TableCell className="text-right">
                     <InputField
                       name={`items[${index}].unit_price`}
-                      type="number"
-                      step="0.01"
-                      value={item.unit_price / 100}
-                      onChange={(e) =>
+                      type="text"
+                      inputMode="decimal"
+                      value={
+                        item.unit_price_raw ??
+                        formatNumberForDisplay(item.unit_price / 100)
+                      }
+                      onChange={(e) => {
+                        onItemChange(index, 'unit_price_raw', e.target.value)
                         onItemChange(
                           index,
                           'unit_price',
-                          Math.round(Number(e.target.value) * 100),
+                          toCentsFromInput(e.target.value),
                         )
-                      }
+                      }}
                     />
                   </TableCell>
                   <TableCell className="text-right font-medium">
@@ -211,16 +222,20 @@ export default function OrderFormProductInfo({
                   <InputField
                     name={`items[${index}].unit_price-mobile`}
                     label={t('form.table.unit_price')}
-                    type="number"
-                    step="0.01"
-                    value={item.unit_price / 100}
-                    onChange={(e) =>
+                    type="text"
+                    inputMode="decimal"
+                    value={
+                      item.unit_price_raw ??
+                      formatNumberForDisplay(item.unit_price / 100)
+                    }
+                    onChange={(e) => {
+                      onItemChange(index, 'unit_price_raw', e.target.value)
                       onItemChange(
                         index,
                         'unit_price',
-                        Math.round(Number(e.target.value) * 100),
+                        toCentsFromInput(e.target.value),
                       )
-                    }
+                    }}
                   />
                 </div>
 

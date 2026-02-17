@@ -1,9 +1,15 @@
 // src/server/products.ts
 import { createServerFn } from '@tanstack/react-start'
-import { authMiddleware } from './middleware/auth'
+import { notFound } from '@tanstack/react-router'
 import { and, eq, ilike, inArray, or, sql } from 'drizzle-orm'
 import z from 'zod'
-import { editProductBeforeInsert, notDeleted, validateProduct } from './utils'
+import {
+  editProductBeforeInsert,
+  normalizeParams,
+  notDeleted,
+  validateProduct,
+} from './utils'
+import { requireAuth } from './auth/requireAuth'
 import { createStockMovementTx } from './services/stockService'
 import type { SQL } from 'drizzle-orm'
 import type { InsertProduct } from '@/types'
@@ -17,8 +23,7 @@ import {
 } from '@/db/schema'
 import { productSortFields } from '@/lib/types/types.search'
 
-export const getProducts = createServerFn().middleware([authMiddleware]).handler(async () => {
-
+export const getProducts = createServerFn().handler(async () => {
   return await db.query.productsTable.findMany({
     where: notDeleted(productsTable),
     columns: {
@@ -32,10 +37,9 @@ export const getProducts = createServerFn().middleware([authMiddleware]).handler
   })
 })
 
-export const getProductById = createServerFn().middleware([authMiddleware])
+export const getProductById = createServerFn()
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data }) => {
-
     const product = await db.query.productsTable.findFirst({
       with: {
         customer: true,
@@ -48,7 +52,8 @@ export const getProductById = createServerFn().middleware([authMiddleware])
         andFn(eqFn(p.id, data.id), notDeleted(p)),
     })
 
-    if (!product) fail('PRODUCT_NOT_FOUND')
+    if (!product) throw notFound()
+    // fail('PRODUCT_NOT_FOUND')
 
     return product
   })
@@ -56,32 +61,38 @@ export const getProductById = createServerFn().middleware([authMiddleware])
 const paginatedSchema = z.object({
   pageIndex: z.number().int().min(0),
   pageSize: z.number().int().min(10).max(100),
-  q: z.string().trim().min(1).optional(),
-  material: z.array(z.string()).optional(),
-  customer: z.coerce.number().int().positive().optional(),
+  q: z.string().trim().optional(),
   sortBy: z.enum(productSortFields).optional(),
   sortDir: z.enum(['asc', 'desc']).optional(),
+  material: z.string().trim().optional(),
+  customerId: z.string().trim().optional(),
 })
 
-export const getPaginated = createServerFn().middleware([authMiddleware])
-  .inputValidator((data) => paginatedSchema.parse(data))
+export const getPaginated = createServerFn()
+  .inputValidator(paginatedSchema.parse)
   .handler(async ({ data }) => {
-
     const {
       pageIndex,
       pageSize,
       q,
       material,
-      customer,
+      customerId,
       sortBy = 'code',
       sortDir = 'asc',
     } = data
 
+    const safePageIndex = Math.max(0, pageIndex)
+    const safePageSize = Math.min(Math.max(10, pageSize), 100)
+
+    const normalizedQ = normalizeParams(q)
+    const normalizedMaterial = normalizeParams(material)
+    const normalizedCustomerId = normalizeParams(customerId)
+
     const conditions: Array<SQL> = [notDeleted(productsTable)]
 
     // Search filter
-    if (q) {
-      const search = `%${q}%`
+    if (normalizedQ) {
+      const search = `%${normalizedQ}%`
       conditions.push(
         or(
           ilike(productsTable.code, search),
@@ -95,22 +106,31 @@ export const getPaginated = createServerFn().middleware([authMiddleware])
     }
 
     // Material filter
-    if (material?.length) {
-      conditions.push(
-        or(...material.map((m) => ilike(productsTable.material, `%${m}%`)))!,
-      )
+    if (normalizedMaterial) {
+      const values = normalizedMaterial.split(',').filter(Boolean)
+
+      if (values.length > 1)
+        conditions.push(inArray(productsTable.material, values as any))
+      else conditions.push(eq(productsTable.material, values[0] as any))
     }
 
     // Customer filter
-    if (customer != null) {
-      conditions.push(eq(productsTable.customer_id, customer))
+    if (normalizedCustomerId) {
+      const ids = normalizedCustomerId
+        .split('|')
+        .map(Number)
+        .filter((n) => Number.isInteger(n))
+
+      if (ids.length > 1)
+        conditions.push(inArray(productsTable.customer_id, ids))
+      else if (ids.length === 1)
+        conditions.push(eq(productsTable.customer_id, ids[0]))
     }
 
     const whereExpr =
       conditions.length === 1 ? conditions[0] : and(...conditions)!
 
-    // ERP-grade ranking with exact match boost
-    const rankingExpr = q
+    const rankingExpr = normalizedQ
       ? sql<number>`
         (
           CASE
@@ -145,12 +165,12 @@ export const getPaginated = createServerFn().middleware([authMiddleware])
       db.query.productsTable.findMany({
         with: { customer: true },
         where: () => whereExpr,
-        limit: pageSize,
-        offset: pageIndex * pageSize,
+        limit: safePageSize,
+        offset: safePageIndex * safePageSize,
 
         orderBy: (p, { asc, desc }) => {
           // Use intelligent ranking when searching
-          if (q && rankingExpr) {
+          if (normalizedQ && rankingExpr) {
             return [desc(rankingExpr), asc(p.code), asc(p.id)]
           }
 
@@ -190,17 +210,17 @@ export const getPaginated = createServerFn().middleware([authMiddleware])
 
     return {
       data: products,
-      pageIndex,
-      pageSize,
+      pageIndex: safePageIndex,
+      pageSize: safePageSize,
       total,
-      pageCount: Math.ceil(total / pageSize),
+      pageCount: Math.ceil(total / safePageSize),
     }
   })
 
-export const createProduct = createServerFn().middleware([authMiddleware])
+export const createProduct = createServerFn()
   .inputValidator((data: InsertProduct) => data)
-  .handler(async ({ data, context }) => {
-    const user = context.user
+  .handler(async ({ data }) => {
+    const user = await requireAuth()
 
     validateProduct(data)
     editProductBeforeInsert(data)
@@ -232,12 +252,12 @@ export const createProduct = createServerFn().middleware([authMiddleware])
     })
   })
 
-export const adjustProductStock = createServerFn().middleware([authMiddleware])
+export const adjustProductStock = createServerFn()
   .inputValidator(
     (data: { product_id: number; quantity: number; notes?: string }) => data,
   )
-  .handler(async ({ data, context }) => {
-    const user = context.user
+  .handler(async ({ data }) => {
+    const user = await requireAuth()
 
     return db.transaction(async (tx) => {
       const product = await tx.query.productsTable.findFirst({
@@ -265,7 +285,7 @@ export const adjustProductStock = createServerFn().middleware([authMiddleware])
     })
   })
 
-export const updateProduct = createServerFn().middleware([authMiddleware])
+export const updateProduct = createServerFn()
   .inputValidator(
     (data: {
       id: number
@@ -278,8 +298,8 @@ export const updateProduct = createServerFn().middleware([authMiddleware])
       }
     }) => data,
   )
-  .handler(async ({ data: { id, data: product }, context }) => {
-    const user = context.user
+  .handler(async ({ data: { id, data: product } }) => {
+    const user = await requireAuth()
 
     validateProduct(product)
     editProductBeforeInsert(product)
@@ -355,10 +375,9 @@ export const updateProduct = createServerFn().middleware([authMiddleware])
     return result
   })
 
-export const removeProduct = createServerFn().middleware([authMiddleware])
+export const removeProduct = createServerFn()
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data: { id } }) => {
-
     try {
       return await db.transaction(async (tx) => {
         const product = await tx.query.productsTable.findFirst({
@@ -384,8 +403,7 @@ export const removeProduct = createServerFn().middleware([authMiddleware])
     }
   })
 
-export const getProductFilterOptions = createServerFn().middleware([authMiddleware]).handler(async () => {
-
+export const getProductFilterOptions = createServerFn().handler(async () => {
   const rows = await db
     .selectDistinct({ material: productsTable.material })
     .from(productsTable)

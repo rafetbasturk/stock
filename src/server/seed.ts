@@ -7,10 +7,9 @@ import {
   orderItemsTable,
 } from '@/db/schema'
 import { createServerFn } from '@tanstack/react-start'
-import { authMiddleware } from './middleware/auth'
 import { faker } from '@faker-js/faker'
 
-export const seedDatabase = createServerFn().middleware([authMiddleware]).handler(
+export const seedDatabase = createServerFn().handler(
   async () => {
 
     console.log('--- Seeding Started ---')

@@ -1,6 +1,5 @@
 // src/server/metrics.ts
 import { createServerFn } from '@tanstack/react-start'
-import { authMiddleware } from './middleware/auth'
 import { and, eq, gte, inArray, lt, ne } from 'drizzle-orm'
 import { notDeleted } from './utils'
 import type { SQL } from 'drizzle-orm'
@@ -24,10 +23,9 @@ export type GetKeyMetricsData = {
   preferredCurrency?: Currency
 }
 
-export const getKeyMetrics = createServerFn().middleware([authMiddleware])
+export const getKeyMetrics = createServerFn()
   .inputValidator((data: GetKeyMetricsData) => data)
   .handler(async ({ data }) => {
-
     try {
       const { customerId, year } = data.filters ?? {}
 
@@ -189,7 +187,7 @@ export const getKeyMetrics = createServerFn().middleware([authMiddleware])
     }
   })
 
-export const getMonthlyOverview = createServerFn().middleware([authMiddleware])
+export const getMonthlyOverview = createServerFn()
   .inputValidator(
     (data: {
       filters?: { customerId?: number; year?: number }
@@ -199,7 +197,6 @@ export const getMonthlyOverview = createServerFn().middleware([authMiddleware])
     }) => data,
   )
   .handler(async ({ data }) => {
-
     try {
       const { customerId, year } = data.filters ?? {}
       const preferredCurrency = data.preferredCurrency
@@ -253,7 +250,16 @@ export const getMonthlyOverview = createServerFn().middleware([authMiddleware])
         lt(ordersTable.order_date, end),
       ]
 
-      if (customerId) orderWhere.push(eq(ordersTable.customer_id, customerId))
+      const deliveriesWhere: SQL[] = [
+        notDeleted(deliveriesTable),
+        gte(deliveriesTable.delivery_date, start),
+        lt(deliveriesTable.delivery_date, end),
+      ]
+
+      if (customerId) {
+        orderWhere.push(eq(ordersTable.customer_id, customerId))
+        deliveriesWhere.push(eq(deliveriesTable.customer_id, customerId))
+      }
 
       const orders = await db
         .select({
@@ -320,6 +326,7 @@ export const getMonthlyOverview = createServerFn().middleware([authMiddleware])
           custom_currency: customOrderItemsTable.currency,
         })
         .from(deliveryItemsTable)
+        .where(and(...deliveriesWhere))
         .leftJoin(
           deliveriesTable,
           eq(deliveryItemsTable.delivery_id, deliveriesTable.id),

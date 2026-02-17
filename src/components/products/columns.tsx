@@ -84,7 +84,7 @@ export const getColumns = (
         const isLow = product.stock_quantity <= (product.min_stock_level || 0)
         return (
           <div className="text-center font-bold">
-            <Badge variant={isLow ? 'destructive' : 'outline'}>
+            <Badge variant={isLow ? 'destructive' : 'default'}>
               {product.stock_quantity} {product.unit}
             </Badge>
           </div>

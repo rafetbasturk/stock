@@ -16,10 +16,66 @@ export const convertFormValueToNumber = (
   decimalSeparator: "," | "." = ",",
 ): number => {
   if (value === undefined || value === null) return 0;
-  const stringValue = String(value)
-    .replace(/\./g, "")
-    .replace(decimalSeparator, ".");
-  return parseFloat(stringValue) || 0;
+  const stringValue = String(value);
+  return parseLocaleNumber(stringValue, decimalSeparator);
+};
+
+export const parseLocaleNumber = (
+  value: string,
+  decimalSeparator: "," | "." = ",",
+): number => {
+  const cleaned = value
+    .trim()
+    .replace(/\s|\u00A0/g, "")
+    .replace(/[’']/g, "")
+    .replace(/[^\d,.-]/g, "");
+
+  if (!cleaned) return 0;
+
+  const lastComma = cleaned.lastIndexOf(",");
+  const lastDot = cleaned.lastIndexOf(".");
+  const hasComma = lastComma >= 0;
+  const hasDot = lastDot >= 0;
+
+  if (!hasComma && !hasDot) {
+    return Number(cleaned) || 0;
+  }
+
+  let normalized = cleaned;
+
+  if (hasComma && hasDot) {
+    const decimalChar = lastComma > lastDot ? "," : ".";
+    const thousandsChar = decimalChar === "," ? "." : ",";
+    normalized = normalized.split(thousandsChar).join("");
+    normalized = normalized.replace(decimalChar, ".");
+    return Number(normalized) || 0;
+  }
+
+  const singleSep = hasComma ? "," : ".";
+  const sepIndex = hasComma ? lastComma : lastDot;
+  const digitsAfter = cleaned.length - sepIndex - 1;
+  const sepCount = (cleaned.match(new RegExp(`\\${singleSep}`, "g")) ?? [])
+    .length;
+
+  // If we only have thousand-group-like separators, collapse them.
+  if (
+    digitsAfter === 3 &&
+    decimalSeparator !== singleSep &&
+    sepCount >= 1
+  ) {
+    normalized = cleaned.split(singleSep).join("");
+    return Number(normalized) || 0;
+  }
+
+  normalized = cleaned.replace(singleSep, ".");
+  if (sepCount > 1) {
+    const first = normalized.indexOf(".");
+    normalized =
+      normalized.slice(0, first + 1) +
+      normalized.slice(first + 1).replace(/\./g, "");
+  }
+
+  return Number(normalized) || 0;
 };
 
 export interface NumberInputOptions {
@@ -54,29 +110,54 @@ export const validateNumberInput = (
     return { isValid: true, cleanedValue: "", numericValue: null };
   }
 
-  // Escape the decimal separator for regex
-  const escapedSeparator = decimalSeparator === "." ? "\\." : decimalSeparator;
-
-  // Build regex pattern based on options
-  let pattern = "^";
-  if (allowNegative) pattern += "-?";
-  pattern += "\\d*";
-  if (allowDecimal)
-    pattern += `(${escapedSeparator}\\d{0,${maxDecimalPlaces}})?`;
-  pattern += "$";
-
-  const regex = new RegExp(pattern);
-
-  if (!regex.test(value)) {
+  const compact = value.replace(/\s|\u00A0/g, "");
+  const baseRegex = allowNegative ? /^-?[\d.,]*$/ : /^[\d.,]*$/;
+  if (!baseRegex.test(compact)) {
     return { isValid: false, cleanedValue: value, numericValue: null };
   }
 
-  // Convert to numeric value (replace comma with dot for JavaScript)
-  const numericValue = parseFloat(value.replace(decimalSeparator, "."));
+  let cleanedValue = compact;
+
+  if (allowDecimal) {
+    const lastComma = cleanedValue.lastIndexOf(",");
+    const lastDot = cleanedValue.lastIndexOf(".");
+    const decimalIndex = Math.max(lastComma, lastDot);
+
+    if (decimalIndex >= 0) {
+      const intPart = cleanedValue
+        .slice(0, decimalIndex)
+        .replace(/[.,]/g, "");
+      const fracPart = cleanedValue
+        .slice(decimalIndex + 1)
+        .replace(/[.,]/g, "")
+        .slice(0, maxDecimalPlaces);
+
+      const sourceDigitsAfter = cleanedValue.length - decimalIndex - 1;
+      const onlyOneSepKind =
+        (lastComma >= 0 && lastDot < 0) || (lastDot >= 0 && lastComma < 0);
+
+      // Likely thousand separator (e.g., 1.234 or 1,234)
+      if (onlyOneSepKind && sourceDigitsAfter === 3 && maxDecimalPlaces <= 2) {
+        cleanedValue = cleanedValue.replace(/[.,]/g, "");
+      } else {
+        const sep = decimalSeparator;
+        cleanedValue =
+          fracPart.length > 0 || /[.,]$/.test(cleanedValue)
+            ? `${intPart || "0"}${sep}${fracPart}`
+            : intPart;
+      }
+    } else {
+      cleanedValue = cleanedValue.replace(/[.,]/g, "");
+    }
+  } else {
+    cleanedValue = cleanedValue.replace(/[.,]/g, "");
+  }
+
+  const numericValue = parseLocaleNumber(cleanedValue, decimalSeparator);
 
   return {
     isValid: true,
-    cleanedValue: value,
+    cleanedValue,
     numericValue: isNaN(numericValue) ? null : numericValue,
   };
 };

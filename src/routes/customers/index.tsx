@@ -13,7 +13,7 @@ import { CustomersDataTable } from '@/components/customers/CustomersDataTable'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { debounce } from '@/lib/debounce'
 import { useDeleteCustomerMutation } from '@/lib/mutations/customers'
-import { customersQuery } from '@/lib/queries/customers'
+import { customersPaginatedQuery } from '@/lib/queries/customers'
 import { customersSearchSchema } from '@/lib/types'
 
 type ModalState =
@@ -25,7 +25,9 @@ export const Route = createFileRoute('/customers/')({
   validateSearch: zodValidator(customersSearchSchema),
   loaderDeps: ({ search }) => search,
   loader: async ({ context, deps }) => {
-    return await context.queryClient.ensureQueryData(customersQuery(deps))
+    return await context.queryClient.ensureQueryData(
+      customersPaginatedQuery(deps),
+    )
   },
   component: CustomerList,
   pendingComponent: CustomersPending,
@@ -48,7 +50,7 @@ function CustomerList() {
 
   const deleteMutation = useDeleteCustomerMutation()
 
-  const customersQ = useSuspenseQuery(customersQuery(search))
+  const customersQ = useSuspenseQuery(customersPaginatedQuery(search))
   const { data: customers, total, pageIndex, pageSize } = customersQ.data
 
   const pendingDeleteCustomer = useMemo(
@@ -98,15 +100,12 @@ function CustomerList() {
 
   // Handle search changes with proper type safety
   const handleSearchChange = useCallback(
-    (updates: Record<string, string | undefined>) => {
+    (updates: Partial<CustomersSearch>) => {
       navigate({
-        search: (prev: CustomersSearch) => {
-          const merged = { ...prev, ...updates } as Record<string, any>
-          Object.keys(merged).forEach(
-            (k) => merged[k] === undefined && delete merged[k],
-          )
-          return merged as CustomersSearch
-        },
+        search: (prev) => ({
+          ...prev,
+          ...updates,
+        }),
         replace: true,
       })
     },
@@ -142,9 +141,9 @@ function CustomerList() {
         isFetching={customersQ.isFetching}
         search={search}
         onSearchChange={debouncedSearchChange}
-        onPageChange={(p) => handleSearchChange({ pageIndex: String(p) })}
+        onPageChange={(p) => handleSearchChange({ pageIndex: p })}
         onPageSizeChange={(s) =>
-          handleSearchChange({ pageSize: String(s), pageIndex: '0' })
+          handleSearchChange({ pageSize: s, pageIndex: 0 })
         }
         onRowClick={(id) =>
           navigate({

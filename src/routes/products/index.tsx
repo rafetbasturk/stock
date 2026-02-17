@@ -123,7 +123,7 @@ function ProductList() {
       {
         columnId: 'customer',
         label: t('products.filters.customer'),
-        type: 'select',
+        type: 'multi',
         options: filterOptions.customers.map((c) => ({
           value: String(c.id),
           label: c.name,
@@ -132,7 +132,7 @@ function ProductList() {
       {
         columnId: 'material',
         label: t('products.filters.material'),
-        type: 'select',
+        type: 'multi',
         options: filterOptions.materials
           .filter((m) => m && m.trim().length > 0)
           .map((m) => ({

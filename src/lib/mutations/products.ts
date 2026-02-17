@@ -1,9 +1,17 @@
-import { useQueryClient } from '@tanstack/react-query'
+import { QueryClient, useQueryClient } from '@tanstack/react-query'
 import { useServerFn } from '@tanstack/react-start'
 import { createProduct, removeProduct, updateProduct } from '@/server/products'
 import { toast } from 'sonner'
 import { useFormMutation } from '@/hooks/useFormMutation'
 import { MutationFormErrors } from '@/lib/types'
+import { productQueryKeys } from '../queries/products'
+
+export const invalidateProductQueries = async (qc: QueryClient) =>
+  await Promise.all([
+    qc.invalidateQueries({ queryKey: productQueryKeys.lists() }),
+    qc.invalidateQueries({ queryKey: productQueryKeys.paginatedLists() }),
+    qc.invalidateQueries({ queryKey: productQueryKeys.filterOptions() }),
+  ])
 
 export function useCreateProductMutation(
   onSuccess?: (data: any) => void,
@@ -16,7 +24,7 @@ export function useCreateProductMutation(
     mutationFn: (data: Parameters<typeof createProductFn>[0]['data']) =>
       createProductFn({ data }),
 
-    formErrorCodes: ['VALIDATION_ERROR', 'INVALID_ID'],
+    formErrorCodes: ['VALIDATION_ERROR', 'INVALID_ID', 'PRODUCT_NOT_FOUND'],
 
     onFieldError: formErrors?.setAllErrors,
 
@@ -25,12 +33,8 @@ export function useCreateProductMutation(
       formErrors?.resetErrors()
     },
 
-    onSuccess: (newProduct) => {
-      // Invalidate the products list to refetch with new data
-      // The keepPreviousData option keeps old data visible during refetch
-      qc.invalidateQueries({ queryKey: ['products', 'list'] })
-
-      // Show success immediately (don't wait for refetch)
+    onSuccess: async (newProduct) => {
+      await invalidateProductQueries(qc)
       toast.success('Ürün başarıyla oluşturuldu')
       onSuccess?.(newProduct)
     },
@@ -45,8 +49,12 @@ export function useDeleteProductMutation(onSuccess?: () => void) {
     mutationFn: (data: Parameters<typeof removeProductFn>[0]['data']) =>
       removeProductFn({ data }),
 
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['products', 'list'] })
+    onSuccess: async (_, variables) => {
+      await invalidateProductQueries(qc)
+
+      qc.removeQueries({
+        queryKey: productQueryKeys.detail(variables.id),
+      })
       toast.success('Ürün silindi')
       onSuccess?.()
     },
@@ -73,15 +81,12 @@ export function useUpdateProductMutation(
       formErrors?.resetErrors()
     },
 
-    onSuccess: (updatedProduct) => {
-      // Update the specific product detail query immediately with returned data
-      // This makes the detail view update instantly without refetching
-      qc.setQueryData(['products', 'detail', updatedProduct.id], updatedProduct)
-
-      // Also invalidate the products list so it refreshes in background
-      qc.invalidateQueries({ queryKey: ['products', 'list'] })
-
-      // Show success immediately (don't wait for list refetch)
+    onSuccess: async (updatedProduct) => {
+      await invalidateProductQueries(qc)
+      await qc.setQueryData(
+        productQueryKeys.detail(updatedProduct.id),
+        updatedProduct,
+      )
       toast.success('Ürün başarıyla güncellendi')
       onSuccess?.(updatedProduct)
     },

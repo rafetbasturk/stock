@@ -31,8 +31,8 @@ export const Route = createFileRoute('/deliveries/')({
   loaderDeps: ({ search }) => search,
   loader: async ({ context, deps }) => {
     const data = await Promise.all([
-      context.queryClient.prefetchQuery(lastDeliveryNumberQuery()),
-      context.queryClient.prefetchQuery(getFilterOptions()),
+      context.queryClient.prefetchQuery(lastDeliveryNumberQuery),
+      context.queryClient.prefetchQuery(getFilterOptions),
       context.queryClient.prefetchQuery(ordersSelectQuery),
       context.queryClient.ensureQueryData(deliveriesQuery(deps)),
     ])
@@ -107,11 +107,9 @@ function RouteComponent() {
   }, [pendingDeleteDelivery, pendingDeleteId])
 
   // filter options
-  const { data: filterOptions } = useSuspenseQuery(getFilterOptions())
+  const { data: filterOptions } = useSuspenseQuery(getFilterOptions)
   const { data: orders } = useSuspenseQuery(ordersSelectQuery)
-  const { data: lastDeliveryNumber } = useSuspenseQuery(
-    lastDeliveryNumberQuery(),
-  )
+  const { data: lastDeliveryNumber } = useSuspenseQuery(lastDeliveryNumberQuery)
 
   const customFilters: Array<DataTableFilter> = useMemo(
     () => [
