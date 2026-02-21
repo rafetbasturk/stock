@@ -1,31 +1,11 @@
-import {
-  Customer,
-  DeliveryListRow,
-  MovementRow,
-  OrderListRow,
-  ProductListRow,
-} from '@/types'
+import { MovementRow } from '@/types'
 
-export type CustomersModalState =
+export type ModalState<T> =
   | { type: 'closed' }
   | { type: 'adding' }
-  | { type: 'editing'; customer: Customer }
-
-export type DeliveriesModalState =
-  | { type: 'closed' }
-  | { type: 'adding' }
-  | { type: 'editing'; delivery: DeliveryListRow }
-
-export type OrdersModalState =
-  | { type: 'closed' }
-  | { type: 'adding' }
-  | { type: 'editing'; order: OrderListRow }
-
-export type ProductsModalState =
-  | { type: 'closed' }
-  | { type: 'adding' }
-  | { type: 'editing'; product: ProductListRow }
-  | { type: 'adjusting'; product: ProductListRow }
+  | { type: 'editing'; item: T }
+  | { type: 'deleting'; item: T }
+  | { type: 'adjusting'; item: T }
 
 export type HistoryModalState = {
   type: 'closed' | 'editing' | 'deleting'

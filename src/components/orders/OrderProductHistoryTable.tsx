@@ -18,6 +18,7 @@ export function OrderProductHistoryTable({ order }: { order: OrderListRow }) {
     delivery: {
       delivery_number: string
       delivery_date: Date
+      kind?: 'DELIVERY' | 'RETURN'
     }
   }
 
@@ -55,22 +56,30 @@ export function OrderProductHistoryTable({ order }: { order: OrderListRow }) {
               const productName = 'product' in item ? item.product.name : null
 
               const qty = item.quantity ?? 0
-              const pastDeliveries = item.deliveries as Array<DeliveryHistory>
+              const pastDeliveries = (
+                'deliveries' in item ? item.deliveries : []
+              ) as Array<DeliveryHistory>
+              const signedQty = (d: DeliveryHistory) =>
+                d.delivery?.kind === 'RETURN'
+                  ? -d.delivered_quantity
+                  : d.delivered_quantity
               const delivered = pastDeliveries.reduce(
-                (s, d) => s + d.delivered_quantity,
+                (s, d) => s + signedQty(d),
                 0,
               )
 
               const remaining = qty - delivered
               const progress =
-                qty > 0 ? Math.min((delivered / qty) * 100, 100) : 0
+                qty > 0
+                  ? Math.max(0, Math.min((delivered / qty) * 100, 100))
+                  : 0
 
               return (
                 <TableRow
                   key={item.id}
                   className={cn(
                     'text-sm border-b border-border transition-colors hover:bg-accent/90',
-                    remaining === 0 && 'bg-green-500/5 dark:bg-green-400/10',
+                    remaining <= 0 && 'bg-green-500/5 dark:bg-green-400/10',
                   )}
                 >
                   <TableCell>
@@ -131,7 +140,14 @@ export function OrderProductHistoryTable({ order }: { order: OrderListRow }) {
                     {qty}
                   </TableCell>
 
-                  <TableCell className="text-center font-semibold text-green-600 dark:text-green-400">
+                  <TableCell
+                    className={cn(
+                      'text-center font-semibold',
+                      delivered < 0
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-green-600 dark:text-green-400',
+                    )}
+                  >
                     {delivered}
                   </TableCell>
 
@@ -160,7 +176,8 @@ export function OrderProductHistoryTable({ order }: { order: OrderListRow }) {
                             ).toLocaleDateString('tr-TR')}
                             {' — '}
                             {d.delivery.delivery_number} —{' '}
-                            {d.delivered_quantity} adet
+                            {signedQty(d) > 0 ? '+' : ''}
+                            {signedQty(d)} adet
                           </Badge>
                         ))}
                       </div>

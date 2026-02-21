@@ -9,6 +9,7 @@ import {
   inArray,
   isNull,
   lte,
+  ne,
   or,
   SQL,
   sql,
@@ -25,6 +26,7 @@ import {
 import { requireAuth } from './auth/requireAuth'
 import { db } from '@/db'
 import {
+  customOrderItemsTable,
   customersTable,
   deliveriesTable,
   deliveryItemsTable,
@@ -36,17 +38,145 @@ import {
   createStockMovementTx,
   internalStockMovementCleanupTx,
 } from './services/stockService'
-import { deliveriesSearchSchema } from '@/lib/types'
+import { deliveriesSearchSchema } from '@/lib/types/types.search'
 
 export interface CreateDeliveryInput {
   customer_id: number
   delivery_number: string
   delivery_date: Date | string
+  kind?: 'DELIVERY' | 'RETURN'
   notes?: string
   items: (
     | { order_item_id: number; delivered_quantity: number }
     | { custom_order_item_id: number; delivered_quantity: number }
   )[]
+}
+
+type DeliveryKind = 'DELIVERY' | 'RETURN'
+
+function resolveDeliveryStockMovement(kind: DeliveryKind, quantity: number) {
+  return {
+    quantity: kind === 'RETURN' ? quantity : -quantity,
+    movementType: kind === 'RETURN' ? 'IN' : 'OUT',
+    notePrefix: kind === 'RETURN' ? 'Return' : 'Delivery',
+  } as const
+}
+
+async function assertReturnQuantitiesWithinDeliveredTx(
+  tx: any,
+  items: CreateDeliveryInput['items'],
+  excludeDeliveryId?: number,
+) {
+  const standardRequested = new Map<number, number>()
+  const customRequested = new Map<number, number>()
+
+  for (const item of items) {
+    if ('order_item_id' in item) {
+      standardRequested.set(
+        item.order_item_id,
+        (standardRequested.get(item.order_item_id) ?? 0) +
+          item.delivered_quantity,
+      )
+    } else if ('custom_order_item_id' in item) {
+      customRequested.set(
+        item.custom_order_item_id,
+        (customRequested.get(item.custom_order_item_id) ?? 0) +
+          item.delivered_quantity,
+      )
+    }
+  }
+
+  const returnSignExpr = sql<number>`
+    cast(
+      coalesce(
+        sum(
+          case
+            when ${deliveriesTable.kind} = 'RETURN' then -${deliveryItemsTable.delivered_quantity}
+            else ${deliveryItemsTable.delivered_quantity}
+          end
+        ),
+        0
+      ) as int
+    )
+  `
+
+  if (standardRequested.size > 0) {
+    const conditions: SQL[] = [
+      inArray(deliveryItemsTable.order_item_id, [...standardRequested.keys()]),
+      isNull(deliveryItemsTable.deleted_at),
+      isNull(deliveriesTable.deleted_at),
+    ]
+
+    if (excludeDeliveryId) {
+      conditions.push(ne(deliveriesTable.id, excludeDeliveryId))
+    }
+
+    const rows = await tx
+      .select({
+        order_item_id: deliveryItemsTable.order_item_id,
+        net_delivered: returnSignExpr,
+      })
+      .from(deliveryItemsTable)
+      .innerJoin(
+        deliveriesTable,
+        eq(deliveryItemsTable.delivery_id, deliveriesTable.id),
+      )
+      .where(and(...conditions))
+      .groupBy(deliveryItemsTable.order_item_id)
+
+    const netByItem = new Map<number, number>()
+    for (const row of rows) {
+      if (row.order_item_id == null) continue
+      netByItem.set(row.order_item_id, Number(row.net_delivered ?? 0))
+    }
+
+    for (const [itemId, requested] of standardRequested) {
+      const delivered = netByItem.get(itemId) ?? 0
+      if (requested > delivered) {
+        fail('RETURN_QUANTITY_EXCEEDS_DELIVERED')
+      }
+    }
+  }
+
+  if (customRequested.size > 0) {
+    const conditions: SQL[] = [
+      inArray(deliveryItemsTable.custom_order_item_id, [
+        ...customRequested.keys(),
+      ]),
+      isNull(deliveryItemsTable.deleted_at),
+      isNull(deliveriesTable.deleted_at),
+    ]
+
+    if (excludeDeliveryId) {
+      conditions.push(ne(deliveriesTable.id, excludeDeliveryId))
+    }
+
+    const rows = await tx
+      .select({
+        custom_order_item_id: deliveryItemsTable.custom_order_item_id,
+        net_delivered: returnSignExpr,
+      })
+      .from(deliveryItemsTable)
+      .innerJoin(
+        deliveriesTable,
+        eq(deliveryItemsTable.delivery_id, deliveriesTable.id),
+      )
+      .where(and(...conditions))
+      .groupBy(deliveryItemsTable.custom_order_item_id)
+
+    const netByItem = new Map<number, number>()
+    for (const row of rows) {
+      if (row.custom_order_item_id == null) continue
+      netByItem.set(row.custom_order_item_id, Number(row.net_delivered ?? 0))
+    }
+
+    for (const [itemId, requested] of customRequested) {
+      const delivered = netByItem.get(itemId) ?? 0
+      if (requested > delivered) {
+        fail('RETURN_QUANTITY_EXCEEDS_DELIVERED')
+      }
+    }
+  }
 }
 
 export const createDelivery = createServerFn()
@@ -55,6 +185,7 @@ export const createDelivery = createServerFn()
     const user = await requireAuth()
 
     const { customer_id, delivery_number, delivery_date, notes, items } = data
+    const kind: DeliveryKind = data.kind === 'RETURN' ? 'RETURN' : 'DELIVERY'
 
     const fieldErrors: Record<
       string,
@@ -146,6 +277,39 @@ export const createDelivery = createServerFn()
           }
         }
 
+        const customItems = items.filter(
+          (
+            i,
+          ): i is {
+            custom_order_item_id: number
+            delivered_quantity: number
+          } => 'custom_order_item_id' in i && i.custom_order_item_id != null,
+        )
+
+        if (customItems.length > 0) {
+          const customRows = await tx.query.customOrderItemsTable.findMany({
+            where: and(
+              inArray(
+                customOrderItemsTable.id,
+                customItems.map((item) => item.custom_order_item_id),
+              ),
+              isNull(customOrderItemsTable.deleted_at),
+            ),
+            columns: {
+              id: true,
+              order_id: true,
+            },
+          })
+
+          for (const item of customRows) {
+            if (item.order_id) affectedOrderIds.add(item.order_id)
+          }
+        }
+
+        if (kind === 'RETURN') {
+          await assertReturnQuantitiesWithinDeliveredTx(tx, items)
+        }
+
         /*───────────────────────────────────────────────
           2️⃣ INSERT DELIVERY HEADER
         ───────────────────────────────────────────────*/
@@ -153,6 +317,7 @@ export const createDelivery = createServerFn()
           .insert(deliveriesTable)
           .values({
             customer_id,
+            kind,
             delivery_number,
             delivery_date: normalizeDateForDB(delivery_date),
             notes,
@@ -191,12 +356,15 @@ export const createDelivery = createServerFn()
 
             if (!orderItem.product_id) fail('ORDER_ITEM_INVALID')
 
+            const stockMovement = resolveDeliveryStockMovement(
+              kind,
+              item.delivered_quantity,
+            )
+
             await createStockMovementTx(tx, {
               product_id: orderItem.product_id,
-
-              quantity: -item.delivered_quantity,
-
-              movement_type: 'OUT',
+              quantity: stockMovement.quantity,
+              movement_type: stockMovement.movementType,
 
               reference_type: 'delivery',
 
@@ -204,7 +372,7 @@ export const createDelivery = createServerFn()
 
               created_by: user.id,
 
-              notes: `Delivery #${delivery.delivery_number}`,
+              notes: `${stockMovement.notePrefix} #${delivery.delivery_number}`,
             })
           }
         }
@@ -271,6 +439,7 @@ export const getDeliveries = createServerFn().handler(async () => {
                     columns: {
                       delivery_number: true,
                       delivery_date: true,
+                      kind: true,
                     },
                   },
                 },
@@ -290,6 +459,7 @@ export const getDeliveries = createServerFn().handler(async () => {
                     columns: {
                       delivery_number: true,
                       delivery_date: true,
+                      kind: true,
                     },
                   },
                 },
@@ -327,6 +497,7 @@ export const getDeliveryById = createServerFn()
                       columns: {
                         delivery_number: true,
                         delivery_date: true,
+                        kind: true,
                       },
                     },
                   },
@@ -359,6 +530,7 @@ export const getPaginatedDeliveries = createServerFn()
       customerId,
       sortBy,
       sortDir,
+      kind,
     } = data
 
     const safePageIndex = Math.max(0, pageIndex)
@@ -369,6 +541,7 @@ export const getPaginatedDeliveries = createServerFn()
 
     const normalizedQ = normalizeParams(q)
     const normalizedCustomerId = normalizeParams(customerId)
+    const normalizedKind = normalizeParams(kind)
 
     const conditions: SQL[] = [notDeleted(deliveriesTable)]
 
@@ -403,6 +576,14 @@ export const getPaginatedDeliveries = createServerFn()
       } else if (ids.length === 1) {
         conditions.push(eq(deliveriesTable.customer_id, ids[0]))
       }
+    }
+
+    if (normalizedKind) {
+      const values = normalizedKind.split(',').filter(Boolean)
+
+      if (values.length > 1)
+        conditions.push(inArray(deliveriesTable.kind, values as any))
+      else conditions.push(eq(deliveriesTable.kind, values[0] as any))
     }
 
     const whereExpr: SQL =
@@ -448,6 +629,7 @@ export const getPaginatedDeliveries = createServerFn()
                         columns: {
                           delivery_number: true,
                           delivery_date: true,
+                          kind: true,
                         },
                       },
                     },
@@ -467,6 +649,7 @@ export const getPaginatedDeliveries = createServerFn()
                         columns: {
                           delivery_number: true,
                           delivery_date: true,
+                          kind: true,
                         },
                       },
                     },
@@ -573,15 +756,37 @@ export const getLastDeliveryNumber = createServerFn().handler(async () => {
       delivery_number: deliveriesTable.delivery_number,
     })
     .from(deliveriesTable)
-    .where(notDeleted(deliveriesTable))
+    .where(
+      and(notDeleted(deliveriesTable), eq(deliveriesTable.kind, 'DELIVERY')),
+    )
     .orderBy(
       drizzleDesc(deliveriesTable.created_at),
       drizzleDesc(deliveriesTable.id),
     )
     .limit(1)
 
-  return lastDelivery.delivery_number
+  return lastDelivery?.delivery_number
 })
+
+export const getLastReturnDeliveryNumber = createServerFn().handler(
+  async () => {
+    const [lastReturn] = await db
+      .select({
+        delivery_number: deliveriesTable.delivery_number,
+      })
+      .from(deliveriesTable)
+      .where(
+        and(notDeleted(deliveriesTable), eq(deliveriesTable.kind, 'RETURN')),
+      )
+      .orderBy(
+        drizzleDesc(deliveriesTable.created_at),
+        drizzleDesc(deliveriesTable.id),
+      )
+      .limit(1)
+
+    return lastReturn?.delivery_number
+  },
+)
 
 export const getDeliveryFilterOptions = createServerFn().handler(async () => {
   const customerRows = await db
@@ -625,6 +830,7 @@ const updateDeliveryItemSchema = z.union([
 export const updateDeliverySchema = z.object({
   id: z.number().int().positive(),
   data: z.object({
+    kind: z.enum(['DELIVERY', 'RETURN']).optional(),
     delivery_number: z.string().trim().min(1),
     delivery_date: z.date(),
     notes: z.string().nullable().optional(),
@@ -640,6 +846,25 @@ export const updateDelivery = createServerFn()
     try {
       const user = await requireAuth()
       await db.transaction(async (tx) => {
+        const existingDelivery = await tx.query.deliveriesTable.findFirst({
+          where: and(
+            eq(deliveriesTable.id, deliveryId),
+            isNull(deliveriesTable.deleted_at),
+          ),
+          columns: { id: true, kind: true },
+        })
+
+        if (!existingDelivery) fail('DELIVERY_NOT_FOUND')
+
+        const kind: DeliveryKind = data.kind ?? existingDelivery.kind
+        if (data.kind && data.kind !== existingDelivery.kind) {
+          fail('DELIVERY_KIND_CHANGE_NOT_ALLOWED')
+        }
+
+        if (kind === 'RETURN') {
+          await assertReturnQuantitiesWithinDeliveredTx(tx, items, deliveryId)
+        }
+
         // -------------------------------------------------------
         // 1️⃣ Revert and Clean ALL existing stock movements for this delivery
         // -------------------------------------------------------
@@ -750,14 +975,18 @@ export const updateDelivery = createServerFn()
 
         for (const item of allCurrentItems) {
           if (item.orderItem?.product_id) {
+            const stockMovement = resolveDeliveryStockMovement(
+              kind,
+              item.delivered_quantity,
+            )
             await createStockMovementTx(tx, {
               product_id: item.orderItem.product_id,
-              quantity: -item.delivered_quantity,
-              movement_type: 'OUT',
+              quantity: stockMovement.quantity,
+              movement_type: stockMovement.movementType,
               reference_type: 'delivery',
               reference_id: deliveryId,
               created_by: user.id,
-              notes: `Delivery update #${delivery_number}`,
+              notes: `${stockMovement.notePrefix} update #${delivery_number}`,
             })
 
             if (item.orderItem.order_id)
@@ -771,6 +1000,7 @@ export const updateDelivery = createServerFn()
         await tx
           .update(deliveriesTable)
           .set({
+            kind,
             delivery_number: delivery_number.trim(),
             delivery_date: normalizeDateForDB(delivery_date),
             notes: notes?.trim() || null,

@@ -78,6 +78,13 @@
       "when": 1771315754660,
       "tag": "0010_whole_skin",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1771680000000,
+      "tag": "0011_fair_returns",
+      "breakpoints": true
     }
   ]
 }

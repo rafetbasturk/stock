@@ -1,30 +1,30 @@
-import type { ComponentType, ReactNode, SVGProps } from "react";
-import { useRouter } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
-import { Button } from "./ui/button";
+import type { ComponentType, ReactNode, SVGProps } from 'react'
+import { useRouter } from '@tanstack/react-router'
+import { ArrowLeft } from 'lucide-react'
+import { Button } from './ui/button'
 
-export type IconType = ComponentType<SVGProps<SVGSVGElement>>;
+export type IconType = ComponentType<SVGProps<SVGSVGElement>>
 
 export interface BreadcrumbItem {
-  label: string;
-  to?: string;
-  onClick?: () => void;
+  label: string
+  to?: string
+  onClick?: () => void
 }
 
 export interface PageHeaderProps {
-  title: string;
-  description?: string;
+  title?: string
+  description?: string
   /** Optional: breadcrumb trail */
-  breadcrumbs?: BreadcrumbItem[];
+  breadcrumbs?: BreadcrumbItem[]
 
   /** Optional: Right-side action buttons (Add, Save, Export, etc.) */
-  actions?: ReactNode;
+  actions?: ReactNode
 
   /** If true, shows a back button (detail pages) */
-  showBack?: boolean;
+  showBack?: boolean
 
   /** Override the back icon */
-  backIcon?: IconType;
+  backIcon?: IconType
 }
 
 export default function PageHeader({
@@ -35,8 +35,8 @@ export default function PageHeader({
   showBack = true,
   backIcon: BackIconProp,
 }: PageHeaderProps) {
-  const router = useRouter();
-  const BackIcon = BackIconProp ?? ArrowLeft;
+  const router = useRouter()
+  const BackIcon = BackIconProp ?? ArrowLeft
 
   return (
     <header className="flex flex-col gap-3">
@@ -64,7 +64,7 @@ export default function PageHeader({
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav className="flex items-center gap-2 text-sm text-muted-foreground">
           {breadcrumbs.map((bc, idx) => {
-            const isLast = idx === breadcrumbs.length - 1;
+            const isLast = idx === breadcrumbs.length - 1
             return (
               <span key={idx} className="flex items-center gap-2">
                 {bc.to ? (
@@ -82,10 +82,10 @@ export default function PageHeader({
                 )}
                 {!isLast && <span>/</span>}
               </span>
-            );
+            )
           })}
         </nav>
       )}
     </header>
-  );
+  )
 }

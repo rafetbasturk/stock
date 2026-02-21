@@ -1,12 +1,13 @@
 // src/server/customers.ts
 import { createServerFn } from '@tanstack/react-start'
-import { and, eq, ilike, or, SQL, sql } from 'drizzle-orm'
+import { and, eq, ilike, or, sql } from 'drizzle-orm'
+import { normalizeParams, notDeleted, validateCustomerInput } from './utils'
+import type { SQL } from 'drizzle-orm'
 import type { InsertCustomer } from '@/types'
-import { customersSearchSchema } from '@/lib/types'
 import { db } from '@/db'
 import { customersTable, ordersTable } from '@/db/schema'
 import { fail } from '@/lib/error/core/serverError'
-import { normalizeParams, notDeleted, validateCustomerInput } from './utils'
+import { customersSearchSchema } from '@/lib/types/types.search'
 
 export const getAllCustomers = createServerFn().handler(async () => {
   return await db.query.customersTable.findMany({
@@ -33,7 +34,7 @@ export const getPaginatedCustomers = createServerFn()
 
     const normalizedQ = normalizeParams(q)
 
-    const conditions: SQL[] = [notDeleted(customersTable)]
+    const conditions: Array<SQL> = [notDeleted(customersTable)]
 
     if (normalizedQ) {
       const search = `%${normalizedQ}%`

@@ -1,32 +1,40 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
+import { type ElementType, PropsWithChildren, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Calendar,
+  CoinsIcon,
   Edit,
-  ListTodo,
+  InfoIcon,
   MapPin,
   ReceiptText,
+  ChevronDown,
+  ChevronRight,
   Truck,
   UserRound,
 } from 'lucide-react'
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import type { ElementType } from 'react'
-import OrderForm from '@/components/orders/OrderForm'
-import PageHeader from '@/components/PageHeader'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
+
 import { convertToCurrencyFormat } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import { orderDeliveriesQuery, orderQuery } from '@/lib/queries/orders'
+
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import PageHeader from '@/components/PageHeader'
+import StatusBadge from '@/components/StatusBadge'
+import OrderForm from '@/components/orders/OrderForm'
+import OrderItemList from '@/components/orders/order-detail/OrderItemList'
+import OrderDeliveryList from '@/components/orders/order-detail/deliveries/OrderDeliveryList'
+import CustomOrderDeliveryList from '@/components/orders/order-detail/deliveries/CustomOrderDeliveryList'
 
 export const Route = createFileRoute('/orders/$id')({
   component: RouteComponent,
   loader: async ({ context, params }) => {
     const orderId = parseOrderId(params.id)
+
     if (orderId === null) {
       throw redirectToOrders()
     }
@@ -42,6 +50,7 @@ function RouteComponent() {
   const { t, i18n } = useTranslation('details')
   const { id } = Route.useParams()
   const orderId = parseOrderId(id)
+  const navigate = Route.useNavigate()
 
   if (orderId === null) {
     throw redirectToOrders()
@@ -49,7 +58,11 @@ function RouteComponent() {
 
   const { data: order } = useSuspenseQuery(orderQuery(orderId))
   const { data: deliveries } = useSuspenseQuery(orderDeliveriesQuery(orderId))
+
   const [isEditing, setIsEditing] = useState(false)
+  const [expandedDeliveryId, setExpandedDeliveryId] = useState<number | null>(
+    null,
+  )
 
   if (!order) {
     throw redirectToOrders()
@@ -60,27 +73,24 @@ function RouteComponent() {
     toast.success(t('orders.updated_success'))
   }
 
-  const totalItems = order.items.length + order.customItems.length
-  const totalDeliveredQuantity = deliveries.reduce(
-    (sum, delivery) =>
-      sum +
-      delivery.items.reduce(
-        (inner, item) => inner + item.delivered_quantity,
-        0,
-      ),
-    0,
-  )
+  const totalLines =
+    (order.items?.length ?? 0) + (order.customItems?.length ?? 0)
+
+  const totalFormatted = convertToCurrencyFormat({
+    cents: order.total_amount * 100,
+    currency: order.currency ?? 'TRY',
+    locale: i18n.language,
+  })
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <PageHeader
-        title={order.order_number}
-        description={order.customer.name}
+        title={t('orders.detail_page_title')}
         actions={
           <Button
             size="sm"
             onClick={() => setIsEditing(true)}
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto"
           >
             <Edit className="size-4" />
             {t('actions.edit')}
@@ -88,294 +98,212 @@ function RouteComponent() {
         }
       />
 
-      <Card className="overflow-hidden border-primary/20 bg-linear-to-r from-primary/10 via-primary/5 to-transparent">
-        <CardContent className="p-5 sm:p-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div className="space-y-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t('orders.card_title')}
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge
-                  className={cn('px-2.5 py-1', statusBadgeClass(order.status))}
-                >
-                  {order.status}
-                </Badge>
-                <Badge variant="outline" className="px-2.5 py-1">
-                  {order.currency || 'TRY'}
-                </Badge>
-                {deliveries.length > 0 && (
-                  <Badge variant="secondary" className="px-2.5 py-1">
-                    {deliveries.length}{' '}
-                    {t('orders.deliveries_count', {
-                      defaultValue:
-                        deliveries.length > 1 ? 'deliveries' : 'delivery',
-                    })}
-                  </Badge>
-                )}
-              </div>
-            </div>
+      {/* Order Info Card */}
+      <Card className="overflow-hidden border-l-4 border-l-primary shadow-sm space-y-6">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <InfoIcon className="size-5 sm:size-6" />
+            {t('orders.card_title')}
+          </CardTitle>
 
-            <div className="rounded-lg border bg-background/80 px-4 py-3 shadow-sm backdrop-blur-sm">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t('orders.totals.total')}
-              </p>
-              <p className="mt-1 text-2xl font-semibold leading-none text-foreground">
-                {convertToCurrencyFormat({
-                  cents: order.total_amount * 100,
-                  currency: order.currency || 'TRY',
-                  locale: i18n.language,
-                })}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          <StatusBadge status={order.status} className="px-6 py-2 text-xs" />
+        </CardHeader>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg">{t('orders.card_title')}</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-5 sm:grid-cols-2">
+        <CardContent className="flex flex-col md:flex-row gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-4 flex-1">
             <DetailItem
               icon={ReceiptText}
               label={t('orders.fields.order_number')}
               value={order.order_number}
+              highlight
             />
-            <DetailItem
-              icon={UserRound}
-              label={t('orders.fields.customer')}
-              value={order.customer.name}
-            />
-            <DetailItem
-              icon={ListTodo}
-              label={t('orders.fields.status')}
-              value={order.status}
-            />
-            <DetailItem
-              icon={ReceiptText}
-              label={t('orders.fields.currency')}
-              value={order.currency}
-            />
+
             <DetailItem
               icon={Calendar}
               label={t('orders.fields.order_date')}
               value={new Date(order.order_date).toLocaleDateString(
                 i18n.language,
               )}
+              highlight
             />
+
+            <DetailItem
+              icon={UserRound}
+              label={t('orders.fields.customer')}
+              value={order.customer?.name}
+              highlight
+            />
+
             <DetailItem
               icon={MapPin}
               label={t('orders.fields.delivery_address')}
               value={order.delivery_address}
+              highlight
             />
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">
-              {t('orders.summary.title', { defaultValue: 'Summary' })}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <SummaryRow
-              label={t('orders.summary.items', { defaultValue: 'Order items' })}
-              value={String(totalItems)}
+            <DetailItem
+              icon={CoinsIcon}
+              label={t('orders.fields.currency')}
+              value={order.currency}
+              highlight
             />
-            <SummaryRow
-              label={t('orders.summary.shipments', {
-                defaultValue: 'Shipments',
-              })}
-              value={String(deliveries.length)}
-            />
-            <SummaryRow
-              label={t('orders.summary.delivered_quantity', {
-                defaultValue: 'Delivered quantity',
-              })}
-              value={String(totalDeliveredQuantity)}
-            />
-            <Separator />
-            <SummaryRow
-              label={t('orders.totals.total')}
-              value={convertToCurrencyFormat({
-                cents: order.total_amount * 100,
-                currency: order.currency || 'TRY',
-                locale: i18n.language,
-              })}
-              valueClassName="text-base font-semibold"
-            />
-          </CardContent>
-        </Card>
-      </div>
+          </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">{t('orders.items_title')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="h-10 w-[40%] px-4 text-left font-medium text-muted-foreground">
-                    {t('orders.items_headers.product')}
-                  </th>
-                  <th className="h-10 px-4 text-right font-medium text-muted-foreground">
-                    {t('orders.items_headers.quantity')}
-                  </th>
-                  <th className="h-10 px-4 text-right font-medium text-muted-foreground">
-                    {t('orders.items_headers.unit_price')}
-                  </th>
-                  <th className="h-10 px-4 text-right font-medium text-muted-foreground">
-                    {t('orders.items_headers.total')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {order.items.map((item) => (
-                  <tr key={item.id}>
-                    <td className="p-4 align-middle">
-                      <div className="font-medium">{item.product.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {item.product.code}
-                      </div>
-                    </td>
-                    <td className="p-4 text-right align-middle">
-                      {item.quantity} {item.product.unit}
-                    </td>
-                    <td className="p-4 text-right align-middle">
-                      {convertToCurrencyFormat({
-                        cents: item.unit_price,
-                        currency: item.currency || 'TRY',
-                        locale: i18n.language,
-                      })}
-                    </td>
-                    <td className="p-4 text-right align-middle font-medium">
-                      {convertToCurrencyFormat({
-                        cents: item.quantity * item.unit_price,
-                        currency: item.currency || 'TRY',
-                        locale: i18n.language,
-                      })}
-                    </td>
-                  </tr>
-                ))}
-                {order.customItems.map((item) => (
-                  <tr key={item.id}>
-                    <td className="p-4 align-middle">
-                      <div className="font-medium">{item.name}</div>
-                      {item.notes && (
-                        <div className="text-xs text-muted-foreground">
-                          {item.notes}
-                        </div>
-                      )}
-                    </td>
-                    <td className="p-4 text-right align-middle">
-                      {item.quantity} {item.unit}
-                    </td>
-                    <td className="p-4 text-right align-middle">
-                      {convertToCurrencyFormat({
-                        cents: item.unit_price,
-                        currency: item.currency || 'TRY',
-                        locale: i18n.language,
-                      })}
-                    </td>
-                    <td className="p-4 text-right align-middle font-medium">
-                      {convertToCurrencyFormat({
-                        cents: item.quantity * item.unit_price,
-                        currency: item.currency || 'TRY',
-                        locale: i18n.language,
-                      })}
-                    </td>
-                  </tr>
-                ))}
-                {totalItems === 0 && (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="p-6 text-center text-muted-foreground"
-                    >
-                      {t('common.empty')}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-              <tfoot className="bg-muted/50 font-medium">
-                <tr>
-                  <td colSpan={3} className="p-4 text-right">
-                    {t('orders.totals.total')}
-                  </td>
-                  <td className="p-4 text-right text-base">
-                    {convertToCurrencyFormat({
-                      cents: order.total_amount * 100,
-                      currency: order.currency || 'TRY',
-                      locale: i18n.language,
-                    })}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
+          <div className="flex flex-col gap-4 border-t pt-4 md:border-none md:pt-0 md:min-w-[180px] md:items-end">
+            {/* Total amount */}
+            <div className="flex flex-col md:items-end">
+              <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                {t('orders.totals.total')}
+              </span>
+              <Separator />
+              <span className="text-xl sm:text-2xl font-bold text-primary">
+                {totalFormatted}
+              </span>
+            </div>
+
+            {/* Stats */}
+            <div className="flex gap-6">
+              <StatBlock label={t('orders.summary.items')} value={totalLines} />
+
+              <StatBlock
+                label={t('orders.summary.shipments')}
+                value={deliveries.length}
+                highlight
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
 
+      {/* Items                                                              */}
+      <OrderItemList
+        order={order}
+        deliveries={deliveries}
+        t={t}
+        navigate={navigate}
+      />
+
+      {/* Deliveries Card                                                    */}
       {deliveries.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Truck className="size-5 text-primary" />
-              {t('orders.deliveries_title', { defaultValue: 'Deliveries' })}
+        <Card className="border-l-4 border-l-amber-500/70 shadow-sm overflow-hidden">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Truck className="size-5 text-amber-600" />
+              {t('orders.deliveries_title', {
+                defaultValue: 'Deliveries',
+              })}
+              <span className="ml-2 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+                {deliveries.length}
+              </span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {deliveries.map((delivery) => {
-              const deliveryCurrency =
-                delivery.items[0]?.orderItem?.currency ??
-                delivery.items[0]?.customOrderItem?.currency ??
-                order.currency ??
-                'TRY'
 
-              return (
-                <div
-                  key={delivery.id}
-                  className="rounded-lg border bg-card px-4 py-3 transition-colors hover:bg-accent/30"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="font-medium text-foreground">
-                        {delivery.delivery_number}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(delivery.delivery_date).toLocaleDateString(
-                          i18n.language,
+          <CardContent className="p-0">
+            <div className="divide-y border-t">
+              {deliveries.map((delivery) => {
+                const isExpanded = expandedDeliveryId === delivery.id
+                const currency =
+                  delivery.items[0]?.orderItem?.currency ??
+                  delivery.items[0]?.customOrderItem?.currency ??
+                  order.currency ??
+                  'TRY'
+
+                const total = convertToCurrencyFormat({
+                  cents: delivery.total_amount * 100,
+                  currency,
+                  locale: i18n.language,
+                })
+
+                return (
+                  <div key={delivery.id} className="group">
+                    {/* Accordion Header */}
+                    <button
+                      onClick={() =>
+                        setExpandedDeliveryId(isExpanded ? null : delivery.id)
+                      }
+                      className={cn(
+                        'flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-muted/50',
+                        isExpanded && 'bg-muted/30',
+                      )}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-50 text-amber-600 transition-colors group-hover:bg-amber-100">
+                          {isExpanded ? (
+                            <ChevronDown className="size-4" />
+                          ) : (
+                            <ChevronRight className="size-4" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm sm:text-base">
+                            {delivery.delivery_number}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(
+                              delivery.delivery_date,
+                            ).toLocaleDateString(i18n.language)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-6">
+                        <div className="hidden sm:block text-right">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+                            {t('orders.delivery_items_label', {
+                              defaultValue: 'Items',
+                            })}
+                          </p>
+                          <p className="font-medium text-sm">
+                            {delivery.items.length}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+                            {t('orders.totals.total')}
+                          </p>
+                          <p className="font-bold text-amber-700">{total}</p>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Accordion Content */}
+                    <div
+                      className={cn(
+                        'overflow-hidden transition-all duration-200 ease-in-out',
+                        isExpanded ? 'max-h-[1000px] border-t' : 'max-h-0',
+                      )}
+                    >
+                      <div className="p-4 bg-muted/10">
+                        {order.is_custom_order ? (
+                          <CustomOrderDeliveryList
+                            delivery={delivery}
+                            order={order}
+                          />
+                        ) : (
+                          <OrderDeliveryList
+                            delivery={delivery}
+                            order={order}
+                          />
                         )}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-foreground">
-                        {convertToCurrencyFormat({
-                          cents: delivery.total_amount * 100,
-                          currency: deliveryCurrency,
-                          locale: i18n.language,
-                        })}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {delivery.items.length}{' '}
-                        {t('orders.delivery_items_label', {
-                          defaultValue: 'line(s)',
-                        })}
-                      </p>
+
+                        {delivery.notes && (
+                          <div className="mt-4 rounded-md bg-amber-50/50 p-3 border border-amber-100/50">
+                            <p className="text-xs font-semibold text-amber-800 uppercase tracking-wider mb-1">
+                              {t('orders.fields.notes', {
+                                defaultValue: 'Notes',
+                              })}
+                            </p>
+                            <p className="text-sm text-muted-foreground italic">
+                              {delivery.notes}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  {delivery.notes && (
-                    <p className="mt-2 border-t pt-2 text-sm text-muted-foreground">
-                      {delivery.notes}
-                    </p>
-                  )}
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -383,11 +311,78 @@ function RouteComponent() {
       {isEditing && (
         <OrderForm
           item={order}
-          isSubmitting={false}
           onClose={() => setIsEditing(false)}
           onSuccess={handleEditSuccess}
         />
       )}
+    </div>
+  )
+}
+
+function DetailItem({
+  children,
+  label,
+  value,
+  icon: Icon,
+  className,
+  highlight,
+}: PropsWithChildren & {
+  label: string
+  value?: string | number | null
+  icon: ElementType
+  className?: string
+  highlight?: boolean
+}) {
+  const { t } = useTranslation('details')
+
+  return (
+    <div className={cn('flex flex-col gap-1 min-w-0', className)}>
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Icon className="size-4 shrink-0" />
+
+        <span className="text-[10px] font-semibold uppercase tracking-wide truncate">
+          {label}
+        </span>
+      </div>
+
+      <div
+        className={cn(
+          'text-sm wrap-break-word',
+          highlight && 'text-primary font-bold text-base',
+        )}
+      >
+        {children ?? value ?? (
+          <span className="italic text-muted-foreground/50">
+            {t('common.empty')}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function StatBlock({
+  label,
+  value,
+  highlight,
+}: {
+  label: string
+  value: number
+  highlight?: boolean
+}) {
+  return (
+    <div className="flex flex-col">
+      <span className="text-[10px] uppercase text-muted-foreground">
+        {label}
+      </span>
+
+      <Separator />
+
+      <span
+        className={cn('font-semibold text-center', highlight && 'text-primary')}
+      >
+        {value}
+      </span>
     </div>
   )
 }
@@ -407,70 +402,4 @@ function redirectToOrders() {
       sortDir: 'desc',
     },
   })
-}
-
-function statusBadgeClass(status: string | null | undefined) {
-  switch (status) {
-    case 'BİTTİ':
-      return 'bg-emerald-600 text-white hover:bg-emerald-600'
-    case 'İPTAL':
-      return 'bg-destructive text-white hover:bg-destructive'
-    case 'ÜRETİM':
-      return 'bg-amber-500 text-amber-950 hover:bg-amber-500'
-    default:
-      return 'bg-primary text-primary-foreground hover:bg-primary'
-  }
-}
-
-function DetailItem({
-  label,
-  value,
-  icon: Icon,
-}: {
-  label: string
-  value: string | number | null | undefined
-  icon: ElementType
-}) {
-  const { t } = useTranslation('details')
-
-  return (
-    <div className="group flex items-start gap-3">
-      <div className="mt-0.5 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-primary/70">
-        <Icon className="size-4" />
-      </div>
-      <div className="space-y-1">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
-        <p className="text-sm font-medium text-foreground">
-          {value || (
-            <span className="text-muted-foreground/40">
-              {t('common.empty')}
-            </span>
-          )}
-        </p>
-      </div>
-    </div>
-  )
-}
-
-function SummaryRow({
-  label,
-  value,
-  valueClassName,
-}: {
-  label: string
-  value: string
-  valueClassName?: string
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span
-        className={cn('text-sm font-medium text-foreground', valueClassName)}
-      >
-        {value}
-      </span>
-    </div>
-  )
 }

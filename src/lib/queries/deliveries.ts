@@ -3,20 +3,13 @@ import {
   getDeliveryById,
   getDeliveryFilterOptions,
   getLastDeliveryNumber,
+  getLastReturnDeliveryNumber,
   getPaginatedDeliveries,
 } from '@/server/deliveries'
-import { DeliveriesSearch } from '../types'
-
-const normalizedSearch = (search: DeliveriesSearch) => ({
-  pageIndex: search.pageIndex ?? 0,
-  pageSize: search.pageSize ?? 100,
-  q: search.q ?? '',
-  sortBy: search.sortBy ?? 'delivery_number',
-  sortDir: search.sortDir ?? 'desc',
-  customerId: search.customerId ?? '',
-  startDate: search.startDate ?? '',
-  endDate: search.endDate ?? '',
-})
+import {
+  DeliveriesSearch,
+  normalizeDeliveriesSearch,
+} from '../types/types.search'
 
 export const deliveryQueryKeys = {
   all: ['deliveries'] as const,
@@ -24,35 +17,36 @@ export const deliveryQueryKeys = {
   lists: () => [...deliveryQueryKeys.all, 'list'] as const,
 
   list: (search: DeliveriesSearch) =>
-    [...deliveryQueryKeys.lists(), normalizedSearch(search)] as const,
+    [...deliveryQueryKeys.lists(), normalizeDeliveriesSearch(search)] as const,
 
   paginatedLists: () => [...deliveryQueryKeys.all, 'paginated'] as const,
 
   paginatedList: (search: DeliveriesSearch) =>
-    [...deliveryQueryKeys.paginatedLists(), normalizedSearch(search)] as const,
+    [
+      ...deliveryQueryKeys.paginatedLists(),
+      normalizeDeliveriesSearch(search),
+    ] as const,
 
   details: () => [...deliveryQueryKeys.all, 'detail'] as const,
 
   detail: (id: number) => [...deliveryQueryKeys.details(), id] as const,
 
   lastNumber: () => [...deliveryQueryKeys.all, 'lastNumber'] as const,
+  lastReturnNumber: () => [...deliveryQueryKeys.all, 'lastReturnNumber'] as const,
 
   filterOptions: () => [...deliveryQueryKeys.all, 'filterOptions'] as const,
 }
 
-export const deliveriesQuery = (search: DeliveriesSearch) => {
-  const normalized = normalizedSearch(search)
-
-  return queryOptions({
+export const deliveriesQuery = (search: DeliveriesSearch) =>
+  queryOptions({
     queryKey: deliveryQueryKeys.list(search),
     queryFn: () =>
       getPaginatedDeliveries({
-        data: normalized,
+        data: search,
       }),
     staleTime: 1000 * 60 * 10,
     placeholderData: keepPreviousData,
   })
-}
 
 export const deliveryQuery = (id: number) =>
   queryOptions({
@@ -62,11 +56,16 @@ export const deliveryQuery = (id: number) =>
 
 export const lastDeliveryNumberQuery = queryOptions({
   queryKey: deliveryQueryKeys.lastNumber(),
-  queryFn: getLastDeliveryNumber,
+  queryFn: () => getLastDeliveryNumber(),
+})
+
+export const lastReturnDeliveryNumberQuery = queryOptions({
+  queryKey: deliveryQueryKeys.lastReturnNumber(),
+  queryFn: () => getLastReturnDeliveryNumber(),
 })
 
 export const getFilterOptions = queryOptions({
   queryKey: deliveryQueryKeys.filterOptions(),
-  queryFn: getDeliveryFilterOptions,
+  queryFn: () => getDeliveryFilterOptions(),
   staleTime: Infinity,
 })

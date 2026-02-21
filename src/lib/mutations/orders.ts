@@ -1,11 +1,11 @@
 import { QueryClient, useQueryClient } from '@tanstack/react-query'
 import { useServerFn } from '@tanstack/react-start'
 import { toast } from 'sonner'
-import type { MutationFormErrors } from '@/lib/types'
 import type { OrderSubmitPayload } from '@/types'
 import { useFormMutation } from '@/hooks/useFormMutation'
 import { createOrder, removeOrder, updateOrder } from '@/server/orders'
 import { orderQueryKeys } from '../queries/orders'
+import { MutationFormErrors } from '../types/types.form'
 
 type ServerFnData<T extends (...args: any) => any> = Parameters<T>[0]['data']
 

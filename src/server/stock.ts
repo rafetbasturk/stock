@@ -12,7 +12,7 @@ import { db } from '@/db'
 import { stockMovementsTable } from '@/db/schema'
 import { BaseAppError } from '@/lib/error/core'
 import { fail } from '@/lib/error/core/serverError'
-import { stockSearchSchema } from '@/lib/types'
+import { stockSearchSchema } from '@/lib/types/types.search'
 
 export const createStockMovement = createServerFn()
   .inputValidator((data: InsertStockMovement) => data)

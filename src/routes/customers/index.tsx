@@ -3,7 +3,6 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { CustomersSearch } from '@/lib/types'
 import type { Customer } from '@/types'
 import { CustomerDeleteDialog } from '@/components/customers/CustomerDeleteDialog'
 import CustomerForm from '@/components/customers/CustomerForm'
@@ -14,8 +13,12 @@ import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { debounce } from '@/lib/debounce'
 import { useDeleteCustomerMutation } from '@/lib/mutations/customers'
 import { customersPaginatedQuery } from '@/lib/queries/customers'
-import { customersSearchSchema, normalizeCustomersSearch } from '@/lib/types'
-import { CustomersModalState } from '@/lib/types/types.modal'
+import {
+  CustomersSearch,
+  customersSearchSchema,
+  normalizeCustomersSearch,
+} from '@/lib/types/types.search'
+import { ModalState } from '@/lib/types/types.modal'
 
 export const Route = createFileRoute('/customers/')({
   validateSearch: zodValidator(customersSearchSchema),
@@ -34,13 +37,15 @@ function CustomerList() {
   const navigate = useNavigate({ from: Route.fullPath })
   const search = Route.useSearch()
 
-  const [modalState, setModalState] = useState<CustomersModalState>({ type: 'closed' })
+  const [modalState, setModalState] = useState<ModalState<Customer>>({
+    type: 'closed',
+  })
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
 
   const closeModal = useCallback(() => setModalState({ type: 'closed' }), [])
   const openAddModal = useCallback(() => setModalState({ type: 'adding' }), [])
   const openEditModal = useCallback(
-    (customer: Customer) => setModalState({ type: 'editing', customer }),
+    (customer: Customer) => setModalState({ type: 'editing', item: customer }),
     [],
   )
 
@@ -151,7 +156,7 @@ function CustomerList() {
 
       {modalState.type !== 'closed' && (
         <CustomerForm
-          item={modalState.type === 'editing' ? modalState.customer : undefined}
+          item={modalState.type === 'editing' ? modalState.item : undefined}
           isSubmitting={false}
           onClose={closeModal}
           onSuccess={closeModal}

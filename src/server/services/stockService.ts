@@ -1,5 +1,5 @@
 import { and, eq, sql } from 'drizzle-orm'
-import { InsertStockMovement } from '@/types'
+import type { InsertStockMovement } from '@/types'
 import { productsTable, stockMovementsTable } from '@/db/schema'
 import { fail } from '@/lib/error/core/serverError'
 import type { PgTransaction } from 'drizzle-orm/pg-core'

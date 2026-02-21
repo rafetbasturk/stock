@@ -87,8 +87,11 @@ export interface DeliveryItem {
   currency?: Currency
 }
 
+type DeliveryKind = 'DELIVERY' | 'RETURN'
+
 interface DeliveryFormState {
   customer_id: number | ''
+  kind: DeliveryKind
   delivery_number: string
   delivery_date: Date | null
   notes: string
@@ -109,13 +112,43 @@ const emptyItem: DeliveryItem = {
 
 const formInitials: DeliveryFormState = {
   customer_id: '',
+  kind: 'DELIVERY',
   delivery_number: '',
   delivery_date: new Date(),
   notes: '',
   items: [structuredClone(emptyItem)],
 }
 
-function normalizeDeliveryItems(items?: any[]): DeliveryItem[] {
+function getNetDeliveredFromHistory(deliveries?: any[]): number {
+  return (
+    deliveries?.reduce(
+      (sum: number, d: any) =>
+        sum +
+        ((d?.delivery?.kind === 'RETURN' ? -1 : 1) *
+          (d?.delivered_quantity ?? 0)),
+      0,
+    ) ?? 0
+  )
+}
+
+function getRemainingQuantityByKind(
+  orderQuantity: number,
+  netDelivered: number,
+  kind: DeliveryKind,
+  currentDelivered = 0,
+) {
+  const signedCurrent = kind === 'RETURN' ? -currentDelivered : currentDelivered
+  const netExcludingCurrent = netDelivered - signedCurrent
+
+  return kind === 'RETURN'
+    ? Math.max(netExcludingCurrent, 0)
+    : Math.max(orderQuantity - netExcludingCurrent, 0)
+}
+
+function normalizeDeliveryItems(
+  items: any[] | undefined,
+  kind: DeliveryKind,
+): DeliveryItem[] {
   if (!items?.length) return [structuredClone(emptyItem)]
 
   return items.map((i) => {
@@ -125,13 +158,13 @@ function normalizeDeliveryItems(items?: any[]): DeliveryItem[] {
 
     // --------------------- NORMAL PRODUCT ----------------------
     if (oi) {
-      const totalSent =
-        oi.deliveries?.reduce(
-          (sum: number, d: any) => sum + (d.delivered_quantity ?? 0),
-          0,
-        ) ?? 0
-
-      const remaining = Math.max(oi.quantity - totalSent + delivered, 0)
+      const netDelivered = getNetDeliveredFromHistory(oi.deliveries)
+      const remaining = getRemainingQuantityByKind(
+        oi.quantity,
+        netDelivered,
+        kind,
+        delivered,
+      )
 
       return {
         id: i.id,
@@ -154,18 +187,19 @@ function normalizeDeliveryItems(items?: any[]): DeliveryItem[] {
 
     // --------------------- CUSTOM PRODUCT ----------------------
     if (ci) {
-      const totalSent =
-        ci.deliveries?.reduce(
-          (sum: number, d: any) => sum + (d.delivered_quantity ?? 0),
-          0,
-        ) ?? 0
+      const netDelivered = getNetDeliveredFromHistory(ci.deliveries)
 
       return {
         id: i.id,
         order_id: ci.order_id,
         custom_order_item_id: ci.id,
         delivered_quantity: delivered,
-        remaining_quantity: Math.max(ci.quantity - totalSent + delivered, 0),
+        remaining_quantity: getRemainingQuantityByKind(
+          ci.quantity,
+          netDelivered,
+          kind,
+          delivered,
+        ),
 
         product_code: ci.name,
         product_name: ci.name,
@@ -186,6 +220,7 @@ interface DeliveryFormProps {
   item?: DeliveryListRow | DeliveryWithItems
   orders: OrderMinimal[]
   lastDeliveryNumber?: string
+  lastReturnDeliveryNumber?: string
   onClose: () => void
 }
 
@@ -193,6 +228,7 @@ export function DeliveryForm({
   item: delivery,
   orders,
   lastDeliveryNumber = '',
+  lastReturnDeliveryNumber = '',
   onClose,
 }: DeliveryFormProps) {
   const [form, setForm] = useState<DeliveryFormState>(formInitials)
@@ -246,12 +282,48 @@ export function DeliveryForm({
   }
 
   const filteredOrders = useMemo(() => {
-    if (delivery) {
-      return orders
-    } else {
-      return orders.filter((o) => !['BİTTİ', 'İPTAL'].includes(o.status))
+    const hasReturnableItems = (order: OrderMinimal) => {
+      const hasReturnableStandard =
+        order.items?.some((item) => {
+          const netDelivered = getNetDeliveredFromHistory(item.deliveries)
+          return netDelivered > 0
+        }) ?? false
+
+      if (hasReturnableStandard) return true
+
+      return (
+        order.customItems?.some((item) => {
+          const netDelivered = getNetDeliveredFromHistory(item.deliveries)
+          return netDelivered > 0
+        }) ?? false
+      )
     }
-  }, [delivery, orders])
+
+    if (delivery) {
+      // When editing: show HAZIR orders + orders already in this delivery
+      const deliveryOrderIds = new Set(
+        delivery.items
+          .map(
+            (item) =>
+              item.orderItem?.order_id ?? item.customOrderItem?.order_id,
+          )
+          .filter(Boolean),
+      )
+
+      if (form.kind === 'RETURN') {
+        return orders.filter((o) => hasReturnableItems(o) || deliveryOrderIds.has(o.id))
+      }
+
+      return orders.filter((o) => o.status === 'HAZIR' || deliveryOrderIds.has(o.id))
+    } else {
+      // When creating returns: only show orders with returnable quantity.
+      if (form.kind === 'RETURN') {
+        return orders.filter((o) => hasReturnableItems(o))
+      }
+      // When creating deliveries: only show HAZIR (ready) orders.
+      return orders.filter((o) => o.status === 'HAZIR')
+    }
+  }, [delivery, form.kind, orders])
 
   // Unique customer list
   const customerIdsFromOrders = useMemo(() => {
@@ -284,10 +356,54 @@ export function DeliveryForm({
       return newErrors
     })
 
-    setForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
+    setForm((prev) => {
+      const next = {
+        ...prev,
+        [field]: value,
+      }
+
+      if (field !== 'kind') return next
+
+      const kind = value as DeliveryKind
+      const baseNumber =
+        kind === 'RETURN' ? lastReturnDeliveryNumber : lastDeliveryNumber
+      const recalculatedItems = next.items.map((item) => {
+        if (!item.order_id) return item
+        const order = orders.find((o) => o.id === item.order_id)
+        if (!order) return item
+
+        const selectedStandard = order.items?.find((i) => i.id === item.order_item_id)
+        const selectedCustom = order.customItems?.find(
+          (i) => i.id === item.custom_order_item_id || i.id === item.order_item_id,
+        )
+        const selected = selectedStandard ?? selectedCustom
+        if (!selected) return item
+
+        const netDelivered = getNetDeliveredFromHistory(selected.deliveries)
+        const orderQuantity = selected.quantity ?? 0
+        const currentDelivered = item.id ? item.delivered_quantity : 0
+        const remaining_quantity = getRemainingQuantityByKind(
+          orderQuantity,
+          netDelivered,
+          kind,
+          currentDelivered,
+        )
+
+        return {
+          ...item,
+          remaining_quantity,
+          delivered_quantity: Math.min(item.delivered_quantity, remaining_quantity),
+        }
+      })
+
+      return {
+        ...next,
+        ...(delivery?.id
+          ? {}
+          : { delivery_number: incrementDeliveryNumber(baseNumber ?? '') }),
+        items: recalculatedItems,
+      }
+    })
   }
 
   // --------------------------------------------
@@ -359,14 +475,12 @@ export function DeliveryForm({
             updated.order_item_id = first.id
 
             const deliveries = first.deliveries ?? []
-            const totalDelivered = deliveries.reduce(
-              (sum: number, d: any) => sum + (d.delivered_quantity || 0),
-              0,
-            )
+            const netDelivered = getNetDeliveredFromHistory(deliveries)
 
-            updated.remaining_quantity = Math.max(
-              first.quantity - totalDelivered,
-              0,
+            updated.remaining_quantity = getRemainingQuantityByKind(
+              first.quantity,
+              netDelivered,
+              prev.kind,
             )
 
             updated.order_quantity = first.quantity
@@ -404,14 +518,13 @@ export function DeliveryForm({
 
           if (itemObj) {
             const deliveries = itemObj.deliveries ?? []
-            const totalSent = deliveries.reduce(
-              (sum: number, d: any) => sum + (d.delivered_quantity || 0),
-              0,
-            )
+            const netDelivered = getNetDeliveredFromHistory(deliveries)
 
-            updated.remaining_quantity = Math.max(
-              itemObj.quantity - totalSent,
-              0,
+            updated.remaining_quantity = getRemainingQuantityByKind(
+              itemObj.quantity,
+              netDelivered,
+              prev.kind,
+              current.id ? current.delivered_quantity : 0,
             )
 
             if ('product' in itemObj) {
@@ -461,22 +574,30 @@ export function DeliveryForm({
   // --------------------------------------------
   useEffect(() => {
     if (delivery) {
+      const kind: DeliveryKind =
+        delivery.kind === 'RETURN' ? 'RETURN' : 'DELIVERY'
+
       setForm({
         customer_id: delivery.customer_id,
+        kind,
         delivery_number: delivery.delivery_number ?? '',
         delivery_date: delivery.delivery_date
           ? new Date(delivery.delivery_date)
           : new Date(),
         notes: delivery.notes ?? '',
-        items: normalizeDeliveryItems(delivery.items),
+        items: normalizeDeliveryItems(delivery.items, kind),
       })
     } else {
+      const baseNumber =
+        formInitials.kind === 'RETURN'
+          ? lastReturnDeliveryNumber
+          : lastDeliveryNumber
       setForm({
         ...formInitials,
-        delivery_number: incrementDeliveryNumber(lastDeliveryNumber),
+        delivery_number: incrementDeliveryNumber(baseNumber ?? ''),
       })
     }
-  }, [delivery, lastDeliveryNumber, orders])
+  }, [delivery, lastDeliveryNumber, lastReturnDeliveryNumber, orders])
 
   // --------------------------------------------
   // SUBMIT
@@ -488,6 +609,7 @@ export function DeliveryForm({
     const payload: any = {
       id: delivery?.id,
       customer_id: Number(form.customer_id),
+      kind: form.kind,
       delivery_number: form.delivery_number.trim(),
       delivery_date: form.delivery_date ?? new Date(),
       notes: form.notes,
@@ -523,6 +645,7 @@ export function DeliveryForm({
             onChange={handleChange}
             customerIds={customerIdsFromOrders}
             errors={errors}
+            disableKindEdit={Boolean(delivery?.id)}
           />
 
           <div className="h-full max-h-60 overflow-y-auto">
@@ -530,6 +653,7 @@ export function DeliveryForm({
               items={form.items}
               orders={customerOrders}
               onItemChange={handleItemChange}
+              kind={form.kind}
               removeItem={removeItem}
               addItem={addItem}
               errors={errors}

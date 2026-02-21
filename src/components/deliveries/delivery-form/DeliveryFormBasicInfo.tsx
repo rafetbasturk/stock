@@ -1,6 +1,13 @@
 import { tr } from "react-day-picker/locale";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import CustomerInput from "@/components/form/CustomerInput";
 import InputField from "@/components/form/InputField";
 import { Field, FieldLabel, FieldSet } from "@/components/ui/field";
@@ -11,6 +18,7 @@ interface Props {
   onChange: (field: string, value: any) => void;
   customerIds: number[];
   errors: FieldErrors;
+  disableKindEdit?: boolean;
 }
 
 export default function DeliveryFormBasicInfo({
@@ -18,6 +26,7 @@ export default function DeliveryFormBasicInfo({
   onChange,
   customerIds,
   errors,
+  disableKindEdit = false,
 }: Props) {
   return (
     <div className="flex flex-col sm:flex-row gap-6">
@@ -43,6 +52,23 @@ export default function DeliveryFormBasicInfo({
           placeholder="NKA202500000001"
           error={errors.delivery_number}
         />
+
+        <Field className="gap-1 relative">
+          <FieldLabel htmlFor="kind">Belge Tipi</FieldLabel>
+          <Select
+            value={form.kind}
+            onValueChange={(value) => onChange("kind", value)}
+            disabled={disableKindEdit}
+          >
+            <SelectTrigger id="kind" className="w-full">
+              <SelectValue placeholder="Belge tipi seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="DELIVERY">Sevkiyat</SelectItem>
+              <SelectItem value="RETURN">İade</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
 
         {/* NOTES */}
         <Field className="gap-1 relative">

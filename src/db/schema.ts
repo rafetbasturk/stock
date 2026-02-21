@@ -12,6 +12,7 @@ import {
 } from 'drizzle-orm/pg-core'
 import {
   currencyEnum,
+  deliveryKindEnum,
   statusEnum,
   stockMovementTypeEnum,
   stockReferenceTypeEnum,
@@ -185,6 +186,7 @@ export const deliveriesTable = pgTable(
     customer_id: integer('customer_id')
       .notNull()
       .references(() => customersTable.id, { onDelete: 'restrict' }),
+    kind: deliveryKindEnum('kind').notNull().default('DELIVERY'),
     delivery_number: text('delivery_number').notNull(),
     delivery_date: timestamp('delivery_date').defaultNow().notNull(),
     notes: text('notes'),
@@ -195,6 +197,7 @@ export const deliveriesTable = pgTable(
       .on(table.customer_id, table.delivery_number)
       .where(isNull(table.deleted_at)),
     index('idx_deliveries_customer').on(table.customer_id),
+    index('idx_deliveries_kind').on(table.kind),
     index('idx_deliveries_delivery_date').on(table.delivery_date),
     index('idx_deliveries_deleted').on(table.deleted_at),
     index('idx_deliveries_date_customer').on(

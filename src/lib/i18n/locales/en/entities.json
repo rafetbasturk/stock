@@ -135,13 +135,36 @@
     "columns": {
       "delivery_number": "Delivery No",
       "delivery_date": "Delivery Date",
+      "kind": "Type",
       "customer": "Customer",
       "delivery_address": "Delivery Address",
       "total_amount": "Total Amount"
     },
     "filters": {
       "customer": "Customer",
+      "daterange": "Date Range",
+      "kind": "Delivery Type"
+    },
+    "kinds": {
+      "delivery": "Delivery",
+      "return": "Return"
+    }
+  },
+  "productDemand": {
+    "list_title": "Product Demand",
+    "description": "Rank products by how often they appear in orders",
+    "loading": "Loading product demand...",
+    "filters": {
+      "customer": "Customer",
       "daterange": "Date Range"
+    },
+    "columns": {
+      "customer_code": "Customer",
+      "product_code": "Product",
+      "ordered_times": "Order Count",
+      "total_pieces": "Total Pieces",
+      "avg_pieces_per_order": "Avg Pieces / Order",
+      "last_order_date": "Last Order Date"
     }
   }
 }

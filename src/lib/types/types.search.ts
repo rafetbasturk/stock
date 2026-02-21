@@ -1,8 +1,24 @@
 import { z } from 'zod'
 
+const optionalString = z
+  .preprocess((v) => {
+    if (typeof v !== 'string') return undefined
+    const t = v.trim()
+    return t === '' ? undefined : t
+  }, z.string().optional())
+  .optional()
+
+const optionalNumber = z
+  .preprocess((v) => {
+    if (v == null || v === '') return undefined
+    const n = Number(v)
+    return isNaN(n) ? undefined : n
+  }, z.number().int().optional())
+  .optional()
+
 export const homeSearchSchema = z.object({
-  customerId: z.number().optional(),
-  year: z.number().optional(),
+  customerId: optionalNumber,
+  year: optionalNumber,
 })
 
 export type HomeSearch = z.infer<typeof homeSearchSchema>
@@ -18,14 +34,6 @@ export const productSortFields = [
 ] as const
 
 export type ProductSortField = (typeof productSortFields)[number]
-
-const optionalString = z
-  .preprocess((v) => {
-    if (v == null || typeof v !== 'string') return undefined
-    const t = v.trim()
-    return t.length ? t : undefined
-  }, z.string().optional())
-  .optional()
 
 const sharedSearchSchema = z.object({
   pageIndex: z.coerce.number().int().min(0).catch(0),
@@ -122,8 +130,9 @@ export const deliveriesSortFields = [
 
 export const deliveriesSearchSchema = z.object({
   ...sharedSearchSchema.shape,
-  sortBy: z.enum(deliveriesSortFields).catch('delivery_number'),
+  sortBy: z.enum(deliveriesSortFields).catch('delivery_date'),
   sortDir: z.enum(['asc', 'desc']).catch('desc'),
+  kind: optionalString,
   customerId: optionalString,
   startDate: optionalString,
   endDate: optionalString,
@@ -137,8 +146,9 @@ export const normalizeDeliveriesSearch = (
   pageIndex: s.pageIndex ?? 0,
   pageSize: s.pageSize ?? 100,
   q: s.q || undefined,
-  sortBy: s.sortBy ?? 'delivery_number',
+  sortBy: s.sortBy ?? 'delivery_date',
   sortDir: s.sortDir ?? 'desc',
+  kind: s.kind || undefined,
   customerId: s.customerId || undefined,
   startDate: s.startDate || undefined,
   endDate: s.endDate || undefined,
@@ -157,12 +167,40 @@ export const stockSearchSchema = z.object({
   pageSize: z.coerce.number().int().min(10).max(100).catch(100),
   q: optionalString,
   movementType: optionalString,
-  productId: z
-    .preprocess((v) => {
-      const n = Number(v)
-      return isNaN(n) ? undefined : n
-    }, z.number().int().positive().optional())
-    .optional(),
+  productId: optionalNumber,
 })
 
 export type StockSearch = z.infer<typeof stockSearchSchema>
+
+export const productDemandSortFields = [
+  'avg_pieces_per_order',
+  'total_pieces',
+  'ordered_times',
+  'last_order_date',
+  'customer_code',
+  'product_code',
+] as const
+
+export const productDemandSearchSchema = z.object({
+  ...sharedSearchSchema.shape,
+  sortBy: z.enum(productDemandSortFields).catch('ordered_times'),
+  sortDir: z.enum(['asc', 'desc']).catch('desc'),
+  customerId: optionalString,
+  startDate: optionalString,
+  endDate: optionalString,
+})
+
+export type ProductDemandSearch = z.infer<typeof productDemandSearchSchema>
+
+export const normalizeProductDemandSearch = (
+  s: Partial<ProductDemandSearch>,
+): ProductDemandSearch => ({
+  pageIndex: s.pageIndex ?? 0,
+  pageSize: s.pageSize ?? 100,
+  q: s.q || undefined,
+  sortBy: s.sortBy ?? 'avg_pieces_per_order',
+  sortDir: s.sortDir ?? 'desc',
+  customerId: s.customerId || undefined,
+  startDate: s.startDate || undefined,
+  endDate: s.endDate || undefined,
+})

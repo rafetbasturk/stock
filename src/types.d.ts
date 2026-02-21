@@ -1,6 +1,7 @@
 // src/types.d.ts
 import type {
   customersTable,
+  customOrderItemsTable,
   deliveriesTable,
   deliveryItemsTable,
   orderItemsTable,
@@ -57,8 +58,8 @@ export type InsertOrderItem = typeof orderItemsTable.$inferInsert
 export type StockMovement = typeof stockMovementsTable.$inferSelect
 export type InsertStockMovement = typeof stockMovementsTable.$inferInsert
 
-export type StockMovementType = StockMovementInsert['movement_type']
-export type StockReferenceType = StockMovementInsert['reference_type']
+export type StockMovementType = InsertStockMovement['movement_type']
+export type StockReferenceType = InsertStockMovement['reference_type']
 
 export interface OrderItemWithProduct extends OrderItem {
   product: Product
@@ -70,8 +71,8 @@ export interface OrderWithCustomer extends Order {
   customItems: CustomOrderItem[]
 }
 
-export type CustomOrderItem = InferSelectModel<typeof customOrderItemsTable>
-export type NewCustomOrderItem = InferInsertModel<typeof customOrderItemsTable>
+export type CustomOrderItem = typeof customOrderItemsTable.$inferSelect
+export type NewCustomOrderItem = typeof customOrderItemsTable.$inferInsert
 
 export interface OrderWithItems extends Order {
   items: OrderItemWithProduct[]
@@ -82,6 +83,7 @@ export type NewOrderItem = Omit<InsertOrderItem, 'order_id'>
 
 export type Delivery = typeof deliveriesTable.$inferSelect
 export type InsertDelivery = typeof deliveriesTable.$inferInsert
+export type DeliveryKind = InsertDelivery['kind']
 
 export type DeliveryItem = typeof deliveryItemsTable.$inferSelect
 export type InsertDeliveryItem = typeof deliveryItemsTable.$inferInsert
@@ -95,6 +97,7 @@ interface DeliveryItemWithOrderItems extends DeliveryItem {
           delivery: {
             delivery_number: string
             delivery_date: Date
+            kind: DeliveryKind
           }
         }[]
       })
@@ -119,6 +122,20 @@ export type OrderListRow = OrderWithCustomer & {
 
 export type ProductListRow = Product & {
   customer: Customer
+}
+
+export interface DeliveryItemRow {
+  id: number
+  product_code: string
+  product_name: string
+  unit: string
+  unit_price: number
+  delivered_quantity: number
+  total_price: number
+  order_number: string
+  order_date: Date
+  currency: string
+  is_custom: boolean
 }
 
 export type OrderItemSubmitPayload = {

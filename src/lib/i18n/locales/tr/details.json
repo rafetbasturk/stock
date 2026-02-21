@@ -43,7 +43,11 @@
   },
   "orders": {
     "updated_success": "Sipariş güncellendi",
-    "card_title": "Sipariş Bilgileri",
+    "detail_page_title": "Sipariş Detayları",
+    "card_title": "Sipariş Temel Bilgileri",
+    "deliveries_title": "Sevkiyatlar",
+    "deliveries_plural": "Sevkiyat",
+    "deliveries_singular": "Sevkiyat",
     "fields": {
       "order_number": "Sipariş No",
       "customer": "Müşteri",
@@ -73,18 +77,20 @@
     }
   },
   "deliveries": {
-    "card_title": "Sevkiyat Bilgileri",
+    "detail_page_title": "Sevkiyat Detayları",
+    "card_title": "Sevkiyat Temel Bilgileri",
     "fields": {
       "delivery_number": "Sevkiyat No",
       "customer": "Müşteri",
       "delivery_date": "Sevkiyat Tarihi",
-      "notes": "Notlar"
+      "notes": "Notlar",
+      "currency": "Para Birimi"
     },
     "summary_title": "Özet",
-    "summary_items": "Kalem",
+    "summary_items": "Sevk Kalem Sayısı",
     "summary_quantity": "Teslim Edilen Miktar",
     "summary_total": "Toplam Tutar",
-    "items_title": "Sevkiyat Kalemleri",
+    "items_title": "Sevkiyat İçeriği",
     "items_headers": {
       "item": "Ürün / Kalem",
       "order": "Sipariş",

@@ -4,10 +4,10 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { useTranslation } from 'react-i18next'
 
-import type { OrdersSearch } from '@/lib/types'
 import type { OrderListRow } from '@/types'
 import {
   normalizeOrdersSearch,
+  OrdersSearch,
   ordersSearchSchema,
 } from '@/lib/types/types.search'
 import { debounce } from '@/lib/debounce'
@@ -25,7 +25,7 @@ import { OrderListHeader } from '@/components/orders/OrderListHeader'
 import { OrdersDataTable } from '@/components/orders/OrdersDataTable'
 import { OrderDeleteDialog } from '@/components/orders/OrderDeleteDialog'
 import { DataTableFilter } from '@/components/DataTable'
-import { OrdersModalState } from '@/lib/types/types.modal'
+import { ModalState } from '@/lib/types/types.modal'
 
 export const Route = createFileRoute('/orders/')({
   validateSearch: zodValidator(ordersSearchSchema),
@@ -46,7 +46,7 @@ function OrderList() {
   const navigate = useNavigate({ from: Route.fullPath })
   const search = Route.useSearch()
 
-  const [modalState, setModalState] = useState<OrdersModalState>({
+  const [modalState, setModalState] = useState<ModalState<OrderListRow>>({
     type: 'closed',
   })
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
@@ -54,7 +54,7 @@ function OrderList() {
   const closeModal = useCallback(() => setModalState({ type: 'closed' }), [])
   const openAddModal = useCallback(() => setModalState({ type: 'adding' }), [])
   const openEditModal = useCallback(
-    (order: OrderListRow) => setModalState({ type: 'editing', order }),
+    (order: OrderListRow) => setModalState({ type: 'editing', item: order }),
     [],
   )
 
@@ -198,8 +198,7 @@ function OrderList() {
 
       {modalState.type !== 'closed' && (
         <OrderForm
-          item={modalState.type === 'editing' ? modalState.order : undefined}
-          isSubmitting={false}
+          item={modalState.type === 'editing' ? modalState.item : undefined}
           onClose={closeModal}
           onSuccess={closeModal}
         />

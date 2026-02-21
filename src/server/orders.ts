@@ -49,6 +49,7 @@ export const getOrders = createServerFn().handler(async () => {
                 columns: {
                   delivery_number: true,
                   delivery_date: true,
+                  kind: true,
                 },
               },
             },
@@ -68,6 +69,7 @@ export const getOrders = createServerFn().handler(async () => {
                 columns: {
                   delivery_number: true,
                   delivery_date: true,
+                  kind: true,
                 },
               },
             },
@@ -122,6 +124,7 @@ export const getOrderById = createServerFn()
                   columns: {
                     delivery_number: true,
                     delivery_date: true,
+                    kind: true,
                   },
                 },
               },
@@ -141,6 +144,7 @@ export const getOrderById = createServerFn()
                   columns: {
                     delivery_number: true,
                     delivery_date: true,
+                    kind: true,
                   },
                 },
               },
@@ -223,6 +227,7 @@ export const getOrderDeliveries = createServerFn()
                       columns: {
                         delivery_number: true,
                         delivery_date: true,
+                        kind: true,
                       },
                     },
                   },
@@ -242,6 +247,7 @@ export const getOrderDeliveries = createServerFn()
                       columns: {
                         delivery_number: true,
                         delivery_date: true,
+                        kind: true,
                       },
                     },
                   },

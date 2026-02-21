@@ -1,6 +1,7 @@
 // src/lib/settings/useThemeToggle.ts
 import { useCallback } from 'react'
-import { setTheme, type Theme } from './clientSettings'
+import { setTheme } from './clientSettings'
+import { Theme } from '../types/types.settings'
 
 export function useThemeToggle() {
   const toggleTheme = useCallback(() => {

@@ -5,6 +5,7 @@ import type { ActionMenuItem, DeliveryListRow } from '@/types'
 import { DataTableRowActions } from '../DataTableRowActions'
 import { convertToCurrencyFormat } from '@/lib/currency'
 import { Button } from '../ui/button'
+import { Badge } from '../ui/badge'
 
 export function getColumns(
   onEdit: (delivery: DeliveryListRow) => void,
@@ -81,9 +82,29 @@ export function getColumns(
     },
     {
       header: t('deliveries.columns.customer'),
-      accessorKey: "customerId",
+      accessorKey: 'customerId',
       size: 200,
       cell: ({ row }) => <div>{row.original.customer.name}</div>,
+    },
+    {
+      accessorKey: 'kind',
+      header: t('deliveries.columns.kind'),
+      size: 130,
+      cell: ({ row }) => {
+        const isReturn = row.original.kind === 'RETURN'
+        return (
+          <Badge
+            variant="outline"
+            className={
+              isReturn
+                ? 'border-red-300 text-red-700 bg-red-50'
+                : 'border-green-300 text-green-700 bg-green-50'
+            }
+          >
+            {isReturn ? t('deliveries.kinds.return') : t('deliveries.kinds.delivery')}
+          </Badge>
+        )
+      },
     },
     {
       accessorKey: 'total_amount',
@@ -95,13 +116,20 @@ export function getColumns(
       ),
       size: 150,
       cell: ({ row }) => {
+        const isReturn = row.original.kind === 'RETURN'
         const total = Number(row.getValue('total_amount') ?? 0)
         const amount = convertToCurrencyFormat({
           cents: Math.round(total * 100),
           currency: row.original.currency,
         })
 
-        return <div className="text-right font-medium">{amount}</div>
+        return (
+          <div
+            className={`text-right font-medium ${isReturn ? 'text-red-500' : ''}`}
+          >
+            {amount}
+          </div>
+        )
       },
     },
   ]

@@ -2,7 +2,7 @@ import { LoadingSpinner } from '../LoadingSpinner'
 import DataTable, { DataTableFilter } from '../DataTable'
 import { ColumnDef } from '@tanstack/react-table'
 import { MovementRow } from '@/types'
-import { StockSearch } from '@/lib/types'
+import { StockSearch } from '@/lib/types/types.search'
 
 interface TableProps {
   stocks: Array<MovementRow>

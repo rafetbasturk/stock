@@ -67,7 +67,6 @@ export type SelectProduct = {
 
 interface BasePaginatedFormProps<TData, TSubmitPayload> {
   item?: TData
-  isSubmitting: boolean
   onClose: () => void
   onSuccess: (payload: TSubmitPayload) => void
 }
@@ -78,7 +77,6 @@ export default function OrderForm({
   item: order,
   onClose,
   onSuccess,
-  isSubmitting,
 }: OrderFormProps) {
   const { data: products = [], isLoading } = useSelectProducts()
   const { data: lastOrderNumber } = useQuery(lastOrderNumberQuery)
@@ -109,8 +107,7 @@ export default function OrderForm({
   const createMutation = useCreateOrderMutation(onSuccess, mutationFormErrors)
   const updateMutation = useUpdateOrderMutation(onSuccess, mutationFormErrors)
 
-  const submitting =
-    isSubmitting || createMutation.isPending || updateMutation.isPending
+  const submitting = createMutation.isPending || updateMutation.isPending
 
   useEffect(() => {
     if (lastOrderNumber && !order?.id) {

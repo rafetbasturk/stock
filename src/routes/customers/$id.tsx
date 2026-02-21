@@ -74,7 +74,11 @@ function RouteComponent() {
         title={customer.code}
         description={customer.name}
         actions={
-          <Button size="sm" onClick={() => setIsEditing(true)} className="gap-2">
+          <Button
+            size="sm"
+            onClick={() => setIsEditing(true)}
+            className="gap-2"
+          >
             <Edit className="size-4" />
             {t('actions.edit')}
           </Button>
@@ -86,15 +90,37 @@ function RouteComponent() {
           <CardTitle className="text-lg">{t('customers.card_title')}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-5 sm:grid-cols-2">
-          <DetailItem icon={UserRound} label={t('customers.fields.code')} value={customer.code} />
-          <DetailItem icon={UserRound} label={t('customers.fields.name')} value={customer.name} />
-          <DetailItem icon={Mail} label={t('customers.fields.email')} value={customer.email} />
-          <DetailItem icon={Phone} label={t('customers.fields.phone')} value={customer.phone} />
-          <DetailItem icon={MapPin} label={t('customers.fields.address')} value={customer.address} />
+          <DetailItem
+            icon={UserRound}
+            label={t('customers.fields.code')}
+            value={customer.code}
+          />
+          <DetailItem
+            icon={UserRound}
+            label={t('customers.fields.name')}
+            value={customer.name}
+          />
+          <DetailItem
+            icon={Mail}
+            label={t('customers.fields.email')}
+            value={customer.email}
+          />
+          <DetailItem
+            icon={Phone}
+            label={t('customers.fields.phone')}
+            value={customer.phone}
+          />
+          <DetailItem
+            icon={MapPin}
+            label={t('customers.fields.address')}
+            value={customer.address}
+          />
           <DetailItem
             icon={Calendar}
             label={t('common.last_update')}
-            value={new Date(customer.updated_at).toLocaleDateString(i18n.language)}
+            value={new Date(customer.updated_at).toLocaleDateString(
+              i18n.language,
+            )}
           />
         </CardContent>
       </Card>

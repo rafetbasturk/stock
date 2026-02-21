@@ -3,8 +3,8 @@ import { useServerFn } from '@tanstack/react-start'
 import { createProduct, removeProduct, updateProduct } from '@/server/products'
 import { toast } from 'sonner'
 import { useFormMutation } from '@/hooks/useFormMutation'
-import { MutationFormErrors } from '@/lib/types'
 import { productQueryKeys } from '../queries/products'
+import { MutationFormErrors } from '../types/types.form'
 
 export const invalidateProductQueries = async (qc: QueryClient) =>
   await Promise.all([

@@ -115,11 +115,12 @@ export function addTotalAmount<T extends OrderWithItems | DeliveryWithItems>(
 
   // ---- Case 2: Delivery object ----
   if ('delivery_number' in data) {
+    const sign = data.kind === 'RETURN' ? -1 : 1
     totalCents = (data.items ?? []).reduce((sum, item) => {
       const price =
         item.orderItem?.unit_price ?? item.customOrderItem?.unit_price ?? 0 // cents
       const qty = item.delivered_quantity ?? 0
-      return sum + price * qty
+      return sum + sign * price * qty
     }, 0)
   }
 
@@ -132,12 +133,14 @@ export function addTotalAmount<T extends OrderWithItems | DeliveryWithItems>(
 export function addDeliveryTotals(
   delivery: DeliveryWithItems,
 ): DeliveryListRow {
+  const sign = delivery.kind === 'RETURN' ? -1 : 1
+
   // 1) Sum in cents to avoid floating-point issues
   const totalCents = (delivery.items ?? []).reduce((sum, item) => {
     const price =
       item.orderItem?.unit_price ?? item.customOrderItem?.unit_price ?? 0 // cents
     const qty = item.delivered_quantity ?? 0
-    return sum + price * qty
+    return sum + sign * price * qty
   }, 0)
 
   // 2) Derive currency from the first item
@@ -198,13 +201,23 @@ export async function updateOrderStatusIfComplete(tx: any, orderId: number) {
       with: {
         deliveries: {
           where: isNull(deliveryItemsTable.deleted_at),
+          with: {
+            delivery: {
+              columns: {
+                kind: true,
+              },
+            },
+          },
         },
       },
     })
     hasItems = customItems.length > 0
     for (const item of customItems) {
       const deliveredTotal = (item.deliveries ?? []).reduce(
-        (sum: number, di: any) => sum + (di.delivered_quantity ?? 0),
+        (sum: number, di: any) =>
+          sum +
+          ((di.delivery?.kind === 'RETURN' ? -1 : 1) *
+            (di.delivered_quantity ?? 0)),
         0,
       )
       if (deliveredTotal < item.quantity) {
@@ -221,13 +234,23 @@ export async function updateOrderStatusIfComplete(tx: any, orderId: number) {
       with: {
         deliveries: {
           where: isNull(deliveryItemsTable.deleted_at),
+          with: {
+            delivery: {
+              columns: {
+                kind: true,
+              },
+            },
+          },
         },
       },
     })
     hasItems = items.length > 0
     for (const item of items) {
       const deliveredTotal = (item.deliveries ?? []).reduce(
-        (sum: number, di: any) => sum + (di.delivered_quantity ?? 0),
+        (sum: number, di: any) =>
+          sum +
+          ((di.delivery?.kind === 'RETURN' ? -1 : 1) *
+            (di.delivered_quantity ?? 0)),
         0,
       )
       if (deliveredTotal < item.quantity) {

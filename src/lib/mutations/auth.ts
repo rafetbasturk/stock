@@ -6,8 +6,9 @@ import { toast } from 'sonner'
 import { authLogin, authLogout } from '@/server/auth'
 import { useAuthStore } from '@/stores/authStore'
 import { meQuery } from '@/lib/queries/auth'
-import { LogoutReason, MutationFormErrors } from '@/lib/types'
 import { useFormMutation } from '@/hooks/useFormMutation'
+import { MutationFormErrors } from '../types/types.form'
+import { LogoutReason } from '../types/types.auth'
 
 function safeRedirect(redirect?: string) {
   if (!redirect) return '/'
@@ -45,6 +46,7 @@ export function useLoginMutation(
     onSuccess: (user) => {
       qc.setQueryData(meQuery.queryKey, user)
       navigate({ to: safeRedirect(redirect), replace: true })
+      toast.dismiss()
       toast.success(t('welcome', { username: user.username }))
     },
   })

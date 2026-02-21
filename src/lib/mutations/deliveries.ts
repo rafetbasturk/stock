@@ -2,13 +2,13 @@ import { QueryClient, useQueryClient } from '@tanstack/react-query'
 import { useServerFn } from '@tanstack/react-start'
 import { toast } from 'sonner'
 import { deliveryQueryKeys } from '../queries/deliveries'
-import type { MutationFormErrors } from '@/lib/types'
 import {
   createDelivery,
   removeDelivery,
   updateDelivery,
 } from '@/server/deliveries'
 import { useFormMutation } from '@/hooks/useFormMutation'
+import { MutationFormErrors } from '../types/types.form'
 
 type ServerFnData<T extends (...args: any) => any> = Parameters<T>[0]['data']
 
@@ -17,6 +17,7 @@ export const invalidateDeliveryQueries = async (qc: QueryClient) =>
     qc.invalidateQueries({ queryKey: deliveryQueryKeys.lists() }),
     qc.invalidateQueries({ queryKey: deliveryQueryKeys.paginatedLists() }),
     qc.invalidateQueries({ queryKey: deliveryQueryKeys.lastNumber() }),
+    qc.invalidateQueries({ queryKey: deliveryQueryKeys.lastReturnNumber() }),
     qc.invalidateQueries({ queryKey: deliveryQueryKeys.filterOptions() }),
   ])
 
@@ -31,7 +32,11 @@ export function useCreateDeliveryMutation(
     mutationFn: (data: ServerFnData<typeof createDeliveryFn>) =>
       createDeliveryFn({ data }),
 
-    formErrorCodes: ['VALIDATION_ERROR', 'INVALID_ID'],
+    formErrorCodes: [
+      'VALIDATION_ERROR',
+      'INVALID_ID',
+      'RETURN_QUANTITY_EXCEEDS_DELIVERED',
+    ],
 
     onFieldError: formErrors?.setAllErrors,
 
@@ -41,6 +46,7 @@ export function useCreateDeliveryMutation(
 
     onSuccess: async (newDelivery) => {
       await invalidateDeliveryQueries(qc)
+      qc.invalidateQueries({ queryKey: deliveryQueryKeys.all })
       toast.success('Teslimat başarıyla oluşturuldu')
       onSuccess?.(newDelivery)
     },
@@ -82,7 +88,9 @@ export function useUpdateDeliveryMutation(
       'VALIDATION_ERROR',
       'INVALID_ID',
       'DELIVERY_NOT_FOUND',
+      'DELIVERY_KIND_CHANGE_NOT_ALLOWED',
       'INSUFFICIENT_STOCK',
+      'RETURN_QUANTITY_EXCEEDS_DELIVERED',
     ],
 
     onFieldError: formErrors?.setAllErrors,

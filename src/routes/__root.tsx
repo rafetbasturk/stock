@@ -10,18 +10,12 @@ import {
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { createServerFn } from '@tanstack/react-start'
-import {
-  getCookie,
-  getRequestHeader,
-  setCookie,
-} from '@tanstack/react-start/server'
 import { useMemo } from 'react'
 import { I18nextProvider, useTranslation } from 'react-i18next'
 import { Toaster } from 'sonner'
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 import appCss from '../styles.css?url'
 import type { QueryClient } from '@tanstack/react-query'
-import type { AppSettings } from '@/lib/types'
 import { AppSidebar } from '@/components/AppSidebar'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { ErrorComponent } from '@/components/error/ErrorComponent'
@@ -35,52 +29,24 @@ import trRoot from '@/lib/i18n/locales/tr/root.json'
 import { createSettingsScript } from '@/lib/settings/settingsScript'
 import { ClientOnly } from '@tanstack/react-router'
 import { SetTimeZoneCookie } from '@/components/SetTimeZoneCookie'
+import type { AppSettings, Language } from '@/lib/types/types.settings'
+import { settingsMiddleware } from '@/middleware/settings'
 
 interface MyRouterContext {
   queryClient: QueryClient
   settings: AppSettings
 }
 
-const ROOT_TITLE_BY_LANG: Record<AppSettings['lang'], string> = {
+const ROOT_TITLE_BY_LANG: Record<Language, string> = {
   en: enRoot.app_title,
   tr: trRoot.app_title,
 }
 
-export const getServerCookies = createServerFn().handler(() => {
-  const cookieLang = getCookie('lang')
-  const acceptLang = getRequestHeader('accept-language')
-  const cookieTheme = getCookie('theme')
-  const cookieSidebar = getCookie('sidebar_state')
-  const cookieTimeZone = getCookie('tz')
-
-  const theme: AppSettings['theme'] =
-    cookieTheme === 'light' ||
-    cookieTheme === 'dark' ||
-    cookieTheme === 'system'
-      ? cookieTheme
-      : 'system'
-
-  let lang: AppSettings['lang'] = 'tr'
-
-  if (cookieLang === 'tr' || cookieLang === 'en') {
-    lang = cookieLang
-  } else if (acceptLang) {
-    const primaryLang = acceptLang.split(',')[0].split('-')[0].toLowerCase()
-    lang = primaryLang === 'tr' ? 'tr' : 'en'
-
-    setCookie('lang', lang, {
-      path: '/',
-      maxAge: 60 * 60 * 24 * 365, // 1 year
-      sameSite: 'lax',
-    })
-  }
-
-  const sidebarOpen = cookieSidebar !== 'false'
-
-  const timeZone = cookieTimeZone || 'UTC'
-
-  return { lang, theme, sidebarOpen, timeZone }
-})
+export const getServerCookies = createServerFn()
+  .middleware([settingsMiddleware])
+  .handler(async ({ context }) => {
+    return context.settings
+  })
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async ({ context, location }) => {
@@ -151,7 +117,7 @@ function RootComponent() {
     <SidebarProvider defaultOpen={settings.sidebarOpen}>
       <div className="flex min-h-svh w-full">
         <AppSidebar settings={settings} />
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1 overflow-x-hidden">
           <SidebarTrigger className="md:hidden" />
           <Outlet />
         </main>

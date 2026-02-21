@@ -17,6 +17,11 @@ export const stockReferenceTypeEnum = pgEnum('stock_reference_type', [
   'purchase',
 ])
 
+export const deliveryKindEnum = pgEnum('delivery_kind', [
+  'DELIVERY',
+  'RETURN',
+])
+
 // Define enums for Postgres
 export const statusEnum = pgEnum(
   'status',

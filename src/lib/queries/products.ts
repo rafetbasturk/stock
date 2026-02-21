@@ -47,7 +47,7 @@ export const productsQuery = (search: ProductsSearch) =>
 
 export const selectProductsQuery = queryOptions({
   queryKey: productQueryKeys.select(),
-  queryFn: getProducts,
+  queryFn: () => getProducts(),
   staleTime: 1000 * 60 * 10,
 })
 
@@ -60,6 +60,6 @@ export const productQuery = (id: number) =>
 export const getFilterOptions = () =>
   queryOptions({
     queryKey: productQueryKeys.filterOptions(),
-    queryFn: getProductFilterOptions,
+    queryFn: () => getProductFilterOptions(),
     staleTime: Infinity,
   })

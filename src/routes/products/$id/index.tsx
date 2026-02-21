@@ -71,7 +71,7 @@ function RouteComponent() {
     <div className="space-y-6">
       <PageHeader
         title={product.code}
-        description={product.name}
+        description={product.customer?.name}
         actions={
           <>
             <Link to="/products/$id/activities" params={{ id }}>
@@ -146,7 +146,7 @@ function RouteComponent() {
               <DetailItem
                 icon={User}
                 label={t('products.fields.customer_name')}
-                value={product.customer.name}
+                value={product.customer?.name}
               />
             </CardContent>
           </Card>

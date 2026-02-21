@@ -31,8 +31,10 @@
   "DELIVERY_UPDATE_FAILED": "Teslimat güncellenemedi.",
   "DELIVERY_NOT_FOUND": "Teslimat bulunamadı.",
   "DELIVERY_NUMBER_EXISTS": "Teslimat numarası zaten mevcut.",
+  "DELIVERY_KIND_CHANGE_NOT_ALLOWED": "Belge tipi oluşturulduktan sonra değiştirilemez.",
   "DELIVERY_REMOVAL_FAILED": "Teslimat silinemedi.",
   "INVALID_DELIVERY_QUANTITY": "Teslimat miktarı geçersiz.",
+  "RETURN_QUANTITY_EXCEEDS_DELIVERED": "İade miktarı net sevk edilen miktarı aşamaz.",
   "CUSTOM_DELIVERY_CREATION_FAILED": "Özel teslimat oluşturulamadı.",
   "CUSTOM_DELIVERY_UPDATE_FAILED": "Özel teslimat güncellenemedi.",
 

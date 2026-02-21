@@ -31,8 +31,10 @@
   "DELIVERY_UPDATE_FAILED": "Failed to update delivery.",
   "DELIVERY_NOT_FOUND": "Delivery not found.",
   "DELIVERY_NUMBER_EXISTS": "Delivery number already exists.",
+  "DELIVERY_KIND_CHANGE_NOT_ALLOWED": "Delivery type cannot be changed after creation.",
   "DELIVERY_REMOVAL_FAILED": "Failed to delete delivery.",
   "INVALID_DELIVERY_QUANTITY": "Invalid delivery quantity.",
+  "RETURN_QUANTITY_EXCEEDS_DELIVERED": "Return quantity exceeds net delivered quantity.",
   "CUSTOM_DELIVERY_CREATION_FAILED": "Failed to create custom delivery.",
   "CUSTOM_DELIVERY_UPDATE_FAILED": "Failed to update custom delivery.",
 

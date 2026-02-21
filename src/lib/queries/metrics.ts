@@ -5,6 +5,7 @@ import type { Currency } from '@/types'
 import type { Rate } from '../currency'
 import { getKeyMetrics, getMonthlyOverview } from '@/server/metrics'
 import { useExchangeRatesStore } from '@/stores/exchangeRatesStore'
+import { AppError, BaseAppError } from '@/lib/error/core'
 
 export const metricsQueryKeys = {
   all: ['metrics'] as const,
@@ -58,17 +59,26 @@ export const useFetchMetrics = (
       lastUpdated,
     ),
 
-    queryFn: () =>
-      getKeyMetrics({
-        data: {
-          rates,
-          filters: {
-            customerId: filters.customerId,
-            year: filters.year,
+    queryFn: async () => {
+      try {
+        return await getKeyMetrics({
+          data: {
+            rates,
+            filters: {
+              customerId: filters.customerId,
+              year: filters.year,
+            },
+            preferredCurrency,
           },
-          preferredCurrency,
-        },
-      }),
+        })
+      } catch (error) {
+        const appError = AppError.from(error)
+        if (appError.code === 'UNKNOWN_ERROR') {
+          throw BaseAppError.create({ code: 'METRICS_FETCH_FAILED' })
+        }
+        throw appError
+      }
+    },
 
     enabled: isReady,
 
@@ -95,13 +105,22 @@ export const useFetchMonthlyOverview = (
       lastUpdated,
     ),
 
-    queryFn: () =>
-      getMonthlyOverview({
-        data: {
-          filters,
-          rates,
-          preferredCurrency,
-        },
-      }),
+    queryFn: async () => {
+      try {
+        return await getMonthlyOverview({
+          data: {
+            filters,
+            rates,
+            preferredCurrency,
+          },
+        })
+      } catch (error) {
+        const appError = AppError.from(error)
+        if (appError.code === 'UNKNOWN_ERROR') {
+          throw BaseAppError.create({ code: 'OVERVIEW_FETCH_FAILED' })
+        }
+        throw appError
+      }
+    },
   })
 }

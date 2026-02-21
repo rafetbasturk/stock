@@ -1,6 +1,4 @@
-// src/lib/settings/clientSettings.ts
-export type Theme = 'light' | 'dark' | 'system'
-export type Language = 'en' | 'tr'
+import { Language, Theme } from '../types/types.settings'
 
 function applyThemeToDom(theme: Theme) {
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches

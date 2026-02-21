@@ -13,11 +13,11 @@ import { useMemo } from 'react'
 import { ErrorMessage } from '../error/ErrorMessage'
 import { Skeleton } from '../ui/skeleton'
 import { LoadingSpinner } from '../LoadingSpinner'
-import type { HomeSearch } from '@/lib/types'
 import { useFetchMonthlyOverview } from '@/lib/queries/metrics'
 import { useExchangeRatesStore } from '@/stores/exchangeRatesStore'
 import { convertToCurrencyFormat } from '@/lib/currency'
 import { useMounted } from '@/hooks/useMounted'
+import { HomeSearch } from '@/lib/types/types.search'
 
 interface Props {
   filters: HomeSearch
@@ -78,7 +78,7 @@ export default function MonthlyChart({ filters }: Props) {
 
       {mounted ? (
         chartData.length > 0 ? (
-          <ResponsiveContainer width={"100%"} height={400}>
+          <ResponsiveContainer width="100%" height={400}>
             <ComposedChart data={chartData}>
               {/* ... chart components ... */}
               <XAxis dataKey="monthName" fontSize={12} />

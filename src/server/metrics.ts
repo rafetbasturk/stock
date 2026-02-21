@@ -129,6 +129,7 @@ export const getKeyMetrics = createServerFn()
       const deliveries = await db
         .select({
           delivered_quantity: deliveryItemsTable.delivered_quantity,
+          kind: deliveriesTable.kind,
           standard_order_id: orderItemsTable.order_id,
           standard_price: orderItemsTable.unit_price,
           standard_currency: orderItemsTable.currency,
@@ -159,7 +160,9 @@ export const getKeyMetrics = createServerFn()
 
         const unitPrice = d.standard_price ?? d.custom_price ?? 0
         const currency = d.standard_currency ?? d.custom_currency ?? 'TRY'
-        const deliveredAmount = d.delivered_quantity * unitPrice
+        const signedQuantity =
+          d.kind === 'RETURN' ? -d.delivered_quantity : d.delivered_quantity
+        const deliveredAmount = signedQuantity * unitPrice
 
         const converted = convertToBaseCurrency(
           deliveredAmount,
@@ -339,6 +342,7 @@ export const getMonthlyOverview = createServerFn()
         .select({
           delivery_id: deliveryItemsTable.delivery_id,
           delivery_date: deliveriesTable.delivery_date,
+          kind: deliveriesTable.kind,
 
           delivered_quantity: deliveryItemsTable.delivered_quantity,
 
@@ -435,9 +439,11 @@ export const getMonthlyOverview = createServerFn()
 
         const unitPrice = d.standard_price ?? d.custom_price ?? 0
         const currency = d.standard_currency ?? d.custom_currency ?? 'TRY'
+        const signedQuantity =
+          d.kind === 'RETURN' ? -d.delivered_quantity : d.delivered_quantity
 
         const converted = convertToBaseCurrency(
-          d.delivered_quantity * unitPrice,
+          signedQuantity * unitPrice,
           currency,
           preferredCurrency,
           rates,
@@ -462,7 +468,7 @@ export const getMonthlyOverview = createServerFn()
         }
       })
     } catch (error) {
-      console.error(error)
+      console.error('[getMonthlyOverview] failed:', error)
       fail('OVERVIEW_FETCH_FAILED')
     }
   })

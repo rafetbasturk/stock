@@ -11,10 +11,14 @@ import {
   deliveriesQuery,
   getFilterOptions,
   lastDeliveryNumberQuery,
+  lastReturnDeliveryNumberQuery,
 } from '@/lib/queries/deliveries'
 import { ordersSelectQuery } from '@/lib/queries/orders'
-import { DeliveriesSearch, deliveriesSearchSchema } from '@/lib/types'
-import { DeliveriesModalState } from '@/lib/types/types.modal'
+import { ModalState } from '@/lib/types/types.modal'
+import {
+  DeliveriesSearch,
+  deliveriesSearchSchema,
+} from '@/lib/types/types.search'
 import { DeliveryListRow } from '@/types'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
@@ -28,6 +32,7 @@ export const Route = createFileRoute('/deliveries/')({
   loader: async ({ context, deps }) => {
     const data = await Promise.all([
       context.queryClient.prefetchQuery(lastDeliveryNumberQuery),
+      context.queryClient.prefetchQuery(lastReturnDeliveryNumberQuery),
       context.queryClient.prefetchQuery(getFilterOptions),
       context.queryClient.prefetchQuery(ordersSelectQuery),
       context.queryClient.ensureQueryData(deliveriesQuery(deps)),
@@ -43,13 +48,16 @@ function RouteComponent() {
   const navigate = useNavigate({ from: Route.fullPath })
   const search = Route.useSearch()
 
-  const [modalState, setModalState] = useState<DeliveriesModalState>({ type: 'closed' })
+  const [modalState, setModalState] = useState<ModalState<DeliveryListRow>>({
+    type: 'closed',
+  })
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
 
   const closeModal = useCallback(() => setModalState({ type: 'closed' }), [])
   const openAddModal = useCallback(() => setModalState({ type: 'adding' }), [])
   const openEditModal = useCallback(
-    (delivery: DeliveryListRow) => setModalState({ type: 'editing', delivery }),
+    (delivery: DeliveryListRow) =>
+      setModalState({ type: 'editing', item: delivery }),
     [],
   )
 
@@ -106,6 +114,9 @@ function RouteComponent() {
   const { data: filterOptions } = useSuspenseQuery(getFilterOptions)
   const { data: orders } = useSuspenseQuery(ordersSelectQuery)
   const { data: lastDeliveryNumber } = useSuspenseQuery(lastDeliveryNumberQuery)
+  const { data: lastReturnDeliveryNumber } = useSuspenseQuery(
+    lastReturnDeliveryNumberQuery,
+  )
 
   const customFilters: Array<DataTableFilter> = useMemo(
     () => [
@@ -117,6 +128,15 @@ function RouteComponent() {
           value: String(c.id),
           label: c.name,
         })),
+      },
+      {
+        columnId: 'kind',
+        label: t('deliveries.filters.kind'),
+        type: 'select',
+        options: [
+          { value: 'DELIVERY', label: t('deliveries.kinds.delivery') },
+          { value: 'RETURN', label: t('deliveries.kinds.return') },
+        ],
       },
       {
         columnId: 'dateRange',
@@ -186,9 +206,10 @@ function RouteComponent() {
       />
       {modalState.type !== 'closed' && (
         <DeliveryForm
-          item={modalState.type === 'editing' ? modalState.delivery : undefined}
+          item={modalState.type === 'editing' ? modalState.item : undefined}
           orders={orders}
           lastDeliveryNumber={lastDeliveryNumber}
+          lastReturnDeliveryNumber={lastReturnDeliveryNumber}
           onClose={closeModal}
         />
       )}

@@ -1,17 +1,16 @@
 import { keepPreviousData, queryOptions, useQuery } from '@tanstack/react-query'
-import type { CustomersSearch } from '../types'
+import { normalizeCustomersSearch } from '../types/types.search'
+import type { CustomersSearch } from '../types/types.search'
 import {
   getAllCustomers,
   getCustomerById,
-  getPaginatedCustomers,
   getDistinctCustomers,
+  getPaginatedCustomers,
 } from '@/server/customers'
 
 type CustomerListFilters = {
   distinct?: boolean
 }
-
-import { normalizeCustomersSearch } from '../types'
 
 export const customerQueryKeys = {
   all: ['customers'] as const,
@@ -40,7 +39,8 @@ export const customerQueryKeys = {
 export const customersListQuery = (filters?: CustomerListFilters) =>
   queryOptions({
     queryKey: customerQueryKeys.list(filters),
-    queryFn: filters?.distinct ? getDistinctCustomers : getAllCustomers,
+    queryFn: () =>
+      filters?.distinct ? getDistinctCustomers() : getAllCustomers(),
     staleTime: 1000 * 60 * 10,
   })
 

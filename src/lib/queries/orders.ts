@@ -1,5 +1,4 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query'
-import type { OrdersSearch } from '../types/types.search'
 import {
   getLastOrderNumber,
   getOrderById,
@@ -10,7 +9,7 @@ import {
   getYearRange,
 } from '@/server/orders'
 
-import { normalizeOrdersSearch } from '../types/types.search'
+import { normalizeOrdersSearch, OrdersSearch } from '../types/types.search'
 
 export const orderQueryKeys = {
   all: ['orders'] as const,
@@ -69,21 +68,21 @@ export const orderDeliveriesQuery = (orderId: number) =>
 
 export const ordersSelectQuery = queryOptions({
   queryKey: orderQueryKeys.select(),
-  queryFn: getOrders,
+  queryFn: () => getOrders(),
 })
 
 export const lastOrderNumberQuery = queryOptions({
   queryKey: orderQueryKeys.lastNumber(),
-  queryFn: getLastOrderNumber,
+  queryFn: () => getLastOrderNumber(),
 })
 
 export const getFilterOptions = queryOptions({
   queryKey: orderQueryKeys.filterOptions(),
-  queryFn: getOrderFilterOptions,
+  queryFn: () => getOrderFilterOptions(),
   staleTime: Infinity,
 })
 
 export const yearRangeQuery = queryOptions({
   queryKey: orderQueryKeys.yearRange(),
-  queryFn: getYearRange,
+  queryFn: () => getYearRange(),
 })

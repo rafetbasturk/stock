@@ -135,13 +135,36 @@
     "columns": {
       "delivery_number": "Sevk No",
       "delivery_date": "Teslimat Tarihi",
+      "kind": "Tür",
       "customer": "Müşteri",
       "delivery_address": "Teslimat Adresi",
       "total_amount": "Toplam Tutar"
     },
     "filters": {
       "customer": "Müşteri",
+      "daterange": "Tarih Aralığı",
+      "kind": "Sevk Türü"
+    },
+    "kinds": {
+      "delivery": "Teslimat",
+      "return": "İade"
+    }
+  },
+  "productDemand": {
+    "list_title": "Ürün Talebi",
+    "description": "Ürünlerin sipariş bazında taleplerini analiz edin.",
+    "loading": "Ürün talebi yükleniyor...",
+    "filters": {
+      "customer": "Müşteri",
       "daterange": "Tarih Aralığı"
+    },
+    "columns": {
+      "customer_code": "Müşteri",
+      "product_code": "Ürün",
+      "ordered_times": "Sipariş Sayısı",
+      "total_pieces": "Toplam Adet",
+      "avg_pieces_per_order": "Sipariş Başına Ortalama",
+      "last_order_date": "Son Sipariş Tarihi"
     }
   }
 }

@@ -23,6 +23,7 @@ import { useTranslation } from "react-i18next";
 interface Props {
   orders: OrderMinimal[];
   items: DeliveryItem[];
+  kind: "DELIVERY" | "RETURN";
   onItemChange: (index: number, field: string, value: any) => void;
   removeItem: (index: number) => void;
   addItem: () => void;
@@ -33,6 +34,7 @@ interface Props {
 export default function DeliveryFormItems({
   orders,
   items,
+  kind,
   onItemChange,
   removeItem,
   addItem,
@@ -58,6 +60,15 @@ export default function DeliveryFormItems({
     (sum, i) => sum + (i.price ?? 0) * i.delivered_quantity,
     0
   );
+
+  const netDelivered = (deliveries?: any[]) =>
+    deliveries?.reduce(
+      (sum, d) =>
+        sum +
+        ((d?.delivery?.kind === "RETURN" ? -1 : 1) *
+          (d?.delivered_quantity ?? 0)),
+      0
+    ) ?? 0;
 
   return (
     <div className="space-y-2">
@@ -97,15 +108,11 @@ export default function DeliveryFormItems({
 
                   const orderItems = [
                     ...(order?.items || []).map((oi) => {
-                      const totalSent =
-                        oi.deliveries?.reduce(
-                          (sum, d) => sum + d.delivered_quantity,
-                          0
-                        ) ?? 0;
-                      const remaining = Math.max(
-                        (oi.quantity ?? 0) - totalSent,
-                        0
-                      );
+                      const sent = netDelivered(oi.deliveries);
+                      const remaining =
+                        kind === "RETURN"
+                          ? Math.max(sent, 0)
+                          : Math.max((oi.quantity ?? 0) - sent, 0);
 
                       return {
                         value: oi.id,
@@ -115,21 +122,17 @@ export default function DeliveryFormItems({
                         data: {
                           name: oi.product.name,
                           qty: oi.quantity,
-                          sent: totalSent,
+                          sent,
                           remaining,
                         },
                       };
                     }),
                     ...(order?.customItems || []).map((ci) => {
-                      const totalSent =
-                        ci.deliveries?.reduce(
-                          (sum, d) => sum + d.delivered_quantity,
-                          0
-                        ) ?? 0;
-                      const remaining = Math.max(
-                        (ci.quantity ?? 0) - totalSent,
-                        0
-                      );
+                      const sent = netDelivered(ci.deliveries);
+                      const remaining =
+                        kind === "RETURN"
+                          ? Math.max(sent, 0)
+                          : Math.max((ci.quantity ?? 0) - sent, 0);
 
                       return {
                         value: ci.id,
@@ -139,7 +142,7 @@ export default function DeliveryFormItems({
                         data: {
                           name: ci.custom_name || "Özel ürün",
                           qty: ci.quantity,
-                          sent: totalSent,
+                          sent,
                           remaining,
                         },
                       };
@@ -200,7 +203,7 @@ export default function DeliveryFormItems({
 
                                     {/* Sent */}
                                     <span className="px-1.5 py-0.5 bg-blue-200 rounded">
-                                      {d.sent} sevk
+                                      {d.sent} net sevk
                                     </span>
 
                                     {/* Remaining */}

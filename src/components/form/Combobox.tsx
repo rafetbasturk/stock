@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Button } from "../ui/button";
-import { ChevronsUpDown, Check } from "lucide-react";
+import { useState, useMemo } from 'react'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
+import { Button } from '../ui/button'
+import { ChevronsUpDown, Check } from 'lucide-react'
 import {
   Command,
   CommandEmpty,
@@ -9,34 +9,34 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "../ui/command";
-import { cn } from "@/lib/utils";
-import { Field, FieldError, FieldLabel } from "../ui/field";
-import { useTranslation } from "react-i18next";
-import type { I18nErrorMessage } from "@/lib/error/core/errorTransport";
+} from '../ui/command'
+import { cn } from '@/lib/utils'
+import { Field, FieldError, FieldLabel } from '../ui/field'
+import { useTranslation } from 'react-i18next'
+import type { I18nErrorMessage } from '@/lib/error/core/errorTransport'
 
 export interface ComboItem {
-  value: number | string;
-  label: string;
-  searchText?: string; // merged text to match against (optional)
-  data?: any; // optional full item access for custom renderers
-  disabled?: boolean;
+  value: number | string
+  label: string
+  searchText?: string // merged text to match against (optional)
+  data?: any // optional full item access for custom renderers
+  disabled?: boolean
 }
 
 interface ComboboxProps {
-  id?: string;
-  label?: string;
-  placeholder?: string;
-  items: ComboItem[];
-  value: string | number | null;
-  onChange: (value: string | number) => void;
-  searchable?: boolean;
-  isLoading?: boolean;
-  error?: I18nErrorMessage | string;
-  required?: boolean;
+  id?: string
+  label?: string
+  placeholder?: string
+  items: ComboItem[]
+  value: string | number | null
+  onChange: (value: string | number) => void
+  searchable?: boolean
+  isLoading?: boolean
+  error?: I18nErrorMessage | string
+  required?: boolean
   // allow custom row + trigger UI
-  renderItem?: (item: ComboItem, isSelected: boolean) => React.ReactNode;
-  renderTriggerLabel?: (item: ComboItem | undefined) => React.ReactNode;
+  renderItem?: (item: ComboItem, isSelected: boolean) => React.ReactNode
+  renderTriggerLabel?: (item: ComboItem | undefined) => React.ReactNode
 }
 
 export default function Combobox({
@@ -44,7 +44,7 @@ export default function Combobox({
   items,
   value,
   onChange,
-  placeholder = "Seçiniz...",
+  placeholder = 'Seçiniz...',
   searchable = true,
   label,
   isLoading,
@@ -53,22 +53,22 @@ export default function Combobox({
   renderItem,
   renderTriggerLabel,
 }: ComboboxProps) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
 
-  const selected = items.find((i) => i.value === value);
+  const selected = items.find((i) => i.value === value)
 
   const filtered = useMemo(() => {
-    if (!search) return items;
-    const s = search.toLowerCase();
+    if (!search) return items
+    const s = search.toLowerCase()
     return items.filter(
       (i) =>
         i.label.toLowerCase().includes(s) ||
         i.value.toString().toLowerCase().includes(s) ||
-        i.searchText?.toLowerCase().includes(s)
-    );
-  }, [items, search]);
+        i.searchText?.toLowerCase().includes(s),
+    )
+  }, [items, search])
 
   return (
     <Field className="gap-1 relative">
@@ -86,11 +86,11 @@ export default function Combobox({
             disabled={isLoading}
             aria-expanded={open}
             aria-invalid={!!error}
-            className={cn("w-full justify-between", error && "border-red-500")}
+            className={cn('w-full justify-between', error && 'border-red-500')}
           >
             <div className="flex-1 min-w-0 text-left truncate capitalize">
               {isLoading
-                ? "Yükleniyor"
+                ? 'Yükleniyor'
                 : (renderTriggerLabel?.(selected) ??
                   selected?.label ??
                   placeholder)}
@@ -99,8 +99,8 @@ export default function Combobox({
           </Button>
         </PopoverTrigger>
 
-        <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
-          <Command>
+        <PopoverContent className="w-(--radix-popover-trigger-width) p-0 max-h-96 overflow-hidden flex flex-col pointer-events-auto">
+          <Command className="overflow-hidden flex flex-col pointer-events-auto">
             {searchable && (
               <CommandInput
                 placeholder="Ara..."
@@ -109,12 +109,22 @@ export default function Combobox({
               />
             )}
 
-            <CommandList>
+            <CommandList
+              className="overflow-y-auto flex-1"
+              onWheel={(e) => {
+                // Allow wheel scrolling to work on the list
+                const element = e.currentTarget
+                const canScroll = element.scrollHeight > element.clientHeight
+                if (canScroll) {
+                  e.stopPropagation()
+                }
+              }}
+            >
               <CommandEmpty>Bulunamadı</CommandEmpty>
 
               <CommandGroup>
                 {filtered.map((item) => {
-                  const isSelected = item.value === value;
+                  const isSelected = item.value === value
 
                   return (
                     <CommandItem
@@ -122,19 +132,19 @@ export default function Combobox({
                       disabled={item.disabled}
                       onSelect={() => {
                         if (!item.disabled) {
-                          onChange(item.value);
-                          setOpen(false);
+                          onChange(item.value)
+                          setOpen(false)
                         }
                       }}
                       title={
                         item.disabled
-                          ? "Bu kalem zaten sevk eklendi"
+                          ? 'Bu kalem zaten sevk eklendi'
                           : undefined
                       }
                       className={cn(
-                        "flex items-center justify-between select-none",
-                        item.disabled && "opacity-40 cursor-not-allowed",
-                        !item.disabled && "cursor-pointer hover:bg-accent"
+                        'flex items-center justify-between select-none',
+                        item.disabled && 'opacity-40 cursor-not-allowed',
+                        !item.disabled && 'cursor-pointer hover:bg-accent',
                       )}
                     >
                       <div className="flex items-center gap-2">
@@ -150,7 +160,7 @@ export default function Combobox({
                         {renderItem ? renderItem(item, isSelected) : item.label}
                       </div>
                     </CommandItem>
-                  );
+                  )
                 })}
               </CommandGroup>
             </CommandList>
@@ -159,11 +169,11 @@ export default function Combobox({
       </Popover>
       {error && (
         <FieldError className="text-xs absolute -bottom-4">
-          {typeof error === "string"
+          {typeof error === 'string'
             ? error
             : t(`${error.i18n.ns}:${error.i18n.key}`, error.params)}
         </FieldError>
       )}
     </Field>
-  );
+  )
 }

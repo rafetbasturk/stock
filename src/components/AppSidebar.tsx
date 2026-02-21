@@ -7,12 +7,10 @@ import {
   LanguagesIcon,
   LucideLogOut,
   Moon,
-  Package,
   Sun,
 } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger } from './ui/select'
-import type { Language } from '@/lib/settings/clientSettings'
-import type { AppSettings } from '@/lib/types/types.settings'
+import type { AppSettings, Language } from '@/lib/types/types.settings'
 
 import {
   Sidebar,
@@ -36,6 +34,7 @@ import { setLanguage } from '@/lib/settings/clientSettings'
 import { useThemeToggle } from '@/lib/settings/useThemeToggle'
 import { useMounted } from '@/hooks/useMounted'
 import { useLogoutMutation } from '@/lib/mutations/auth'
+import { Image } from '@unpic/react'
 
 function normalizePath(path: string) {
   return path.replace(/\/+$/, '') || '/'
@@ -85,7 +84,13 @@ export function AppSidebar({ settings }: { settings: AppSettings }) {
       <SidebarContent className="flex justify-between">
         <SidebarGroup>
           <SidebarGroupLabel className="text-lg font-semibold mb-4">
-            <Package className="inline-block mr-2" />
+            <Image
+              src="/favicon-256.png"
+              alt="Logo"
+              width={28}
+              height={28}
+              className="inline-block mr-2"
+            />
             {t('title')}
           </SidebarGroupLabel>
 

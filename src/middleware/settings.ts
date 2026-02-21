@@ -1,5 +1,5 @@
-// src/server/middleware/settings.middleware.ts
-import { AppSettings } from '@/lib/types/types.settings'
+// src/middleware/settings.ts
+import { AppSettings, Language, Theme } from '@/lib/types/types.settings'
 import { createMiddleware } from '@tanstack/react-start'
 import {
   getCookie,
@@ -13,7 +13,7 @@ export const settingsMiddleware = createMiddleware().server(
     const cookieLang = getCookie('lang')
     const acceptLang = getRequestHeader('accept-language')
 
-    let lang: AppSettings['lang'] = 'tr' // Default
+    let lang: Language = 'tr' // Default
 
     if (cookieLang === 'tr' || cookieLang === 'en') {
       lang = cookieLang
@@ -25,7 +25,20 @@ export const settingsMiddleware = createMiddleware().server(
 
     // --- Theme ---
     const themeCookie = getCookie('theme')
-    const theme = (themeCookie ?? 'system') as AppSettings['theme']
+    const theme: Theme =
+      themeCookie === 'light' ||
+      themeCookie === 'dark' ||
+      themeCookie === 'system'
+        ? themeCookie
+        : 'system'
+
+    // --- Sidebar ---
+    const cookieSidebar = getCookie('sidebar_state')
+    const sidebarOpen = cookieSidebar !== 'false'
+
+    // --- Timezone ---
+    const cookieTimeZone = getCookie('tz')
+    const timeZone = cookieTimeZone || 'UTC'
 
     // Only set cookies if they don't exist (to avoid overwriting client-side changes)
     if (!cookieLang) {
@@ -40,8 +53,8 @@ export const settingsMiddleware = createMiddleware().server(
         settings: {
           lang,
           theme,
-          sidebarOpen: true,
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          sidebarOpen,
+          timeZone,
         } satisfies AppSettings,
       },
     })

@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
-import type { MutationFormErrors } from '@/lib/types'
 import { AppError } from '@/lib/error/core'
+import { MutationFormErrors } from '@/lib/types/types.form'
 
 type AnyFn = (...args: any[]) => Promise<any>
 

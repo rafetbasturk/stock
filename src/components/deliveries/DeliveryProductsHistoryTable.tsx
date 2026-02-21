@@ -52,19 +52,25 @@ export function DeliveryProductsHistoryTable({
 
           <TableBody>
             {delivery.items.map((item, i) => {
-              const product = item.orderItem?.product ?? item.customOrderItem;
+              const isReturn = delivery.kind === "RETURN";
+              const productCode = item.orderItem?.product?.code ?? item.customOrderItem?.name ?? "-";
+              const productName = item.orderItem?.product?.name ?? item.customOrderItem?.name ?? "-";
               const ordered =
                 item.orderItem?.quantity ?? item.customOrderItem?.quantity ?? 0;
               const past = item.orderItem?.deliveries ?? [];
+              const signedQty = (d: any) =>
+                d?.delivery?.kind === "RETURN"
+                  ? -(d?.delivered_quantity ?? 0)
+                  : (d?.delivered_quantity ?? 0);
 
               const deliveredTotal = past.reduce(
-                (s, d) => s + d.delivered_quantity,
+                (s, d) => s + signedQty(d),
                 0
               );
               const remaining = ordered - deliveredTotal;
               const progress =
                 ordered > 0
-                  ? Math.min((deliveredTotal / ordered) * 100, 100)
+                  ? Math.max(0, Math.min((deliveredTotal / ordered) * 100, 100))
                   : 0;
 
               return (
@@ -72,7 +78,7 @@ export function DeliveryProductsHistoryTable({
                   key={item.id}
                   className={cn(
                     "text-sm border-b border-border transition-colors hover:bg-accent/90",
-                    remaining === 0 && "bg-green-500/5 dark:bg-green-400/10"
+                    remaining <= 0 && "bg-green-500/5 dark:bg-green-400/10"
                   )}
                 >
                   {/* Sıra No */}
@@ -85,10 +91,10 @@ export function DeliveryProductsHistoryTable({
                   {/* Ürün */}
                   <TableCell>
                     <div className="font-medium text-foreground">
-                      {product?.code}
+                      {productCode}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {product?.name}
+                      {productName}
                     </div>
                   </TableCell>
 
@@ -98,13 +104,20 @@ export function DeliveryProductsHistoryTable({
                   </TableCell>
 
                   {/* Toplam Sevk */}
-                  <TableCell className="text-center font-semibold text-green-700 dark:text-green-400">
+                  <TableCell
+                    className={cn(
+                      "text-center font-semibold",
+                      deliveredTotal < 0
+                        ? "text-red-700 dark:text-red-400"
+                        : "text-green-700 dark:text-green-400",
+                    )}
+                  >
                     {deliveredTotal}
                   </TableCell>
 
                   {/* Bu Sevk */}
                   <TableCell className="text-center font-semibold text-blue-700 dark:text-blue-400">
-                    {item.delivered_quantity}
+                    {isReturn ? -item.delivered_quantity : item.delivered_quantity}
                   </TableCell>
 
                   {/* Durum + Progress */}
@@ -173,7 +186,8 @@ export function DeliveryProductsHistoryTable({
                               {" — "}
                               {d.delivery.delivery_number}
                               {" — "}
-                              {d.delivered_quantity} adet
+                              {signedQty(d) > 0 ? "+" : ""}
+                              {signedQty(d)} adet
                             </Badge>
                           ))
                       ) : (

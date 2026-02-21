@@ -43,7 +43,11 @@
   },
   "orders": {
     "updated_success": "Order updated",
-    "card_title": "Order Details",
+    "detail_page_title": "Order Details",
+    "card_title": "Order Basics",
+    "deliveries_title": "Deliveries",
+    "deliveries_plural": "Deliveries",
+    "deliveries_singular": "Delivery",
     "fields": {
       "order_number": "Order No",
       "customer": "Customer",
@@ -67,21 +71,23 @@
     },
     "summary": {
       "title": "Summary",
-      "items": "Order items count",
-      "shipments": "Shipments count",
+      "items": "Order lines",
+      "shipments": "Shipments",
       "delivered_quantity": "Delivered quantity"
     }
   },
   "deliveries": {
+    "detail_page_title": "Delivery Details",
     "card_title": "Delivery Details",
     "fields": {
       "delivery_number": "Delivery No",
       "customer": "Customer",
       "delivery_date": "Delivery Date",
-      "notes": "Notes"
+      "notes": "Notes",
+      "currency": "Currency"
     },
     "summary_title": "Summary",
-    "summary_items": "Items",
+    "summary_items": "Delivery Items",
     "summary_quantity": "Delivered Quantity",
     "summary_total": "Total Amount",
     "items_title": "Delivery Items",

@@ -23,7 +23,7 @@ import { ProductListHeader } from '@/components/products/ProductListHeader'
 import { ProductsDataTable } from '@/components/products/ProductsDataTable'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { StockAdjustmentDialog } from '@/components/stock/StockAdjustmentDialog'
-import { ProductsModalState } from '@/lib/types/types.modal'
+import { ModalState } from '@/lib/types/types.modal'
 
 export const Route = createFileRoute('/products/')({
   validateSearch: zodValidator(productsSearchSchema),
@@ -44,7 +44,7 @@ function ProductList() {
   const search = Route.useSearch()
 
   // Modal state using discriminated union
-  const [modalState, setModalState] = useState<ProductsModalState>({
+  const [modalState, setModalState] = useState<ModalState<ProductListRow>>({
     type: 'closed',
   })
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
@@ -52,11 +52,13 @@ function ProductList() {
   const closeModal = useCallback(() => setModalState({ type: 'closed' }), [])
   const openAddModal = useCallback(() => setModalState({ type: 'adding' }), [])
   const openEditModal = useCallback(
-    (product: ProductListRow) => setModalState({ type: 'editing', product }),
+    (product: ProductListRow) =>
+      setModalState({ type: 'editing', item: product }),
     [],
   )
   const openAdjustModal = useCallback(
-    (product: ProductListRow) => setModalState({ type: 'adjusting', product }),
+    (product: ProductListRow) =>
+      setModalState({ type: 'adjusting', item: product }),
     [],
   )
 
@@ -188,7 +190,7 @@ function ProductList() {
 
       {(modalState.type === 'adding' || modalState.type === 'editing') && (
         <ProductForm
-          item={modalState.type === 'editing' ? modalState.product : undefined}
+          item={modalState.type === 'editing' ? modalState.item : undefined}
           isSubmitting={false}
           onClose={closeModal}
           onSuccess={closeModal}
@@ -204,7 +206,7 @@ function ProductList() {
       />
 
       <StockAdjustmentDialog
-        product={modalState.type === 'adjusting' ? modalState.product : null}
+        product={modalState.type === 'adjusting' ? modalState.item : null}
         open={modalState.type === 'adjusting'}
         onOpenChange={(open) => !open && closeModal()}
         onSuccess={() => {
