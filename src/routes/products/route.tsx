@@ -1,6 +1,6 @@
 // src/routes/products/route.tsx
 import { Outlet, createFileRoute } from '@tanstack/react-router'
-import { LucideListOrdered } from 'lucide-react'
+import { PackageSearch } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 
@@ -10,7 +10,7 @@ export const Route = createFileRoute('/products')({
   staticData: {
     sidebar: {
       label: 'nav.products',
-      icon: LucideListOrdered,
+      icon: PackageSearch,
       order: 30,
     },
   },

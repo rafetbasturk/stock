@@ -1,12 +1,11 @@
-import { DataTableFilter } from '@/components/DataTable'
 import { getColumns } from '@/components/deliveries/columns'
 import { DeliveriesDataTable } from '@/components/deliveries/DeliveriesDataTable'
 import { DeliveryDeleteDialog } from '@/components/deliveries/DeliveryDeleteDialog'
 import { DeliveryForm } from '@/components/deliveries/DeliveryForm'
 import { DeliveryListHeader } from '@/components/deliveries/DeliveryListHeader'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { debounce } from '@/lib/debounce'
 import { useDeleteDeliveryMutation } from '@/lib/mutations/deliveries'
+import { useAppTimeZone } from '@/hooks/useAppTimeZone'
 import {
   deliveriesQuery,
   getFilterOptions,
@@ -18,7 +17,10 @@ import { ModalState } from '@/lib/types/types.modal'
 import {
   DeliveriesSearch,
   deliveriesSearchSchema,
+  deliveriesSortFields,
 } from '@/lib/types/types.search'
+import type { DataTableFilter } from '@/components/datatable/types'
+
 import { DeliveryListRow } from '@/types'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
@@ -44,7 +46,8 @@ export const Route = createFileRoute('/deliveries/')({
 })
 
 function RouteComponent() {
-  const { t } = useTranslation('entities')
+  const { t, i18n } = useTranslation('entities')
+  const timeZone = useAppTimeZone()
   const navigate = useNavigate({ from: Route.fullPath })
   const search = Route.useSearch()
 
@@ -148,14 +151,20 @@ function RouteComponent() {
   )
 
   const handleSearchChange = useCallback(
-    (updates: Record<string, string | number | undefined>) => {
+    (updates: Partial<DeliveriesSearch>, replaceAll = false) => {
       navigate({
         search: (prev: DeliveriesSearch) => {
-          const merged = { ...prev, ...updates } as Record<string, any>
-          Object.keys(merged).forEach(
-            (k) => merged[k] === undefined && delete merged[k],
-          )
-          return merged as DeliveriesSearch
+          const next: Record<string, any> = replaceAll
+            ? { ...updates }
+            : { ...prev, ...updates }
+
+          Object.keys(next).forEach((k) => {
+            if (next[k] === undefined) {
+              delete next[k]
+            }
+          })
+
+          return next as DeliveriesSearch
         },
         replace: true,
       })
@@ -163,20 +172,16 @@ function RouteComponent() {
     [navigate],
   )
 
-  const debouncedSearchChange = useMemo(
-    () => debounce(handleSearchChange, 400),
-    [handleSearchChange],
-  )
-
-  useEffect(() => {
-    return () => {
-      debouncedSearchChange.cancel()
-    }
-  }, [debouncedSearchChange])
-
   const columns = useMemo(
-    () => getColumns(openEditModal, handleDeleteDelivery, t),
-    [handleDeleteDelivery, openEditModal, t],
+    () =>
+      getColumns(
+        openEditModal,
+        handleDeleteDelivery,
+        t,
+        i18n.language,
+        timeZone,
+      ),
+    [handleDeleteDelivery, openEditModal, t, i18n.language, timeZone],
   )
 
   return (
@@ -192,10 +197,10 @@ function RouteComponent() {
         isFetching={deliveriesQ.isFetching}
         customFilters={customFilters}
         search={search}
-        onSearchChange={debouncedSearchChange}
-        onPageChange={(p) => handleSearchChange({ pageIndex: String(p) })}
+        onSearchChange={handleSearchChange}
+        onPageChange={(p) => handleSearchChange({ pageIndex: p })}
         onPageSizeChange={(s) =>
-          handleSearchChange({ pageSize: String(s), pageIndex: '0' })
+          handleSearchChange({ pageSize: s, pageIndex: 0 })
         }
         onRowClick={(id) =>
           navigate({
@@ -203,6 +208,7 @@ function RouteComponent() {
             params: { id: String(id) },
           })
         }
+        allowedSortBy={deliveriesSortFields}
       />
       {modalState.type !== 'closed' && (
         <DeliveryForm

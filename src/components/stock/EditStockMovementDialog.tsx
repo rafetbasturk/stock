@@ -7,9 +7,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { StockMovementFields } from '@/components/stock/StockMovementFields'
 import { useTranslation } from 'react-i18next'
 import { useUpdateStockMovement } from '@/lib/mutations/stock'
 
@@ -36,7 +34,7 @@ export function EditStockMovementDialog({
     }
   }, [movement])
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault()
     if (!movement) return
 
@@ -68,27 +66,12 @@ export function EditStockMovementDialog({
           <DialogTitle>{t('edit_movement')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="quantity">{t('quantity')}</Label>
-            <Input
-              id="quantity"
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              placeholder="0"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="notes">{t('notes')}</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder={t('notes_placeholder')}
-            />
-          </div>
+          <StockMovementFields
+            quantity={quantity}
+            notes={notes}
+            onQuantityChange={setQuantity}
+            onNotesChange={setNotes}
+          />
 
           <DialogFooter>
             <Button

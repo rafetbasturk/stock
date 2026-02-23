@@ -3,11 +3,14 @@ import type { ColumnDef } from '@tanstack/react-table'
 import type { ActionMenuItem, OrderListRow } from '@/types'
 import { DataTableRowActions } from '@/components/DataTableRowActions'
 import StatusBadge from '../StatusBadge'
+import { formatDateTime } from '@/lib/datetime'
 
 export const getColumns = (
   onEdit: (order: OrderListRow) => void,
   onDelete: (id: number) => void,
   t: (key: string) => string,
+  locale: string,
+  timeZone: string,
 ): Array<ColumnDef<OrderListRow>> => {
   const orderActions: Array<ActionMenuItem<OrderListRow>> = [
     {
@@ -44,8 +47,6 @@ export const getColumns = (
     },
     {
       id: 'actions',
-      enableSorting: false,
-      enableHiding: false,
       size: 28,
       cell: ({ row }) => (
         <DataTableRowActions row={row} actions={orderActions} />
@@ -63,7 +64,13 @@ export const getColumns = (
       header: t('orders.columns.order_date'),
       cell: ({ row }) => (
         <div className="font-medium truncate">
-          {new Date(row.getValue('order_date')).toLocaleDateString('tr-TR')}
+          {formatDateTime(row.getValue('order_date') as string, {
+            locale,
+            timeZone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          })}
         </div>
       ),
     },
@@ -71,25 +78,12 @@ export const getColumns = (
       id: 'customer_name',
       accessorFn: (row) => row.customer.name,
       header: t('orders.columns.customer'),
+      meta: {
+        sortKey: 'customer',
+      },
       cell: ({ row }) => (
         <div className="font-medium truncate">{row.original.customer.name}</div>
       ),
-      filterFn: (row, columnId, filterValue) => {
-        if (
-          !filterValue ||
-          (Array.isArray(filterValue) && filterValue.length === 0)
-        ) {
-          return true
-        }
-
-        const cellValue = String(row.getValue(columnId))
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(cellValue)
-        }
-
-        return cellValue === filterValue
-      },
     },
     {
       accessorKey: 'delivery_address',
@@ -109,21 +103,8 @@ export const getColumns = (
 
         return <StatusBadge status={status} className="w-full" />
       },
-      filterFn: (row, columnId, filterValue) => {
-        if (
-          !filterValue ||
-          (Array.isArray(filterValue) && filterValue.length === 0)
-        ) {
-          return true
-        }
-
-        const cellValue = String(row.getValue(columnId))
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(cellValue)
-        }
-
-        return cellValue === filterValue
+      meta: {
+        headerAlign: 'center',
       },
     },
     {
@@ -144,21 +125,21 @@ export const getColumns = (
         return <div className="text-right font-medium">{formatted}</div>
       },
     },
-    {
-      id: 'customerId',
-      accessorKey: 'customerId',
-      meta: { isFilterOnly: true },
-      enableHiding: false,
-      enableSorting: false,
-      enableResizing: false,
-    },
-    {
-      id: 'dateRange',
-      accessorKey: 'dateRange',
-      meta: { isFilterOnly: true },
-      enableHiding: false,
-      enableSorting: false,
-      enableResizing: false,
-    },
+    // {
+    //   id: 'customerId',
+    //   accessorKey: 'customerId',
+    //   meta: { isFilterOnly: true },
+    //   enableHiding: false,
+    //   enableSorting: false,
+    //   enableResizing: false,
+    // },
+    // {
+    //   id: 'dateRange',
+    //   accessorKey: 'dateRange',
+    //   meta: { isFilterOnly: true },
+    //   enableHiding: false,
+    //   enableSorting: false,
+    //   enableResizing: false,
+    // },
   ]
 }

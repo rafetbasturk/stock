@@ -9,6 +9,8 @@ import CustomerForm from '@/components/customers/CustomerForm'
 import PageHeader from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useAppTimeZone } from '@/hooks/useAppTimeZone'
+import { formatDateTime } from '@/lib/datetime'
 import { customerQuery } from '@/lib/queries/customers'
 
 export const Route = createFileRoute('/customers/$id')({
@@ -33,6 +35,7 @@ export const Route = createFileRoute('/customers/$id')({
 
 function RouteComponent() {
   const { t, i18n } = useTranslation('details')
+  const timeZone = useAppTimeZone()
   const { id } = Route.useParams()
   const customerId = parseCustomerId(id)
 
@@ -118,9 +121,13 @@ function RouteComponent() {
           <DetailItem
             icon={Calendar}
             label={t('common.last_update')}
-            value={new Date(customer.updated_at).toLocaleDateString(
-              i18n.language,
-            )}
+            value={formatDateTime(customer.updated_at, {
+              locale: i18n.language,
+              timeZone,
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+            })}
           />
         </CardContent>
       </Card>

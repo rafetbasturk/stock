@@ -6,11 +6,15 @@ import { DataTableRowActions } from '../DataTableRowActions'
 import { convertToCurrencyFormat } from '@/lib/currency'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
+import { formatDateTime } from '@/lib/datetime'
+import { cn } from '@/lib/utils'
 
 export function getColumns(
   onEdit: (delivery: DeliveryListRow) => void,
   onDelete: (id: number) => void,
   t: (key: string) => string,
+  locale: string,
+  timeZone: string,
 ): ColumnDef<DeliveryListRow, unknown>[] {
   const deliveryActions: ActionMenuItem<DeliveryListRow>[] = [
     {
@@ -74,17 +78,30 @@ export function getColumns(
       header: t('deliveries.columns.delivery_date'),
       size: 200,
       cell: ({ row }) => {
-        const formatted = new Date(
-          row.getValue('delivery_date'),
-        ).toLocaleDateString('tr-TR')
+        const formatted = formatDateTime(
+          row.getValue('delivery_date') as string,
+          {
+            locale,
+            timeZone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          },
+        )
         return <div>{formatted}</div>
       },
     },
     {
+      id: 'customer_name',
+      accessorFn: (row) => row.customer.name,
       header: t('deliveries.columns.customer'),
-      accessorKey: 'customerId',
+      meta: {
+        sortKey: 'customer',
+      },
       size: 200,
-      cell: ({ row }) => <div>{row.original.customer.name}</div>,
+      cell: ({ row }) => (
+        <div className="font-medium truncate">{row.original.customer.name}</div>
+      ),
     },
     {
       accessorKey: 'kind',
@@ -95,15 +112,21 @@ export function getColumns(
         return (
           <Badge
             variant="outline"
-            className={
+            className={cn(
+              'w-full',
               isReturn
                 ? 'border-red-300 text-red-700 bg-red-50'
-                : 'border-green-300 text-green-700 bg-green-50'
-            }
+                : 'border-green-300 text-green-700 bg-green-50',
+            )}
           >
-            {isReturn ? t('deliveries.kinds.return') : t('deliveries.kinds.delivery')}
+            {isReturn
+              ? t('deliveries.kinds.return')
+              : t('deliveries.kinds.delivery')}
           </Badge>
         )
+      },
+      meta: {
+        headerAlign: 'center',
       },
     },
     {

@@ -1,12 +1,12 @@
 import { Outlet, createFileRoute } from '@tanstack/react-router'
-import { TerminalSquareIcon } from 'lucide-react'
+import { ListOrdered } from 'lucide-react'
 
 export const Route = createFileRoute('/orders')({
   component: RouteComponent,
   staticData: {
     sidebar: {
       label: 'nav.orders',
-      icon: TerminalSquareIcon,
+      icon: ListOrdered,
       order: 20,
     },
   },

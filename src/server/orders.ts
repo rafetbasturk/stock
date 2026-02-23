@@ -4,11 +4,9 @@ import {
   and,
   desc as drizzleDesc,
   eq,
-  gte,
   ilike,
   inArray,
   isNull,
-  lte,
   notInArray,
   or,
   sql,
@@ -285,10 +283,6 @@ export const getPaginatedOrders = createServerFn()
     const safePageIndex = Math.max(0, pageIndex)
     const safePageSize = Math.min(Math.max(10, pageSize), 100)
 
-    const startDate = startDateRaw ? new Date(`${startDateRaw}T00:00:00`) : null
-
-    const endDate = endDateRaw ? new Date(`${endDateRaw}T23:59:59.999`) : null
-
     const normalizedQ = normalizeParams(q)
     const normalizedStatus = normalizeParams(status)
     const normalizedCustomerId = normalizeParams(customerId)
@@ -306,12 +300,16 @@ export const getPaginatedOrders = createServerFn()
       )
     }
 
-    if (startDate) {
-      conditions.push(gte(ordersTable.order_date, startDate))
+    if (startDateRaw) {
+      conditions.push(
+        sql`${ordersTable.order_date} >= (${startDateRaw}::date AT TIME ZONE 'Europe/Istanbul')`,
+      )
     }
 
-    if (endDate) {
-      conditions.push(lte(ordersTable.order_date, endDate))
+    if (endDateRaw) {
+      conditions.push(
+        sql`${ordersTable.order_date} < ((${endDateRaw}::date + INTERVAL '1 day') AT TIME ZONE 'Europe/Istanbul')`,
+      )
     }
 
     if (normalizedStatus) {
@@ -380,6 +378,12 @@ export const getPaginatedOrders = createServerFn()
 
           const dir = sortDir === 'asc' ? asc : desc
 
+          const customerNameExpr = sql<string>`(
+            SELECT "customers"."name"
+            FROM "customers"
+            WHERE "customers"."id" = ${o.customer_id}
+          )`
+
           switch (sortBy) {
             case 'order_number':
               return [dir(o.order_number), desc(o.order_date), asc(o.id)]
@@ -390,8 +394,8 @@ export const getPaginatedOrders = createServerFn()
             case 'status':
               return [dir(o.status), desc(o.order_date), asc(o.id)]
 
-            case 'currency':
-              return [dir(o.currency), desc(o.order_date), asc(o.id)]
+            case 'customer':
+              return [dir(customerNameExpr), desc(o.order_date), asc(o.id)]
 
             default:
               return [desc(o.order_date), asc(o.id)]

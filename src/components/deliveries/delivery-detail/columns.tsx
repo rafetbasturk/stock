@@ -1,8 +1,12 @@
 // src/components/deliveries/deliveryItemsColumns.tsx
 import { DeliveryItemRow } from '@/types'
 import type { ColumnDef } from '@tanstack/react-table'
+import { formatDateTime } from '@/lib/datetime'
 
-export const getColumns = (): ColumnDef<DeliveryItemRow>[] => [
+export const getColumns = (
+  locale: string,
+  timeZone: string,
+): ColumnDef<DeliveryItemRow>[] => [
   // ROW NUMBER
   {
     id: 'row_number',
@@ -52,7 +56,15 @@ export const getColumns = (): ColumnDef<DeliveryItemRow>[] => [
     size: 100,
     meta: { filterTitle: 'Sipariş Tarihi' },
     cell: ({ row }) => (
-      <div>{row.original.order_date.toLocaleDateString('tr-TR')}</div>
+      <div>
+        {formatDateTime(row.original.order_date, {
+          locale,
+          timeZone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        })}
+      </div>
     ),
   },
 

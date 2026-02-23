@@ -1,22 +1,25 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { HistoryIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import type { DataTableFilter } from '@/components/DataTable'
-import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog'
-import PageHeader from '@/components/PageHeader'
-import { EditStockMovementDialog } from '@/components/stock/EditStockMovementDialog'
+
+import type { DataTableFilter } from '@/components/datatable/types'
+import type { MovementRow } from '@/types'
+import { useAppTimeZone } from '@/hooks/useAppTimeZone'
 import { useDeleteStockMovement } from '@/lib/mutations/stock'
 import { stockQuery } from '@/lib/queries/stock'
 import { stockSearchSchema } from '@/lib/types/types.search'
+import { HistoryModalState } from '@/lib/types/types.modal'
+
+import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog'
+import PageHeader from '@/components/PageHeader'
+import { EditStockMovementDialog } from '@/components/stock/EditStockMovementDialog'
 import { getColumns } from '@/components/stock/columns'
 import { StockDataTable } from '@/components/stock/StockDataTable'
-import { HistoryModalState } from '@/lib/types/types.modal'
-import type { MovementRow } from '@/types'
-import { debounce } from '@/lib/debounce'
+import { getStockMovementFilterOptions } from '@/components/stock/movementPresentation'
 
 export const Route = createFileRoute('/stock/history')({
   component: RouteComponent,
@@ -37,7 +40,8 @@ export const Route = createFileRoute('/stock/history')({
 function RouteComponent() {
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
-  const { t } = useTranslation(['stock', 'entities'])
+  const { t, i18n } = useTranslation(['stock', 'entities'])
+  const timeZone = useAppTimeZone()
   const deleteMutation = useDeleteStockMovement()
 
   const [modalState, setModalState] = useState<HistoryModalState>({
@@ -53,33 +57,50 @@ function RouteComponent() {
         columnId: 'movementType',
         label: t('movement_type_filter'),
         type: 'multi',
-        options: [
-          { value: 'IN', label: t('stock_in') },
-          { value: 'OUT', label: t('stock_out') },
-          { value: 'ADJUSTMENT', label: t('adjust_stock') },
-          { value: 'RESERVE', label: t('movement_types.reserve') },
-          { value: 'RELEASE', label: t('movement_types.release') },
-        ],
+        options: getStockMovementFilterOptions(t),
       },
     ],
     [t],
   )
 
-  const handleNavigateToSource = useCallback(
-    (movement: MovementRow) => {
-      const route =
-        movement.reference_type === 'order' ? '/orders' : '/deliveries'
-      ;(navigate as any)({
-        to: `${route}/$id`,
-        params: { id: String(movement.reference_id) },
-      })
-    },
+  const navigateToProduct = useCallback(
+    (id: number) =>
+      navigate({
+        to: '/products/$id',
+        params: { id: String(id) },
+      }),
     [navigate],
   )
 
+  const handleNavigateToSource = useCallback(
+    (movement: MovementRow) => {
+      const sourceId = movement.reference_id
+      if (!sourceId) return
+
+      if (movement.reference_type === 'transfer') {
+        navigateToProduct(sourceId)
+        return
+      }
+
+      if (movement.reference_type === 'order') {
+        navigate({
+          to: '/orders/$id',
+          params: { id: String(sourceId) },
+        })
+        return
+      }
+
+      navigate({
+        to: '/deliveries/$id',
+        params: { id: String(sourceId) },
+      })
+    },
+    [navigate, navigateToProduct],
+  )
+
   const columns = useMemo(
-    () => getColumns(setModalState, t, handleNavigateToSource),
-    [t, handleNavigateToSource],
+    () => getColumns(setModalState, t, handleNavigateToSource, i18n.language),
+    [t, handleNavigateToSource, i18n.language, timeZone],
   )
 
   const handleSearchChange = useCallback(
@@ -105,17 +126,6 @@ function RouteComponent() {
     [navigate],
   )
 
-  const debouncedSearchChange = useMemo(
-    () => debounce(handleSearchChange, 400),
-    [handleSearchChange],
-  )
-
-  useEffect(() => {
-    return () => {
-      debouncedSearchChange.cancel()
-    }
-  }, [debouncedSearchChange])
-
   return (
     <div className="space-y-6 p-6">
       <PageHeader
@@ -132,7 +142,7 @@ function RouteComponent() {
         customFilters={customFilters}
         pageIndex={search.pageIndex}
         pageSize={search.pageSize}
-        onSearchChange={debouncedSearchChange}
+        onSearchChange={handleSearchChange}
         onPageChange={(index) =>
           navigate({
             search: (prev) => ({ ...prev, pageIndex: index }),
@@ -147,10 +157,7 @@ function RouteComponent() {
         }
         onRowClick={(row) => {
           if (row.product_id && !row.product?.deleted_at) {
-            ;(navigate as any)({
-              to: '/products/$id',
-              params: { id: String(row.product_id) },
-            })
+            navigateToProduct(row.product_id)
             return
           }
 
@@ -167,9 +174,9 @@ function RouteComponent() {
       <EditStockMovementDialog
         open={modalState.type === 'editing'}
         movement={modalState.movement}
-        onOpenChange={(open) =>
-          setModalState(open ? modalState : { type: 'closed', movement: null })
-        }
+        onOpenChange={(open) => {
+          if (!open) setModalState({ type: 'closed', movement: null })
+        }}
       />
 
       <ConfirmDeleteDialog

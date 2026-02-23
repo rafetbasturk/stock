@@ -10,5 +10,6 @@
   "no_results": "Sonuç bulunamadı.",
   "records_count": "{{count}} kayıt",
   "rows_per_page": "Sayfa başı:",
-  "page_status": "Sayfa {{current}} / {{total}}"
+  "page_status": "Sayfa {{current}} / {{total}}",
+  "filters": "Filtreler"
 }

@@ -1,73 +1,71 @@
 // src/lib/filtersUtility.ts
-import type { ColumnFiltersState } from "@tanstack/react-table";
-import type { DataTableFilter } from "@/components/DataTable";
+import type { ColumnFiltersState } from '@tanstack/react-table'
+import type { DataTableFilter } from '@/components/datatable/types'
 
-export const FILTER_DELIMITER = "|";
+export const FILTER_DELIMITER = '|'
 
 const stripOuterQuotes = (s: string) => {
-  const t = s.trim();
+  const t = s.trim()
   return t.length >= 2 && t.startsWith('"') && t.endsWith('"')
     ? t.slice(1, -1)
-    : t;
-};
+    : t
+}
 
 export function encodeFiltersToParams(
   filters: ColumnFiltersState,
-  filterDefs?: { columnId: string }[]
+  filterDefs?: { columnId: string }[],
 ) {
-  const params: Record<string, string | undefined> = {};
-  const allowedFilterIds = filterDefs?.map((f) => f.columnId);
+  const params: Record<string, string | undefined> = {}
+  const allowedFilterIds = filterDefs?.map((f) => f.columnId)
 
   for (const f of filters) {
-    if (allowedFilterIds && !allowedFilterIds.includes(f.id)) continue;
+    if (allowedFilterIds && !allowedFilterIds.includes(f.id)) continue
 
     if (!f.value || (Array.isArray(f.value) && f.value.length === 0)) {
-      params[f.id] = undefined;
-      continue;
+      params[f.id] = undefined
+      continue
     }
 
     if (Array.isArray(f.value)) {
       params[f.id] = f.value
         .map((v) => stripOuterQuotes(String(v)))
-        .join(FILTER_DELIMITER);
+        .join(FILTER_DELIMITER)
     } else {
-      params[f.id] = stripOuterQuotes(String(f.value));
+      params[f.id] = stripOuterQuotes(String(f.value))
     }
   }
 
-  return params;
+  return params
 }
 
 export function decodeParamsToFilters(
   search: Record<string, string | undefined>,
-  filterDefs: DataTableFilter[]
+  filterDefs: DataTableFilter[],
 ): ColumnFiltersState {
-  const out: ColumnFiltersState = [];
+  const out: ColumnFiltersState = []
 
   for (const f of filterDefs) {
-    if (f.isVirtual) continue;
+    const raw = search[f.columnId]
+    if (raw == null || raw === '') continue
 
-    const raw = search[f.columnId];
-    if (raw == null || raw === "") continue;
+    const normalized = stripOuterQuotes(raw)
 
-    const normalized = stripOuterQuotes(raw);
-
-    if (f.type === "multi") {
+    if (f.type === 'multi') {
       out.push({
         id: f.columnId,
         value: normalized
           .split(FILTER_DELIMITER)
           .map(stripOuterQuotes)
           .filter(Boolean),
-      });
-      continue;
+      })
+      continue
     }
 
-    if (f.type === "select" || f.type === "text") {
-      out.push({ id: f.columnId, value: normalized });
-      continue;
+    if (f.type === 'select' || f.type === 'text') {
+      out.push({ id: f.columnId, value: normalized })
+      continue
     }
   }
 
-  return out;
+  return out
 }

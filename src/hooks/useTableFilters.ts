@@ -1,11 +1,8 @@
 // src/hooks/useTableFilters.ts
-
 import { useMemo } from 'react'
 import type { Table } from '@tanstack/react-table'
-import type { DataTableFilter } from '@/components/DataTable'
 import { useTranslation } from 'react-i18next'
-
-type TableSearch = Record<string, string | number | undefined>
+import type { DataTableFilter, TableSearch } from '@/components/datatable/types'
 
 interface UseTableFiltersProps<TData> {
   table: Table<TData>
@@ -78,8 +75,6 @@ export function useTableFilters<TData>({
     */
 
     for (const filter of filters) {
-      if (filter.isVirtual) continue
-
       const raw = search[filter.columnId]
 
       if (!raw) continue
@@ -130,26 +125,10 @@ export function useTableFilters<TData>({
 
   const hasActiveFilters = activeFilters.length > 0
 
-  /*
-  Clear helpers (still update React Table UI state)
-  */
-
-  const clearAllFilters = () => {
-    table.setColumnFilters([])
-  }
-
-  const clearFilter = (columnId: string) => {
-    table.getColumn(columnId)?.setFilterValue(undefined)
-  }
-
   return {
     handleSingleFilterChange,
     handleMultiFilterChange,
-
     activeFilters,
     hasActiveFilters,
-
-    clearAllFilters,
-    clearFilter,
   }
 }

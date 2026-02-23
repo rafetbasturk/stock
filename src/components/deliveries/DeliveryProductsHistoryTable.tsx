@@ -1,6 +1,7 @@
 import { CheckCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DeliveryWithItems } from "@/types";
+import { useTranslation } from "react-i18next";
 import {
   Table,
   TableBody,
@@ -10,12 +11,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { useAppTimeZone } from "@/hooks/useAppTimeZone";
+import { formatDateTime } from "@/lib/datetime";
 
 export function DeliveryProductsHistoryTable({
   delivery,
 }: {
   delivery: DeliveryWithItems;
 }) {
+  const { i18n } = useTranslation();
+  const timeZone = useAppTimeZone();
   return (
     <div
       className={cn(
@@ -180,9 +185,13 @@ export function DeliveryProductsHistoryTable({
                               variant="secondary"
                               className="text-xs px-2 py-0.5 w-fit"
                             >
-                              {new Date(
-                                d.delivery.delivery_date
-                              ).toLocaleDateString("tr-TR")}
+                              {formatDateTime(d.delivery.delivery_date, {
+                                locale: i18n.language,
+                                timeZone,
+                                year: "numeric",
+                                month: "2-digit",
+                                day: "2-digit",
+                              })}
                               {" — "}
                               {d.delivery.delivery_number}
                               {" — "}

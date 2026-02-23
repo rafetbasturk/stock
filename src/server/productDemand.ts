@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { and, asc, desc, eq, gte, ilike, lte, ne, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, ilike, ne, or, sql } from 'drizzle-orm'
 import { normalizeParams, notDeleted } from './utils'
 import type { SQL } from 'drizzle-orm'
 import { db } from '@/db'
@@ -28,9 +28,6 @@ export const getPaginatedProductDemand = createServerFn()
     const safePageIndex = Math.max(0, pageIndex)
     const safePageSize = Math.min(Math.max(10, pageSize), 100)
 
-    const startDate = startDateRaw ? new Date(`${startDateRaw}T00:00:00`) : null
-    const endDate = endDateRaw ? new Date(`${endDateRaw}T23:59:59.999`) : null
-
     const normalizedQ = normalizeParams(q)
     const normalizedCustomerId = normalizeParams(customerId)
 
@@ -54,12 +51,16 @@ export const getPaginatedProductDemand = createServerFn()
       )
     }
 
-    if (startDate) {
-      conditions.push(gte(ordersTable.order_date, startDate))
+    if (startDateRaw) {
+      conditions.push(
+        sql`${ordersTable.order_date} >= (${startDateRaw}::date AT TIME ZONE 'Europe/Istanbul')`,
+      )
     }
 
-    if (endDate) {
-      conditions.push(lte(ordersTable.order_date, endDate))
+    if (endDateRaw) {
+      conditions.push(
+        sql`${ordersTable.order_date} < ((${endDateRaw}::date + INTERVAL '1 day') AT TIME ZONE 'Europe/Istanbul')`,
+      )
     }
 
     if (normalizedCustomerId) {

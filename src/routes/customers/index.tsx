@@ -10,13 +10,13 @@ import { getColumns } from '@/components/customers/columns'
 import { CustomerListHeader } from '@/components/customers/CustomerListHeader'
 import { CustomersDataTable } from '@/components/customers/CustomersDataTable'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { debounce } from '@/lib/debounce'
 import { useDeleteCustomerMutation } from '@/lib/mutations/customers'
 import { customersPaginatedQuery } from '@/lib/queries/customers'
 import {
   CustomersSearch,
   customersSearchSchema,
   normalizeCustomersSearch,
+  customerSortFields,
 } from '@/lib/types/types.search'
 import { ModalState } from '@/lib/types/types.modal'
 
@@ -99,31 +99,27 @@ function CustomerList() {
     }
   }, [pendingDeleteCustomer, pendingDeleteId])
 
-  // Handle search changes with proper type safety
   const handleSearchChange = useCallback(
-    (updates: Partial<CustomersSearch>) => {
+    (updates: Partial<CustomersSearch>, replaceAll = false) => {
       navigate({
-        search: (prev) => ({
-          ...prev,
-          ...updates,
-        }),
+        search: (prev: CustomersSearch) => {
+          const next: Record<string, any> = replaceAll
+            ? { ...updates }
+            : { ...prev, ...updates }
+
+          Object.keys(next).forEach((k) => {
+            if (next[k] === undefined) {
+              delete next[k]
+            }
+          })
+
+          return next as CustomersSearch
+        },
         replace: true,
       })
     },
     [navigate],
   )
-
-  // Stable debounced search callback
-  const debouncedSearchChange = useMemo(
-    () => debounce(handleSearchChange, 400),
-    [handleSearchChange],
-  )
-
-  useEffect(() => {
-    return () => {
-      debouncedSearchChange.cancel()
-    }
-  }, [debouncedSearchChange])
 
   const columns = useMemo(
     () => getColumns(openEditModal, handleDeleteCustomer, t),
@@ -141,7 +137,7 @@ function CustomerList() {
         pageSize={pageSize}
         isFetching={customersQ.isFetching}
         search={search}
-        onSearchChange={debouncedSearchChange}
+        onSearchChange={handleSearchChange}
         onPageChange={(p) => handleSearchChange({ pageIndex: p })}
         onPageSizeChange={(s) =>
           handleSearchChange({ pageSize: s, pageIndex: 0 })
@@ -152,6 +148,7 @@ function CustomerList() {
             params: { id: String(id) },
           })
         }
+        allowedSortBy={customerSortFields}
       />
 
       {modalState.type !== 'closed' && (

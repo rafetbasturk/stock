@@ -1,11 +1,9 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import type { ProductListRow } from '@/types'
-import type { ProductsSearch } from '@/lib/types/types.search'
-import type { DataTableFilter } from '@/components/DataTable'
-import DataTable from '@/components/DataTable'
+import type { ProductsSearch, SearchUpdates } from '@/lib/types/types.search'
+import type { DataTableFilter } from '@/components/datatable/types'
+import DataTable from '@/components/datatable'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-
-type SearchUpdates = Record<string, string | number | undefined>
 
 interface ProductsDataTableProps {
   products: Array<ProductListRow>
@@ -20,6 +18,7 @@ interface ProductsDataTableProps {
   onPageChange: (pageIndex: number) => void
   onPageSizeChange: (pageSize: number) => void
   onRowClick: (id: number) => void
+  allowedSortBy?: ReadonlyArray<string>
 }
 
 export function ProductsDataTable({
@@ -35,6 +34,7 @@ export function ProductsDataTable({
   onPageChange,
   onPageSizeChange,
   onRowClick,
+  allowedSortBy,
 }: ProductsDataTableProps) {
   return (
     <div className="mt-6 border rounded-lg shadow-sm">
@@ -54,8 +54,13 @@ export function ProductsDataTable({
           customer: false,
           specs: false,
           specs_net: false,
+          price: false,
+          notes: false,
+          other_codes: false,
         }}
         onRowClick={(row) => onRowClick(row.id)}
+        allowedSortBy={allowedSortBy}
+        showColumnVisibilityToggle={true}
       />
     </div>
   )

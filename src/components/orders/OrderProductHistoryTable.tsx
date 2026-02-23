@@ -2,6 +2,9 @@ import { CheckCircle, Clock } from 'lucide-react'
 import type { OrderListRow } from '@/types'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import { useAppTimeZone } from '@/hooks/useAppTimeZone'
+import { formatDateTime } from '@/lib/datetime'
+import { useTranslation } from 'react-i18next'
 import {
   Table,
   TableBody,
@@ -12,6 +15,9 @@ import {
 } from '@/components/ui/table'
 
 export function OrderProductHistoryTable({ order }: { order: OrderListRow }) {
+  const { i18n } = useTranslation()
+  const timeZone = useAppTimeZone()
+
   type DeliveryHistory = {
     id: number
     delivered_quantity: number
@@ -171,9 +177,13 @@ export function OrderProductHistoryTable({ order }: { order: OrderListRow }) {
                             variant="secondary"
                             className="text-[11px] px-2 py-0.5 w-fit"
                           >
-                            {new Date(
-                              d.delivery.delivery_date,
-                            ).toLocaleDateString('tr-TR')}
+                            {formatDateTime(d.delivery.delivery_date, {
+                              locale: i18n.language,
+                              timeZone,
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                            })}
                             {' — '}
                             {d.delivery.delivery_number} —{' '}
                             {signedQty(d) > 0 ? '+' : ''}

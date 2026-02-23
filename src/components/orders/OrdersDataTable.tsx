@@ -1,12 +1,9 @@
 import { OrderProductHistoryTable } from './OrderProductHistoryTable'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { OrderListRow } from '@/types'
-import type { OrdersSearch } from '@/lib/types/types.search'
-import type { DataTableFilter } from '@/components/DataTable'
-import DataTable from '@/components/DataTable'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
-
-type SearchUpdates = Record<string, string | number | undefined>
+import type { OrdersSearch, SearchUpdates } from '@/lib/types/types.search'
+import DataTable from '@/components/datatable'
+import { DataTableFilter } from '../datatable/types'
 
 interface TableProps {
   orders: Array<OrderListRow>
@@ -21,6 +18,7 @@ interface TableProps {
   onPageChange: (pageIndex: number) => void
   onPageSizeChange: (pageSize: number) => void
   onRowClick: (id: number) => void
+  allowedSortBy?: ReadonlyArray<string>
 }
 
 export function OrdersDataTable({
@@ -36,10 +34,10 @@ export function OrdersDataTable({
   onPageChange,
   onPageSizeChange,
   onRowClick,
+  allowedSortBy,
 }: TableProps) {
   return (
     <div className="mt-6 border rounded-lg shadow-sm">
-      {isFetching && <LoadingSpinner variant="inline" />}
       <DataTable
         data={orders}
         columns={columns}
@@ -53,6 +51,8 @@ export function OrdersDataTable({
         onSearchChange={onSearchChange}
         onRowClick={(row) => onRowClick(row.id)}
         renderExpandedRow={(o) => <OrderProductHistoryTable order={o} />}
+        allowedSortBy={allowedSortBy}
+        isFetching={isFetching}
       />
     </div>
   )

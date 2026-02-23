@@ -6,15 +6,17 @@ import { zodValidator } from '@tanstack/zod-adapter'
 import { useTranslation } from 'react-i18next'
 
 import type { ProductListRow } from '@/types'
-import type { DataTableFilter } from '@/components/DataTable'
 import type { ProductsSearch } from '@/lib/types/types.search'
-import { debounce } from '@/lib/debounce'
 import { useDeleteProductMutation } from '@/lib/mutations/products'
 import { getFilterOptions, productsQuery } from '@/lib/queries/products'
 import {
   normalizeProductsSearch,
+  productSortFields,
   productsSearchSchema,
 } from '@/lib/types/types.search'
+
+import type { DataTableFilter } from '@/components/datatable/types'
+import type { ModalState } from '@/lib/types/types.modal'
 
 import { getColumns } from '@/components/products/columns'
 import ProductForm from '@/components/products/ProductForm'
@@ -23,7 +25,6 @@ import { ProductListHeader } from '@/components/products/ProductListHeader'
 import { ProductsDataTable } from '@/components/products/ProductsDataTable'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { StockAdjustmentDialog } from '@/components/stock/StockAdjustmentDialog'
-import { ModalState } from '@/lib/types/types.modal'
 
 export const Route = createFileRoute('/products/')({
   validateSearch: zodValidator(productsSearchSchema),
@@ -118,8 +119,8 @@ function ProductList() {
   )
 
   // Memoize customFilters with filtered empty materials
-  const customFilters: Array<DataTableFilter> = useMemo(
-    () => [
+  const customFilters: Array<DataTableFilter> = useMemo(() => {
+    const filters: Array<DataTableFilter> = [
       {
         columnId: 'material',
         label: t('products.filters.material'),
@@ -131,37 +132,44 @@ function ProductList() {
             label: m,
           })),
       },
-    ],
-    [filterOptions.customers, filterOptions.materials, t],
-  )
+    ]
 
-  // Handle search changes with proper type safety
+    if (filterOptions.customers.length > 1) {
+      filters.push({
+        columnId: 'customerId',
+        label: t('products.filters.customer'),
+        type: 'multi',
+        options: filterOptions.customers.map((c) => ({
+          value: String(c.id),
+          label: c.name,
+        })),
+      })
+    }
+
+    return filters
+  }, [filterOptions.customers, filterOptions.materials, t])
+
   const handleSearchChange = useCallback(
-    (updates: Record<string, string | number | undefined>) => {
+    (updates: Partial<ProductsSearch>, replaceAll = false) => {
       navigate({
         search: (prev: ProductsSearch) => {
-          const merged = { ...prev, ...updates } as Record<string, any>
-          Object.keys(merged).forEach(
-            (k) => merged[k] === undefined && delete merged[k],
-          )
-          return merged as ProductsSearch
+          const next: Record<string, any> = replaceAll
+            ? { ...updates }
+            : { ...prev, ...updates }
+
+          Object.keys(next).forEach((k) => {
+            if (next[k] === undefined) {
+              delete next[k]
+            }
+          })
+
+          return next as ProductsSearch
         },
         replace: true,
       })
     },
     [navigate],
   )
-
-  const debouncedSearchChange = useMemo(
-    () => debounce(handleSearchChange, 400),
-    [handleSearchChange],
-  )
-
-  useEffect(() => {
-    return () => {
-      debouncedSearchChange.cancel()
-    }
-  }, [debouncedSearchChange])
 
   return (
     <>
@@ -175,10 +183,10 @@ function ProductList() {
         search={search}
         columns={columns}
         customFilters={customFilters}
-        onSearchChange={debouncedSearchChange}
-        onPageChange={(p) => handleSearchChange({ pageIndex: String(p) })}
+        onSearchChange={handleSearchChange}
+        onPageChange={(p) => handleSearchChange({ pageIndex: p })}
         onPageSizeChange={(s) =>
-          handleSearchChange({ pageSize: String(s), pageIndex: '0' })
+          handleSearchChange({ pageSize: s, pageIndex: 0 })
         }
         onRowClick={(id) =>
           navigate({
@@ -186,6 +194,7 @@ function ProductList() {
             params: { id: String(id) },
           })
         }
+        allowedSortBy={productSortFields}
       />
 
       {(modalState.type === 'adding' || modalState.type === 'editing') && (

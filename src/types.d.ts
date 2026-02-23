@@ -22,6 +22,8 @@ declare module '@tanstack/react-table' {
     filterTitle?: string
     className?: string | ((cell: TValue, row: TData) => string)
     headerClassName?: string
+    headerAlign?: 'left' | 'center' | 'right'
+    sortKey?: string
     isFilterOnly?: boolean
   }
   interface TableMeta<TData extends unknown> {

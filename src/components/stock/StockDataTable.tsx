@@ -1,5 +1,6 @@
 import { LoadingSpinner } from '../LoadingSpinner'
-import DataTable, { DataTableFilter } from '../DataTable'
+import DataTable from '../datatable'
+import type { DataTableFilter } from '../datatable/types'
 import { ColumnDef } from '@tanstack/react-table'
 import { MovementRow } from '@/types'
 import { StockSearch } from '@/lib/types/types.search'

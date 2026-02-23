@@ -1,14 +1,13 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { useTranslation } from 'react-i18next'
-import type { DataTableFilter } from '@/components/DataTable'
 import type { ProductDemandSearch } from '@/lib/types/types.search'
 import PageHeader from '@/components/PageHeader'
 import { getColumns } from '@/components/product-demand/columns'
 import { ProductDemandDataTable } from '@/components/product-demand/ProductDemandDataTable'
-import { debounce } from '@/lib/debounce'
+import { useAppTimeZone } from '@/hooks/useAppTimeZone'
 import { customersListQuery } from '@/lib/queries/customers'
 import { productDemandQuery } from '@/lib/queries/productDemand'
 import {
@@ -16,6 +15,7 @@ import {
   productDemandSearchSchema,
 } from '@/lib/types/types.search'
 import { Language } from '@/lib/types/types.settings'
+import { DataTableFilter } from '@/components/datatable/types'
 
 export const Route = createFileRoute('/product-demand/')({
   validateSearch: zodValidator(productDemandSearchSchema),
@@ -31,6 +31,7 @@ export const Route = createFileRoute('/product-demand/')({
 
 function RouteComponent() {
   const { t, i18n } = useTranslation('entities')
+  const timeZone = useAppTimeZone()
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
 
@@ -42,8 +43,8 @@ function RouteComponent() {
   const { data, pageIndex, pageSize, total } = demandQ.data
 
   const columns = useMemo(
-    () => getColumns(t, i18n.language as Language),
-    [t, i18n.language],
+    () => getColumns(t, i18n.language as Language, timeZone),
+    [t, i18n.language, timeZone],
   )
 
   const customFilters: Array<DataTableFilter> = useMemo(
@@ -67,31 +68,26 @@ function RouteComponent() {
   )
 
   const handleSearchChange = useCallback(
-    (updates: Record<string, string | number | undefined>) => {
+    (updates: Partial<ProductDemandSearch>, replaceAll = false) => {
       navigate({
         search: (prev: ProductDemandSearch) => {
-          const merged = { ...prev, ...updates } as Record<string, any>
-          Object.keys(merged).forEach(
-            (key) => merged[key] === undefined && delete merged[key],
-          )
-          return merged as ProductDemandSearch
+          const next: Record<string, any> = replaceAll
+            ? { ...updates }
+            : { ...prev, ...updates }
+
+          Object.keys(next).forEach((k) => {
+            if (next[k] === undefined) {
+              delete next[k]
+            }
+          })
+
+          return next as ProductDemandSearch
         },
         replace: true,
       })
     },
     [navigate],
   )
-
-  const debouncedSearchChange = useMemo(
-    () => debounce(handleSearchChange, 400),
-    [handleSearchChange],
-  )
-
-  useEffect(() => {
-    return () => {
-      debouncedSearchChange.cancel()
-    }
-  }, [debouncedSearchChange])
 
   return (
     <>
@@ -110,10 +106,10 @@ function RouteComponent() {
         isFetching={demandQ.isFetching}
         search={search}
         customFilters={customFilters}
-        onSearchChange={debouncedSearchChange}
-        onPageChange={(p) => handleSearchChange({ pageIndex: String(p) })}
+        onSearchChange={handleSearchChange}
+        onPageChange={(p) => handleSearchChange({ pageIndex: p })}
         onPageSizeChange={(s) =>
-          handleSearchChange({ pageSize: String(s), pageIndex: '0' })
+          handleSearchChange({ pageSize: s, pageIndex: 0 })
         }
       />
     </>

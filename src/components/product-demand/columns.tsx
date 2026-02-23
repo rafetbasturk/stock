@@ -1,5 +1,6 @@
 import { Language } from '@/lib/types/types.settings'
 import type { ColumnDef } from '@tanstack/react-table'
+import { formatDateTime } from '@/lib/datetime'
 
 export type ProductDemandRow = {
   customer_id: number
@@ -17,6 +18,7 @@ export type ProductDemandRow = {
 export const getColumns = (
   t: (key: string) => string,
   lang?: Language,
+  timeZone?: string,
 ): Array<ColumnDef<ProductDemandRow>> => {
   return [
     {
@@ -46,10 +48,12 @@ export const getColumns = (
         if (!value) return <div className="text-muted-foreground">-</div>
         return (
           <div>
-            {new Date(value).toLocaleDateString(lang ?? 'tr', {
+            {formatDateTime(value, {
+              locale: lang ?? 'tr',
+              timeZone,
               year: 'numeric',
-              month: 'numeric',
-              day: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
             })}
           </div>
         )

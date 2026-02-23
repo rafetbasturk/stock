@@ -167,6 +167,12 @@ export const getPaginated = createServerFn()
           // Otherwise use manual sorting
           const dir = sortDir === 'desc' ? desc : asc
 
+          const customerNameExpr = sql<string>`(
+            SELECT "customers"."name"
+            FROM "customers"
+            WHERE "customers"."id" = ${p.customer_id}
+          )`
+
           switch (sortBy) {
             case 'code':
               return [dir(p.code), asc(p.id)]
@@ -188,6 +194,9 @@ export const getPaginated = createServerFn()
 
             case 'coating':
               return [dir(p.coating), asc(p.id)]
+
+            case 'customer':
+              return [dir(customerNameExpr), desc(p.code), asc(p.id)]
 
             default:
               return [dir(p.code), asc(p.id)]

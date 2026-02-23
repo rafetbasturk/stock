@@ -7,13 +7,13 @@ import {
   redirect,
   useRouterState,
 } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
+// import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
+// import { TanStackDevtools } from '@tanstack/react-devtools'
+// import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 import { createServerFn } from '@tanstack/react-start'
 import { useMemo } from 'react'
 import { I18nextProvider, useTranslation } from 'react-i18next'
 import { Toaster } from 'sonner'
-import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 import appCss from '../styles.css?url'
 import type { QueryClient } from '@tanstack/react-query'
 import { AppSidebar } from '@/components/AppSidebar'
@@ -134,7 +134,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const i18n = useMemo(() => createI18n(settings.lang), [settings.lang])
 
   return (
-    <html lang={settings.lang} suppressHydrationWarning>
+    <html lang={settings.lang}>
       <head>
         <HeadContent />
         <title>{ROOT_TITLE_BY_LANG[settings.lang]}</title>
@@ -147,7 +147,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           </ClientOnly>
           {children}
           <Toaster position="bottom-right" closeButton />
-          <ClientOnly>
+          {/* <ClientOnly>
             <TanStackDevtools
               config={{
                 position: 'bottom-right',
@@ -160,7 +160,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 TanStackQueryDevtools,
               ]}
             />
-          </ClientOnly>
+          </ClientOnly> */}
           <Scripts />
         </I18nextProvider>
       </body>

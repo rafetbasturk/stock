@@ -10,5 +10,6 @@
   "no_results": "No results found.",
   "records_count": "{{count}} records",
   "rows_per_page": "Rows per page:",
-  "page_status": "Page {{current}} / {{total}}"
+  "page_status": "Page {{current}} / {{total}}",
+  "filters": "Filters"
 }

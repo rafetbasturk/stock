@@ -4,11 +4,9 @@ import {
   and,
   desc as drizzleDesc,
   eq,
-  gte,
   ilike,
   inArray,
   isNull,
-  lte,
   ne,
   or,
   SQL,
@@ -40,11 +38,13 @@ import {
 } from './services/stockService'
 import { deliveriesSearchSchema } from '@/lib/types/types.search'
 
+type DeliveryKind = 'DELIVERY' | 'RETURN'
+
 export interface CreateDeliveryInput {
   customer_id: number
   delivery_number: string
   delivery_date: Date | string
-  kind?: 'DELIVERY' | 'RETURN'
+  kind?: DeliveryKind
   notes?: string
   items: (
     | { order_item_id: number; delivered_quantity: number }
@@ -52,14 +52,33 @@ export interface CreateDeliveryInput {
   )[]
 }
 
-type DeliveryKind = 'DELIVERY' | 'RETURN'
-
 function resolveDeliveryStockMovement(kind: DeliveryKind, quantity: number) {
   return {
     quantity: kind === 'RETURN' ? quantity : -quantity,
     movementType: kind === 'RETURN' ? 'IN' : 'OUT',
     notePrefix: kind === 'RETURN' ? 'Return' : 'Delivery',
   } as const
+}
+
+function normalizeDeliveryItemsForComparison(
+  items: Array<{
+    delivered_quantity: number
+    order_item_id?: number | null
+    custom_order_item_id?: number | null
+  }>,
+) {
+  return items
+    .map((item) => {
+      if (item.order_item_id != null) {
+        return `order:${item.order_item_id}:${item.delivered_quantity}`
+      }
+      if (item.custom_order_item_id != null) {
+        return `custom:${item.custom_order_item_id}:${item.delivered_quantity}`
+      }
+      return null
+    })
+    .filter((item): item is string => item != null)
+    .sort()
 }
 
 async function assertReturnQuantitiesWithinDeliveredTx(
@@ -536,9 +555,6 @@ export const getPaginatedDeliveries = createServerFn()
     const safePageIndex = Math.max(0, pageIndex)
     const safePageSize = Math.min(Math.max(10, pageSize), 100)
 
-    const startDate = startDateRaw ? new Date(`${startDateRaw}T00:00:00`) : null
-    const endDate = endDateRaw ? new Date(`${endDateRaw}T23:59:59.999`) : null
-
     const normalizedQ = normalizeParams(q)
     const normalizedCustomerId = normalizeParams(customerId)
     const normalizedKind = normalizeParams(kind)
@@ -557,12 +573,16 @@ export const getPaginatedDeliveries = createServerFn()
       )
     }
 
-    if (startDate) {
-      conditions.push(gte(deliveriesTable.delivery_date, startDate))
+    if (startDateRaw) {
+      conditions.push(
+        sql`${deliveriesTable.delivery_date} >= (${startDateRaw}::date AT TIME ZONE 'Europe/Istanbul')`,
+      )
     }
 
-    if (endDate) {
-      conditions.push(lte(deliveriesTable.delivery_date, endDate))
+    if (endDateRaw) {
+      conditions.push(
+        sql`${deliveriesTable.delivery_date} < ((${endDateRaw}::date + INTERVAL '1 day') AT TIME ZONE 'Europe/Istanbul')`,
+      )
     }
 
     if (normalizedCustomerId) {
@@ -668,12 +688,24 @@ export const getPaginatedDeliveries = createServerFn()
 
           const dir = sortDir === 'asc' ? asc : desc
 
+          const customerNameExpr = sql<string>`(
+            SELECT "customers"."name"
+            FROM "customers"
+            WHERE "customers"."id" = ${d.customer_id}
+          )`
+
           switch (sortBy) {
             case 'delivery_number':
               return [dir(d.delivery_number), desc(d.delivery_date), asc(d.id)]
 
             case 'delivery_date':
               return [dir(d.delivery_date), desc(d.delivery_number), asc(d.id)]
+
+            case 'kind':
+              return [dir(d.kind), desc(d.delivery_date), asc(d.id)]
+
+            case 'customer':
+              return [dir(customerNameExpr), desc(d.delivery_date), asc(d.id)]
 
             default:
               return [desc(d.delivery_date), asc(d.id)]
@@ -861,6 +893,56 @@ export const updateDelivery = createServerFn()
           fail('DELIVERY_KIND_CHANGE_NOT_ALLOWED')
         }
 
+        const headerUpdateData = {
+          kind,
+          delivery_number: delivery_number.trim(),
+          delivery_date: normalizeDateForDB(delivery_date),
+          notes: notes?.trim() || null,
+          updated_at: sql`now()`,
+        }
+
+        const oldItems = await tx.query.deliveryItemsTable.findMany({
+          where: and(
+            eq(deliveryItemsTable.delivery_id, deliveryId),
+            isNull(deliveryItemsTable.deleted_at),
+          ),
+          with: {
+            orderItem: true,
+            customOrderItem: true,
+          },
+        })
+
+        const incomingItemsNormalized = normalizeDeliveryItemsForComparison(
+          items.map((item) => ({
+            delivered_quantity: item.delivered_quantity,
+            order_item_id: 'order_item_id' in item ? item.order_item_id : null,
+            custom_order_item_id:
+              'custom_order_item_id' in item ? item.custom_order_item_id : null,
+          })),
+        )
+
+        const existingItemsNormalized = normalizeDeliveryItemsForComparison(
+          oldItems.map((item) => ({
+            delivered_quantity: item.delivered_quantity,
+            order_item_id: item.order_item_id,
+            custom_order_item_id: item.custom_order_item_id,
+          })),
+        )
+
+        const itemsChanged =
+          incomingItemsNormalized.length !== existingItemsNormalized.length ||
+          incomingItemsNormalized.some(
+            (item, index) => item !== existingItemsNormalized[index],
+          )
+
+        if (!itemsChanged) {
+          await tx
+            .update(deliveriesTable)
+            .set(headerUpdateData)
+            .where(eq(deliveriesTable.id, deliveryId))
+          return
+        }
+
         if (kind === 'RETURN') {
           await assertReturnQuantitiesWithinDeliveredTx(tx, items, deliveryId)
         }
@@ -875,17 +957,6 @@ export const updateDelivery = createServerFn()
           deliveryId,
           user.id,
         )
-
-        const oldItems = await tx.query.deliveryItemsTable.findMany({
-          where: and(
-            eq(deliveryItemsTable.delivery_id, deliveryId),
-            isNull(deliveryItemsTable.deleted_at),
-          ),
-          with: {
-            orderItem: true,
-            customOrderItem: true,
-          },
-        })
 
         const affectedOrderIds = new Set<number>()
         for (const old of oldItems) {
@@ -999,13 +1070,7 @@ export const updateDelivery = createServerFn()
         // -------------------------------------------------------
         await tx
           .update(deliveriesTable)
-          .set({
-            kind,
-            delivery_number: delivery_number.trim(),
-            delivery_date: normalizeDateForDB(delivery_date),
-            notes: notes?.trim() || null,
-            updated_at: sql`now()`,
-          })
+          .set(headerUpdateData)
           .where(eq(deliveriesTable.id, deliveryId))
 
         // -------------------------------------------------------

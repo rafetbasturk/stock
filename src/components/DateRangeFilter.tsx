@@ -24,6 +24,9 @@ import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 
 import { cn } from "@/lib/utils"
+import { useAppTimeZone } from "@/hooks/useAppTimeZone"
+import { formatDateTime } from "@/lib/datetime"
+import { useTranslation } from "react-i18next"
 
 interface DateRangeFilterProps {
 
@@ -49,6 +52,8 @@ export function DateRangeFilter({
   end,
   onChange,
 }: DateRangeFilterProps) {
+  const { i18n } = useTranslation()
+  const timeZone = useAppTimeZone()
 
   const [open, setOpen] = React.useState(false)
 
@@ -119,7 +124,9 @@ export function DateRangeFilter({
       thisMonth: {
         start: startOfMonth(now),
         end: endOfMonth(now),
-        label: now.toLocaleString("tr-TR", {
+        label: formatDateTime(now, {
+          locale: i18n.language,
+          timeZone,
           month: "long",
         }),
       },
@@ -127,7 +134,9 @@ export function DateRangeFilter({
       lastMonth: {
         start: startOfMonth(last),
         end: endOfMonth(last),
-        label: last.toLocaleString("tr-TR", {
+        label: formatDateTime(last, {
+          locale: i18n.language,
+          timeZone,
           month: "long",
         }),
       },
@@ -135,14 +144,16 @@ export function DateRangeFilter({
       twoMonthsAgo: {
         start: startOfMonth(twoAgo),
         end: endOfMonth(twoAgo),
-        label: twoAgo.toLocaleString("tr-TR", {
+        label: formatDateTime(twoAgo, {
+          locale: i18n.language,
+          timeZone,
           month: "long",
         }),
       },
 
     }
 
-  }, [now])
+  }, [now, i18n.language, timeZone])
 
 
   function applyRange(
@@ -328,6 +339,7 @@ export function DateRangeFilter({
       <PopoverTrigger asChild>
 
         <Button
+          type="button"
           variant="outline"
           className={cn(
             "w-full md:w-72 justify-start font-normal",
@@ -346,7 +358,7 @@ export function DateRangeFilter({
 
 
       <PopoverContent
-        className="w-auto p-3"
+        className="w-(--radix-popover-trigger-width) max-w-[calc(100vw-2rem)] p-3"
         align="start"
       >
 
@@ -365,6 +377,7 @@ export function DateRangeFilter({
               return (
 
                 <Button
+                  type="button"
                   key={key}
                   size="sm"
                   variant={
@@ -406,6 +419,7 @@ export function DateRangeFilter({
         {/* Clear */}
 
         <Button
+          type="button"
           variant="secondary"
           size="sm"
           className="mt-3 w-full"

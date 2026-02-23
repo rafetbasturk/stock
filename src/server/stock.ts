@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { and, eq, ilike, or, sql } from 'drizzle-orm'
 import {
   createStockMovementTx,
+  createStockTransferTx,
   deleteStockMovementTx,
   updateStockMovementTx,
 } from './services/stockService'
@@ -14,8 +15,13 @@ import { BaseAppError } from '@/lib/error/core'
 import { fail } from '@/lib/error/core/serverError'
 import { stockSearchSchema } from '@/lib/types/types.search'
 
+type CreateStockMovementInput = Omit<
+  InsertStockMovement,
+  'created_by' | 'id' | 'created_at' | 'updated_at' | 'deleted_at'
+>
+
 export const createStockMovement = createServerFn()
-  .inputValidator((data: InsertStockMovement) => data)
+  .inputValidator((data: CreateStockMovementInput) => data)
   .handler(async ({ data }) => {
     const user = await requireAuth()
 
@@ -30,6 +36,36 @@ export const createStockMovement = createServerFn()
       return { success: true }
     } catch (error) {
       console.error('[createStockMovement]', error)
+
+      if (error instanceof BaseAppError) throw error
+
+      fail('STOCK_MOVEMENT_FAILED')
+    }
+  })
+
+export const createStockTransfer = createServerFn()
+  .inputValidator(
+    (data: {
+      from_product_id: number
+      to_product_id: number
+      quantity: number
+      notes?: string | null
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const user = await requireAuth()
+
+    try {
+      await db.transaction(async (tx) => {
+        await createStockTransferTx(tx, {
+          ...data,
+          created_by: user.id,
+        })
+      })
+
+      return { success: true }
+    } catch (error) {
+      console.error('[createStockTransfer]', error)
 
       if (error instanceof BaseAppError) throw error
 

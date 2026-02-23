@@ -75,15 +75,16 @@ export function MultiSelectFilter({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           variant="outline"
-          className="justify-between w-full md:w-48 font-normal"
+          className="justify-between w-full md:w-48 font-normal text-muted-foreground"
         >
           {getLabel()}
-          <ChevronDown className="ml-2 h-4 w-4" />
+          <ChevronDown className="ml-2 size-4 text-muted-foreground opacity-50" />
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-56 p-0">
+      <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
         <Command>
           <CommandInput placeholder={`${filter.label} ara...`} />
 

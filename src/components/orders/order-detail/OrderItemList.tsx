@@ -5,21 +5,25 @@ import { CustomItemRow, getCustomColumns } from './customColumns'
 import { getColumns } from './columns'
 import { DeliveryWithItems, OrderWithItems } from '@/types'
 import { TFunction } from 'i18next'
-import { UseNavigateResult } from '@tanstack/react-router'
 
 type Props = {
   order: OrderWithItems
   deliveries: DeliveryWithItems[]
   t: TFunction
-  navigate: UseNavigateResult<'/products/$id'>
+  onProductClick: (productId: number) => void
 }
 
-export default function OrderItemList({ order, deliveries, t, navigate }: Props) {
+export default function OrderItemList({
+  order,
+  deliveries,
+  t,
+  onProductClick,
+}: Props) {
   const columns = getColumns(deliveries)
   const customColumns = getCustomColumns()
 
   return (
-    <Card className="border-l-4 border-l-primary/70 shadow-sm">
+    <Card className="border-l-4 border-l-primary shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <ListCheckIcon className="size-5 text-primary" />
@@ -36,12 +40,7 @@ export default function OrderItemList({ order, deliveries, t, navigate }: Props)
           <DetailTable
             data={order.items}
             columns={columns}
-            onRowClick={(item) =>
-              navigate({
-                to: `/products/$id`,
-                params: { id: String(item.product.id) },
-              })
-            }
+            onRowClick={(item) => onProductClick(item.product.id)}
           />
         )}
       </CardContent>

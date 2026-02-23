@@ -7,9 +7,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { StockMovementFields } from '@/components/stock/StockMovementFields'
 import { toast } from 'sonner'
 import { createStockMovement } from '@/server/stock'
 import { useTranslation } from 'react-i18next'
@@ -38,7 +36,7 @@ export function StockAdjustmentDialog({
   const [loading, setLoading] = useState(false)
   const [type, setType] = useState<'IN' | 'OUT'>('IN')
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault()
     if (!product) return
 
@@ -57,7 +55,6 @@ export function StockAdjustmentDialog({
           movement_type: type,
           reference_type: 'adjustment',
           reference_id: product.id,
-          created_by: 1, // Will be handled by middleware/session later
           notes,
         },
       })
@@ -83,46 +80,20 @@ export function StockAdjustmentDialog({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="flex gap-4">
-            <Button
-              type="button"
-              variant={type === 'IN' ? 'default' : 'outline'}
-              className="flex-1"
-              onClick={() => setType('IN')}
-            >
-              {t('stock_in')}
-            </Button>
-            <Button
-              type="button"
-              variant={type === 'OUT' ? 'destructive' : 'outline'}
-              className="flex-1"
-              onClick={() => setType('OUT')}
-            >
-              {t('stock_out')}
-            </Button>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="quantity">{t('quantity')}</Label>
-            <Input
-              id="quantity"
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              placeholder="0"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="notes">{t('notes')}</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder={t('notes_placeholder')}
-            />
-          </div>
+          <StockMovementFields
+            quantity={quantity}
+            notes={notes}
+            onQuantityChange={setQuantity}
+            onNotesChange={setNotes}
+            movementType={type}
+            onMovementTypeChange={(value) => {
+              if (value !== 'TRANSFER') {
+                setType(value)
+              }
+            }}
+            allowTypeToggle
+            typeToggleButtonClassName="flex-1"
+          />
 
           <DialogFooter>
             <Button

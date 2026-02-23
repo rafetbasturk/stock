@@ -1,12 +1,16 @@
 import { DetailTable } from '@/components/DetailTable'
 import { getColumns } from './columns'
 import { DeliveryItemRow, DeliveryWithItems } from '@/types'
+import { useAppTimeZone } from '@/hooks/useAppTimeZone'
+import { useTranslation } from 'react-i18next'
 
 interface Props {
   delivery: DeliveryWithItems
 }
 
 export default function DeliveryItemList({ delivery }: Props) {
+  const { i18n } = useTranslation()
+  const timeZone = useAppTimeZone()
   const items = delivery?.items ?? []
   const sign = delivery.kind === 'RETURN' ? -1 : 1
 
@@ -53,7 +57,7 @@ export default function DeliveryItemList({ delivery }: Props) {
       }
     })
 
-  const columns = getColumns()
+  const columns = getColumns(i18n.language, timeZone)
 
   return <DetailTable data={rows} columns={columns} />
 }

@@ -10,23 +10,21 @@ import {
   UserRound,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import {
-  useState,
-  useMemo,
-  type ElementType,
-  type PropsWithChildren,
-} from 'react'
+import { useState, useMemo } from 'react'
 import PageHeader from '@/components/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { convertToCurrencyFormat } from '@/lib/currency'
-import { cn } from '@/lib/utils'
+import { formatPrice } from '@/lib/currency'
+import { formatDateTime } from '@/lib/datetime'
 import { deliveryQuery } from '@/lib/queries/deliveries'
 import { ordersSelectQuery } from '@/lib/queries/orders'
 import { DeliveryForm } from '@/components/deliveries/DeliveryForm'
 import { Button } from '@/components/ui/button'
 import DeliveryItemList from '@/components/deliveries/delivery-detail/DeliveryItemList'
 import type { OrderMinimal } from '@/components/deliveries/DeliveryForm'
+import { useAppTimeZone } from '@/hooks/useAppTimeZone'
+import { DetailItem } from '@/components/DetailItem'
+import { StatBlock } from '@/components/StatBlock'
 
 export const Route = createFileRoute('/deliveries/$id')({
   component: RouteComponent,
@@ -42,6 +40,7 @@ export const Route = createFileRoute('/deliveries/$id')({
 
 function RouteComponent() {
   const { t, i18n } = useTranslation('details')
+  const timeZone = useAppTimeZone()
   const { id } = Route.useParams()
   const deliveryId = parseDeliveryId(id)
 
@@ -171,6 +170,8 @@ function RouteComponent() {
     delivery.items[0]?.customOrderItem?.currency ??
     'TRY'
 
+  const formattedAmount = formatPrice(delivery.total_amount * 100, pageCurrency)
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -205,9 +206,13 @@ function RouteComponent() {
             <DetailItem
               icon={Calendar}
               label={t('deliveries.fields.delivery_date')}
-              value={new Date(delivery.delivery_date).toLocaleDateString(
-                i18n.language,
-              )}
+              value={formatDateTime(delivery.delivery_date, {
+                locale: i18n.language,
+                timeZone,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+              })}
               highlight
             />
             <DetailItem
@@ -236,11 +241,7 @@ function RouteComponent() {
               </span>
               <Separator />
               <span className="text-xl sm:text-2xl font-bold text-primary">
-                {convertToCurrencyFormat({
-                  cents: delivery.total_amount * 100,
-                  currency: pageCurrency,
-                  locale: i18n.language,
-                })}
+                {formattedAmount}
               </span>
             </div>
             <div className="flex gap-6">
@@ -257,7 +258,7 @@ function RouteComponent() {
         </CardContent>
       </Card>
 
-      <Card className="border-l-4 border-l-primary/70 shadow-sm">
+      <Card className="border-l-4 border-l-primary shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg">
             {t('deliveries.items_title')}
@@ -294,74 +295,4 @@ function redirectToDeliveries() {
       sortDir: 'desc',
     },
   })
-}
-
-function DetailItem({
-  children,
-  label,
-  value,
-  icon: Icon,
-  className,
-  highlight,
-}: PropsWithChildren & {
-  label: string
-  value?: string | number | null
-  icon: ElementType
-  className?: string
-  highlight?: boolean
-}) {
-  const { t } = useTranslation('details')
-
-  return (
-    <div className={cn('flex flex-col gap-1 min-w-0', className)}>
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Icon className="size-4 shrink-0" />
-
-        <span className="text-[10px] font-semibold uppercase tracking-wide truncate">
-          {label}
-        </span>
-      </div>
-
-      <div
-        className={cn(
-          'text-sm wrap-break-word',
-          highlight && 'text-primary font-bold text-base',
-        )}
-      >
-        {(children ?? (value != '' && value != null)) ? (
-          value
-        ) : (
-          <span className="italic text-muted-foreground/50">
-            {t('common.empty')}
-          </span>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function StatBlock({
-  label,
-  value,
-  highlight,
-}: {
-  label: string
-  value: number
-  highlight?: boolean
-}) {
-  return (
-    <div className="flex flex-col">
-      <span className="text-[10px] uppercase text-muted-foreground">
-        {label}
-      </span>
-
-      <Separator />
-
-      <span
-        className={cn('font-semibold text-center', highlight && 'text-primary')}
-      >
-        {value}
-      </span>
-    </div>
-  )
 }

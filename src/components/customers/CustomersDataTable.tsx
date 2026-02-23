@@ -1,8 +1,8 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import type { Customer } from '@/types'
 import type { CustomersSearch } from '@/lib/types/types.search'
-import type { DataTableFilter } from '@/components/DataTable'
-import DataTable from '@/components/DataTable'
+import type { DataTableFilter } from '@/components/datatable/types'
+import DataTable from '@/components/datatable'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 
 type SearchUpdates = Record<string, string | number | undefined>
@@ -20,6 +20,7 @@ interface TableProps {
   onPageChange: (pageIndex: number) => void
   onPageSizeChange: (pageSize: number) => void
   onRowClick: (id: number) => void
+  allowedSortBy?: ReadonlyArray<string>
 }
 
 export function CustomersDataTable({
@@ -35,6 +36,7 @@ export function CustomersDataTable({
   onPageChange,
   onPageSizeChange,
   onRowClick,
+  allowedSortBy,
 }: TableProps) {
   return (
     <div className="mt-6 border rounded-lg shadow-sm">
@@ -51,6 +53,7 @@ export function CustomersDataTable({
         total={total}
         onSearchChange={onSearchChange}
         onRowClick={(row) => onRowClick(row.id)}
+        allowedSortBy={allowedSortBy}
       />
     </div>
   )

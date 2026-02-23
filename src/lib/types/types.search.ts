@@ -16,6 +16,13 @@ const optionalNumber = z
   }, z.number().int().optional())
   .optional()
 
+const sharedSearchSchema = z.object({
+  pageIndex: z.coerce.number().int().min(0).catch(0),
+  pageSize: z.coerce.number().int().min(10).max(100).catch(100),
+  sortDir: z.enum(['asc', 'desc']).catch('asc'),
+  q: optionalString,
+})
+
 export const homeSearchSchema = z.object({
   customerId: optionalNumber,
   year: optionalNumber,
@@ -31,16 +38,10 @@ export const productSortFields = [
   'material',
   'post_process',
   'coating',
+  'customer',
 ] as const
 
 export type ProductSortField = (typeof productSortFields)[number]
-
-const sharedSearchSchema = z.object({
-  pageIndex: z.coerce.number().int().min(0).catch(0),
-  pageSize: z.coerce.number().int().min(10).max(100).catch(100),
-  sortDir: z.enum(['asc', 'desc']).catch('asc'),
-  q: optionalString,
-})
 
 export const productsSearchSchema = z.object({
   ...sharedSearchSchema.shape,
@@ -63,13 +64,7 @@ export const normalizeProductsSearch = (
   customerId: s.customerId || undefined,
 })
 
-export const customerSortFields = [
-  'code',
-  'name',
-  'email',
-  'address',
-  'phone',
-] as const
+export const customerSortFields = ['code', 'name'] as const
 
 export const customersSearchSchema = z.object({
   ...sharedSearchSchema.shape,
@@ -89,11 +84,10 @@ export const normalizeCustomersSearch = (
 })
 
 export const orderSortFields = [
-  'order_number',
   'order_date',
+  'order_number',
   'status',
   'customer',
-  'currency',
 ] as const
 
 export const ordersSearchSchema = z.object({
@@ -126,6 +120,7 @@ export const deliveriesSortFields = [
   'delivery_number',
   'delivery_date',
   'customer',
+  'kind',
 ] as const
 
 export const deliveriesSearchSchema = z.object({
@@ -157,6 +152,7 @@ export const normalizeDeliveriesSearch = (
 export const stockMovementTypes = [
   'IN',
   'OUT',
+  'TRANSFER',
   'ADJUSTMENT',
   'RESERVE',
   'RELEASE',
@@ -204,3 +200,5 @@ export const normalizeProductDemandSearch = (
   startDate: s.startDate || undefined,
   endDate: s.endDate || undefined,
 })
+
+export type SearchUpdates = Record<string, string | number | undefined>

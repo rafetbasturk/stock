@@ -33,7 +33,7 @@ export default function StatusBadge({
       bgColor = 'bg-green-800 text-green-50'
       break
     default:
-      bgColor = 'bg-slate-200 text-slate-900'
+      bgColor = 'bg-slate-300 text-slate-900'
   }
 
   return (

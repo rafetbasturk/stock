@@ -1,9 +1,8 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import type { DeliveryListRow } from '@/types'
 import type { DeliveriesSearch } from '@/lib/types/types.search'
-import type { DataTableFilter } from '@/components/DataTable'
-import DataTable from '@/components/DataTable'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import type { DataTableFilter } from '../datatable/types'
+import DataTable from '@/components/datatable'
 import { DeliveryProductsHistoryTable } from './DeliveryProductsHistoryTable'
 
 type SearchUpdates = Record<string, string | number | undefined>
@@ -21,6 +20,7 @@ interface TableProps {
   onPageChange: (pageIndex: number) => void
   onPageSizeChange: (pageSize: number) => void
   onRowClick: (id: number) => void
+  allowedSortBy?: ReadonlyArray<string>
 }
 
 export function DeliveriesDataTable({
@@ -36,10 +36,10 @@ export function DeliveriesDataTable({
   onPageChange,
   onPageSizeChange,
   onRowClick,
+  allowedSortBy,
 }: TableProps) {
   return (
     <div className="mt-6 border rounded-lg shadow-sm">
-      {isFetching && <LoadingSpinner variant="inline" />}
       <DataTable
         data={deliveries}
         columns={columns}
@@ -53,6 +53,8 @@ export function DeliveriesDataTable({
         onSearchChange={onSearchChange}
         onRowClick={(row) => onRowClick(row.id)}
         renderExpandedRow={(d) => <DeliveryProductsHistoryTable delivery={d} />}
+        allowedSortBy={allowedSortBy}
+        isFetching={isFetching}
       />
     </div>
   )

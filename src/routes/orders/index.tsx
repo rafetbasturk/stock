@@ -7,10 +7,10 @@ import { useTranslation } from 'react-i18next'
 import type { OrderListRow } from '@/types'
 import {
   normalizeOrdersSearch,
+  orderSortFields,
   OrdersSearch,
   ordersSearchSchema,
 } from '@/lib/types/types.search'
-import { debounce } from '@/lib/debounce'
 import { useDeleteOrderMutation } from '@/lib/mutations/orders'
 import {
   getFilterOptions,
@@ -18,14 +18,15 @@ import {
   ordersQuery,
 } from '@/lib/queries/orders'
 
+import type { DataTableFilter } from '@/components/datatable/types'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { getColumns } from '@/components/orders/columns'
 import OrderForm from '@/components/orders/OrderForm'
 import { OrderListHeader } from '@/components/orders/OrderListHeader'
 import { OrdersDataTable } from '@/components/orders/OrdersDataTable'
 import { OrderDeleteDialog } from '@/components/orders/OrderDeleteDialog'
-import { DataTableFilter } from '@/components/DataTable'
 import { ModalState } from '@/lib/types/types.modal'
+import { useAppTimeZone } from '@/hooks/useAppTimeZone'
 
 export const Route = createFileRoute('/orders/')({
   validateSearch: zodValidator(ordersSearchSchema),
@@ -42,7 +43,8 @@ export const Route = createFileRoute('/orders/')({
 })
 
 function OrderList() {
-  const { t } = useTranslation('entities')
+  const { t, i18n } = useTranslation('entities')
+  const timeZone = useAppTimeZone()
   const navigate = useNavigate({ from: Route.fullPath })
   const search = Route.useSearch()
 
@@ -140,14 +142,20 @@ function OrderList() {
   )
 
   const handleSearchChange = useCallback(
-    (updates: Record<string, string | number | undefined>) => {
+    (updates: Partial<OrdersSearch>, replaceAll = false) => {
       navigate({
         search: (prev: OrdersSearch) => {
-          const merged = { ...prev, ...updates } as Record<string, any>
-          Object.keys(merged).forEach(
-            (k) => merged[k] === undefined && delete merged[k],
-          )
-          return merged as OrdersSearch
+          const next: Record<string, any> = replaceAll
+            ? { ...updates }
+            : { ...prev, ...updates }
+
+          Object.keys(next).forEach((k) => {
+            if (next[k] === undefined) {
+              delete next[k]
+            }
+          })
+
+          return next as OrdersSearch
         },
         replace: true,
       })
@@ -155,20 +163,10 @@ function OrderList() {
     [navigate],
   )
 
-  const debouncedSearchChange = useMemo(
-    () => debounce(handleSearchChange, 400),
-    [handleSearchChange],
-  )
-
-  useEffect(() => {
-    return () => {
-      debouncedSearchChange.cancel()
-    }
-  }, [debouncedSearchChange])
-
   const columns = useMemo(
-    () => getColumns(openEditModal, handleDeleteOrder, t),
-    [handleDeleteOrder, openEditModal, t],
+    () =>
+      getColumns(openEditModal, handleDeleteOrder, t, i18n.language, timeZone),
+    [handleDeleteOrder, openEditModal, t, i18n.language, timeZone],
   )
 
   return (
@@ -183,10 +181,11 @@ function OrderList() {
         isFetching={ordersQ.isFetching}
         customFilters={customFilters}
         search={search}
-        onSearchChange={debouncedSearchChange}
-        onPageChange={(p) => handleSearchChange({ pageIndex: String(p) })}
+        onSearchChange={handleSearchChange}
+        allowedSortBy={orderSortFields}
+        onPageChange={(p) => handleSearchChange({ pageIndex: p })}
         onPageSizeChange={(s) =>
-          handleSearchChange({ pageSize: String(s), pageIndex: '0' })
+          handleSearchChange({ pageSize: s, pageIndex: 0 })
         }
         onRowClick={(id) =>
           navigate({

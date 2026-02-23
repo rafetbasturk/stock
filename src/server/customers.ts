@@ -67,17 +67,11 @@ export const getPaginatedCustomers = createServerFn()
 
           switch (sortBy) {
             case 'code':
-              return [dir(c.code)]
+              return [dir(c.code), asc(c.id)]
             case 'name':
-              return [dir(c.name)]
-            case 'email':
-              return [dir(c.email)]
-            case 'address':
-              return [dir(c.address)]
-            case 'phone':
-              return [dir(c.phone)]
+              return [dir(c.name), asc(c.id)]
             default:
-              return [dir(c.code)]
+              return [dir(c.code), asc(c.id)]
           }
         },
       }),

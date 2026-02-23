@@ -20,11 +20,15 @@ import {
 } from './enums'
 
 const timestamps = {
-  created_at: timestamp('created_at').defaultNow().notNull(),
+  created_at: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 
-  updated_at: timestamp('updated_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 
-  deleted_at: timestamp('deleted_at'),
+  deleted_at: timestamp('deleted_at', { withTimezone: true }),
 }
 
 export const customersTable = pgTable(
@@ -99,7 +103,9 @@ export const ordersTable = pgTable(
     id: serial('id').primaryKey(),
     is_custom_order: boolean('is_custom_order').default(false),
     order_number: text('order_number').notNull(),
-    order_date: timestamp('order_date').defaultNow().notNull(),
+    order_date: timestamp('order_date', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
     delivery_address: text('delivery_address'),
     customer_id: integer('customer_id')
       .notNull()
@@ -188,7 +194,9 @@ export const deliveriesTable = pgTable(
       .references(() => customersTable.id, { onDelete: 'restrict' }),
     kind: deliveryKindEnum('kind').notNull().default('DELIVERY'),
     delivery_number: text('delivery_number').notNull(),
-    delivery_date: timestamp('delivery_date').defaultNow().notNull(),
+    delivery_date: timestamp('delivery_date', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
     notes: text('notes'),
     ...timestamps,
   },
@@ -343,7 +351,9 @@ export const usersTable = pgTable('users', {
   username: text('username').unique().notNull(),
   password_hash: text('password_hash').notNull(),
   role: text('role').default('user'),
-  created_at: timestamp('created_at').defaultNow().notNull(),
+  created_at: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 })
 
 export const sessionsTable = pgTable(
@@ -355,9 +365,13 @@ export const sessionsTable = pgTable(
       .references(() => usersTable.id, { onDelete: 'cascade' }),
     refresh_token: text('refresh_token').notNull().unique(),
     user_agent: text('user_agent'),
-    expires_at: timestamp('expires_at').notNull(),
-    last_activity_at: timestamp('last_activity_at').notNull(),
-    created_at: timestamp('created_at').defaultNow().notNull(),
+    expires_at: timestamp('expires_at', { withTimezone: true }).notNull(),
+    last_activity_at: timestamp('last_activity_at', {
+      withTimezone: true,
+    }).notNull(),
+    created_at: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
   (table) => [
     index('sessions_user_idx').on(table.user_id),
@@ -374,9 +388,15 @@ export const loginAttemptsTable = pgTable(
     username: text('username').notNull(),
     ip: text('ip').notNull(),
     attempts: integer('attempts').notNull().default(0),
-    locked_until: timestamp('locked_until'),
-    last_attempt_at: timestamp('last_attempt_at').notNull().defaultNow(),
-    created_at: timestamp('created_at').defaultNow().notNull(),
+    locked_until: timestamp('locked_until', { withTimezone: true }),
+    last_attempt_at: timestamp('last_attempt_at', {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+    created_at: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
   (table) => [
     uniqueIndex('login_attempts_username_ip_idx').on(table.username, table.ip),
@@ -387,9 +407,11 @@ export const rateLimitsTable = pgTable('rate_limits', {
   id: serial('id').primaryKey(),
   ip: text('ip').notNull().unique(),
   count: integer('count').notNull().default(0),
-  window_start: timestamp('window_start').notNull(),
-  locked_until: timestamp('locked_until'),
-  created_at: timestamp('created_at').defaultNow().notNull(),
+  window_start: timestamp('window_start', { withTimezone: true }).notNull(),
+  locked_until: timestamp('locked_until', { withTimezone: true }),
+  created_at: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 })
 
 export const sessionsRelations = relations(sessionsTable, ({ one }) => ({

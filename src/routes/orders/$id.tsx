@@ -17,6 +17,7 @@ import {
 import { toast } from 'sonner'
 
 import { convertToCurrencyFormat } from '@/lib/currency'
+import { formatDateTime } from '@/lib/datetime'
 import { cn } from '@/lib/utils'
 import { orderDeliveriesQuery, orderQuery } from '@/lib/queries/orders'
 
@@ -29,6 +30,7 @@ import OrderForm from '@/components/orders/OrderForm'
 import OrderItemList from '@/components/orders/order-detail/OrderItemList'
 import OrderDeliveryList from '@/components/orders/order-detail/deliveries/OrderDeliveryList'
 import CustomOrderDeliveryList from '@/components/orders/order-detail/deliveries/CustomOrderDeliveryList'
+import { useAppTimeZone } from '@/hooks/useAppTimeZone'
 
 export const Route = createFileRoute('/orders/$id')({
   component: RouteComponent,
@@ -48,6 +50,7 @@ export const Route = createFileRoute('/orders/$id')({
 
 function RouteComponent() {
   const { t, i18n } = useTranslation('details')
+  const timeZone = useAppTimeZone()
   const { id } = Route.useParams()
   const orderId = parseOrderId(id)
   const navigate = Route.useNavigate()
@@ -121,9 +124,13 @@ function RouteComponent() {
             <DetailItem
               icon={Calendar}
               label={t('orders.fields.order_date')}
-              value={new Date(order.order_date).toLocaleDateString(
-                i18n.language,
-              )}
+              value={formatDateTime(order.order_date, {
+                locale: i18n.language,
+                timeZone,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+              })}
               highlight
             />
 
@@ -149,7 +156,7 @@ function RouteComponent() {
             />
           </div>
 
-          <div className="flex flex-col gap-4 border-t pt-4 md:border-none md:pt-0 md:min-w-[180px] md:items-end">
+          <div className="flex flex-col gap-4 border-t pt-4 md:border-none md:pt-0 md:min-w-45 md:items-end">
             {/* Total amount */}
             <div className="flex flex-col md:items-end">
               <span className="text-xs text-muted-foreground uppercase tracking-wide">
@@ -175,24 +182,27 @@ function RouteComponent() {
         </CardContent>
       </Card>
 
-      {/* Items                                                              */}
       <OrderItemList
         order={order}
         deliveries={deliveries}
         t={t}
-        navigate={navigate}
+        onProductClick={(productId) =>
+          navigate({
+            to: '/products/$id',
+            params: { id: String(productId) },
+          })
+        }
       />
 
-      {/* Deliveries Card                                                    */}
       {deliveries.length > 0 && (
-        <Card className="border-l-4 border-l-amber-500/70 shadow-sm overflow-hidden">
+        <Card className="border-l-4 border-l-primary shadow-sm overflow-hidden">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <Truck className="size-5 text-amber-600" />
+              <Truck className="size-5 text-warning" />
               {t('orders.deliveries_title', {
                 defaultValue: 'Deliveries',
               })}
-              <span className="ml-2 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+              <span className="ml-2 rounded-full bg-warning/20 px-2.5 py-0.5 text-xs font-medium text-warning-foreground">
                 {deliveries.length}
               </span>
             </CardTitle>
@@ -227,7 +237,7 @@ function RouteComponent() {
                       )}
                     >
                       <div className="flex items-center gap-4">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-50 text-amber-600 transition-colors group-hover:bg-amber-100">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-warning/15 text-warning transition-colors group-hover:bg-warning/25">
                           {isExpanded ? (
                             <ChevronDown className="size-4" />
                           ) : (
@@ -239,9 +249,13 @@ function RouteComponent() {
                             {delivery.delivery_number}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {new Date(
-                              delivery.delivery_date,
-                            ).toLocaleDateString(i18n.language)}
+                            {formatDateTime(delivery.delivery_date, {
+                              locale: i18n.language,
+                              timeZone,
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                            })}
                           </p>
                         </div>
                       </div>
@@ -261,7 +275,7 @@ function RouteComponent() {
                           <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
                             {t('orders.totals.total')}
                           </p>
-                          <p className="font-bold text-amber-700">{total}</p>
+                          <p className="font-bold text-warning">{total}</p>
                         </div>
                       </div>
                     </button>
@@ -270,7 +284,7 @@ function RouteComponent() {
                     <div
                       className={cn(
                         'overflow-hidden transition-all duration-200 ease-in-out',
-                        isExpanded ? 'max-h-[1000px] border-t' : 'max-h-0',
+                        isExpanded ? 'max-h-250 border-t' : 'max-h-0',
                       )}
                     >
                       <div className="p-4 bg-muted/10">
@@ -287,8 +301,8 @@ function RouteComponent() {
                         )}
 
                         {delivery.notes && (
-                          <div className="mt-4 rounded-md bg-amber-50/50 p-3 border border-amber-100/50">
-                            <p className="text-xs font-semibold text-amber-800 uppercase tracking-wider mb-1">
+                          <div className="mt-4 rounded-md bg-warning/10 p-3 border border-warning/30">
+                            <p className="text-xs font-semibold text-warning uppercase tracking-wider mb-1">
                               {t('orders.fields.notes', {
                                 defaultValue: 'Notes',
                               })}

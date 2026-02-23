@@ -48,8 +48,8 @@ export const getColumns = (
     {
       accessorKey: 'name',
       header: t('products.columns.name'),
-      minSize: 200,
-      size: 300,
+      minSize: 250,
+      maxSize: 400,
       cell: ({ row }) => <div className="truncate">{row.getValue('name')}</div>,
       enableHiding: false,
     },
@@ -72,6 +72,18 @@ export const getColumns = (
       },
     },
     {
+      accessorKey: 'customer',
+      header: t('products.columns.customer'),
+      size: 150,
+      cell: ({ row }) => {
+        return (
+          <div className="text-muted-foreground truncate">
+            {row.original.customer.name}
+          </div>
+        )
+      },
+    },
+    {
       accessorKey: 'stock_quantity',
       header: () => (
         <div className="m-auto">{t('products.columns.stock_quantity')}</div>
@@ -91,7 +103,6 @@ export const getColumns = (
         )
       },
       enableHiding: false,
-      enableSorting: false,
     },
     {
       accessorKey: 'other_codes',
@@ -154,7 +165,6 @@ export const getColumns = (
           {row.getValue('specs_net')}
         </div>
       ),
-      enableSorting: false,
     },
     {
       accessorKey: 'notes',
@@ -166,19 +176,6 @@ export const getColumns = (
           {row.getValue('notes')}
         </div>
       ),
-      enableSorting: false,
-    },
-    {
-      accessorKey: 'customer',
-      header: t('products.columns.customer'),
-      size: 150,
-      cell: ({ row }) => {
-        return (
-          <div className="text-muted-foreground truncate">
-            {row.original.customer.name}
-          </div>
-        )
-      },
     },
   ]
 }

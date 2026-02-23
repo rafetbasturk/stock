@@ -81,6 +81,7 @@ export default function Combobox({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild id={id}>
           <Button
+            type="button"
             role="combobox"
             variant="outline"
             disabled={isLoading}

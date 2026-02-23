@@ -135,7 +135,7 @@ export default function MonthlyChart({ filters }: Props) {
                                 }
                               </span>
                             </p>
-                            <p className="text-orange-500 flex justify-between gap-4">
+                            <p className="text-chart-4 flex justify-between gap-4">
                               <span>
                                 {t('monthly_orders.deliveries_count_label')}
                               </span>
@@ -149,7 +149,7 @@ export default function MonthlyChart({ filters }: Props) {
                             </p>
                           </div>
                           <div className="pt-1 border-t space-y-1">
-                            <p className="text-green-600 flex justify-between gap-4">
+                            <p className="text-chart-2 flex justify-between gap-4">
                               <span>
                                 {t('monthly_orders.total_amount_label')}
                               </span>
@@ -162,7 +162,7 @@ export default function MonthlyChart({ filters }: Props) {
                                 })}
                               </span>
                             </p>
-                            <p className="text-purple-600 flex justify-between gap-4">
+                            <p className="text-chart-5 flex justify-between gap-4">
                               <span>
                                 {t('monthly_orders.delivered_amount_label')}
                               </span>
@@ -188,7 +188,7 @@ export default function MonthlyChart({ filters }: Props) {
                 yAxisId="left"
                 dataKey="orders"
                 name={t('monthly_orders.orders_count')}
-                fill="#0ea5e9"
+                fill="var(--chart-1)"
                 radius={[2, 2, 0, 0]}
                 barSize={30}
               />
@@ -196,7 +196,7 @@ export default function MonthlyChart({ filters }: Props) {
                 yAxisId="left"
                 dataKey="deliveries"
                 name={t('monthly_orders.deliveries_count')}
-                fill="#f97316"
+                fill="var(--chart-4)"
                 radius={[2, 2, 0, 0]}
                 barSize={30}
               />
@@ -205,9 +205,9 @@ export default function MonthlyChart({ filters }: Props) {
                 type="monotone"
                 dataKey="revenue"
                 name={t('monthly_orders.total_amount')}
-                stroke="#22c55e"
+                stroke="var(--chart-2)"
                 strokeWidth={2}
-                dot={{ r: 3, fill: '#22c55e' }}
+                dot={{ r: 3, fill: 'var(--chart-2)' }}
                 activeDot={{ r: 5 }}
               />
               <Line
@@ -215,9 +215,9 @@ export default function MonthlyChart({ filters }: Props) {
                 type="monotone"
                 dataKey="deliveredRevenue"
                 name={t('monthly_orders.delivered_amount')}
-                stroke="#9333ea"
+                stroke="var(--chart-5)"
                 strokeWidth={2}
-                dot={{ r: 3, fill: '#9333ea' }}
+                dot={{ r: 3, fill: 'var(--chart-5)' }}
                 activeDot={{ r: 5 }}
               />
             </ComposedChart>

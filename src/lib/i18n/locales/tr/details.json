@@ -19,7 +19,9 @@
     }
   },
   "products": {
+    "detail_page_title": "Ürün Detayları",
     "updated_success": "Ürün güncellendi",
+    "card_title": "Ürün Temel Bilgileri",
     "sections": {
       "tech_specs": "Teknik Özellikler",
       "customer_info": "Müşteri Bilgileri",
@@ -37,7 +39,14 @@
       "customer_name": "Müşteri Adı",
       "critical_stock_level": "Kritik Stok Seviyesi ({{value}})",
       "minimum_stock": "Minimum Stok",
-      "unit_price": "Birim Fiyat"
+      "unit_price": "Birim Fiyat",
+      "product_name": "Ürün Adı",
+      "price": "Fiyat",
+      "stock_quantity": "Stok Miktarı",
+      "notes": "Notlar",
+      "unit": "Birim",
+      "updated_at": "Son Güncellenme Tarihi",
+      "code": "Ürün Kodu"
     },
     "not_found": "Ürün bulunamadı"
   },

@@ -1,8 +1,8 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import type { DataTableFilter } from '@/components/DataTable'
+import type { DataTableFilter } from '@/components/datatable/types'
 import type { ProductDemandSearch } from '@/lib/types/types.search'
 import type { ProductDemandRow } from './columns'
-import DataTable from '@/components/DataTable'
+import DataTable from '@/components/datatable'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 
 interface ProductDemandDataTableProps {

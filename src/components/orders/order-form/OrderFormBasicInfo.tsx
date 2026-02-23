@@ -1,7 +1,7 @@
 import { tr } from 'date-fns/locale'
 import { format } from 'date-fns'
 import { CalendarIcon } from 'lucide-react'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { InsertOrder, OrderWithItems } from '@/types'
 import type { OrderFormState } from '../OrderForm'
@@ -76,6 +76,16 @@ export default function OrderFormBasicInfo({
     [],
   )
 
+  useEffect(() => {
+    if (form.customer_id > 0 || customers.length === 0) return
+
+    setForm((prev) => ({
+      ...prev,
+      customer_id: customers[0].id,
+    }))
+    clearFieldError('customer_id')
+  }, [form.customer_id, customers, setForm, clearFieldError])
+
   return (
     <FieldSet>
       <FieldLegend>{t('form.sections.basic')}</FieldLegend>
@@ -95,7 +105,7 @@ export default function OrderFormBasicInfo({
           <EntitySelect
             name="customer_id"
             label={t('form.fields.customer')}
-            value={form.customer_id > 0 ? form.customer_id : 1}
+            value={form.customer_id > 0 ? form.customer_id : null}
             error={formErrors.customer_id}
             onValueChange={(value) =>
               {
@@ -127,6 +137,7 @@ export default function OrderFormBasicInfo({
             <Popover>
               <PopoverTrigger asChild>
                 <Button
+                  type="button"
                   variant="outline"
                   className={cn(
                     'w-full justify-start text-left font-normal',
