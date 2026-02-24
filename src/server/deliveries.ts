@@ -613,14 +613,13 @@ export const getPaginatedDeliveries = createServerFn()
       ? sql<number>`
         (
           CASE
-            WHEN ${deliveriesTable.delivery_number} = ${normalizedQ}
-            THEN 1000
+            WHEN ${deliveriesTable.delivery_number} = ${normalizedQ} THEN 1000
             ELSE 0
           END
           +
-          similarity(${deliveriesTable.delivery_number}, ${q}) * 100
+          similarity(${deliveriesTable.delivery_number}, ${normalizedQ}) * 100
           +
-          similarity(${deliveriesTable.notes}, ${q}) * 10
+          similarity(${deliveriesTable.notes}, ${normalizedQ}) * 10
         )
       `
       : undefined
@@ -683,7 +682,7 @@ export const getPaginatedDeliveries = createServerFn()
         limit: safePageSize,
         offset: safePageIndex * safePageSize,
         orderBy: (d, { asc, desc }) => {
-          if (q && rankingExpr)
+          if (normalizedQ && rankingExpr)
             return [desc(rankingExpr), desc(d.delivery_date), asc(d.id)]
 
           const dir = sortDir === 'asc' ? asc : desc
@@ -712,7 +711,30 @@ export const getPaginatedDeliveries = createServerFn()
           }
         },
       }),
-    ])
+    ]).catch((error) => {
+      console.error('[getPaginatedDeliveries] query failed', {
+        error,
+        input: {
+          pageIndex,
+          pageSize,
+          q,
+          customerId,
+          sortBy,
+          sortDir,
+          kind,
+          startDate: startDateRaw,
+          endDate: endDateRaw,
+        },
+        normalized: {
+          normalizedQ,
+          normalizedCustomerId,
+          normalizedKind,
+          safePageIndex,
+          safePageSize,
+        },
+      })
+      throw error
+    })
 
     const total = totalResult[0]?.count ?? 0
 
@@ -815,6 +837,10 @@ export const getLastReturnDeliveryNumber = createServerFn().handler(
         drizzleDesc(deliveriesTable.id),
       )
       .limit(1)
+      .catch((error) => {
+        console.error('[getLastReturnDeliveryNumber] query failed', { error })
+        throw error
+      })
 
     return lastReturn?.delivery_number
   },
@@ -827,11 +853,15 @@ export const getDeliveryFilterOptions = createServerFn().handler(async () => {
       customer_name: customersTable.name,
     })
     .from(deliveriesTable)
-    .where(notDeleted(customersTable))
     .innerJoin(
       customersTable,
       eq(customersTable.id, deliveriesTable.customer_id),
     )
+    .where(and(notDeleted(deliveriesTable), notDeleted(customersTable)))
+    .catch((error) => {
+      console.error('[getDeliveryFilterOptions] query failed', { error })
+      throw error
+    })
 
   const customers = customerRows
     .map((row) => ({

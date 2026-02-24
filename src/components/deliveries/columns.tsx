@@ -31,14 +31,6 @@ export function getColumns(
 
   return [
     {
-      id: 'dateRange',
-      header: () => null,
-      enableSorting: false,
-      enableColumnFilter: false,
-      enableHiding: true,
-      meta: { isFilterOnly: true },
-    },
-    {
       id: 'expand-toggle',
       size: 28,
       enableSorting: false,

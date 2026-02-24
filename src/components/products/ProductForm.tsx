@@ -14,6 +14,7 @@ import type { InsertProduct, ProductListRow } from "@/types";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useCreateProductMutation, useUpdateProductMutation } from "@/lib/mutations/products";
+import { useMobileReadonly } from "@/hooks/useMobileReadonly";
 
 interface BasePaginatedFormProps<TData, TSubmitPayload> {
   item?: TData;
@@ -43,6 +44,7 @@ export default function ProductForm({
   onSuccess: onSuccessProp,
   isSubmitting: isSubmittingProp,
 }: ProductFormProps) {
+  const isMobileReadonly = useMobileReadonly();
   const { t } = useTranslation("entities");
   const [activeTab, setActiveTab] = useState("basic");
   const [stockAction, setStockAction] = useState<StockActionFormState>(
@@ -118,7 +120,16 @@ export default function ProductForm({
       <DialogContent className="p-0 sm:max-w-4xl max-h-[92vh] overflow-hidden flex flex-col gap-0 border-none bg-background shadow-2xl">
         <ProductFormHeader productId={product?.id} />
 
-        <form className="flex-1 flex flex-col min-h-0" onSubmit={handleSubmit}>
+        <form
+          className="flex-1 flex flex-col min-h-0"
+          onSubmit={(e) => {
+            if (isMobileReadonly) {
+              e.preventDefault();
+              return;
+            }
+            handleSubmit(e);
+          }}
+        >
           <Tabs.Root
             value={activeTab}
             onValueChange={setActiveTab}

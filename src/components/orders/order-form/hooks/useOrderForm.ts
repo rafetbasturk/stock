@@ -11,7 +11,6 @@ type UseOrderFormArgs = {
 
 function defaultItem(currency: Currency) {
   return {
-    tempId: crypto.randomUUID(),
     product_id: 0,
     quantity: 1,
     unit_price: 0,
@@ -21,7 +20,6 @@ function defaultItem(currency: Currency) {
 
 function defaultCustomItem(currency: Currency) {
   return {
-    tempId: crypto.randomUUID(),
     name: '',
     unit: 'adet',
     quantity: 1,
@@ -38,7 +36,6 @@ function toInitialForm(order?: OrderWithItems): OrderFormState {
   const items =
     order?.items.map((item) => ({
       id: item.id,
-      tempId: crypto.randomUUID(),
       product_id: item.product_id,
       quantity: item.quantity,
       unit_price: item.unit_price,
@@ -48,7 +45,6 @@ function toInitialForm(order?: OrderWithItems): OrderFormState {
   const customItems =
     order?.customItems.map((item) => ({
       id: item.id,
-      tempId: crypto.randomUUID(),
       name: item.name,
       unit: item.unit ?? 'adet',
       quantity: item.quantity,

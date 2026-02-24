@@ -1,4 +1,4 @@
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -24,8 +24,9 @@ export const Route = createFileRoute('/customers/')({
   validateSearch: zodValidator(customersSearchSchema),
   loaderDeps: ({ search }) => normalizeCustomersSearch(search),
   loader: async ({ context, deps }) => {
+    const normalizedDeps = normalizeCustomersSearch(deps)
     return await context.queryClient.ensureQueryData(
-      customersPaginatedQuery(deps),
+      customersPaginatedQuery(normalizedDeps),
     )
   },
   component: CustomerList,
@@ -51,8 +52,19 @@ function CustomerList() {
 
   const deleteMutation = useDeleteCustomerMutation()
 
-  const customersQ = useSuspenseQuery(customersPaginatedQuery(search))
-  const { data: customers, total, pageIndex, pageSize } = customersQ.data
+  const customersQ = useQuery(customersPaginatedQuery(search))
+  const customersData = customersQ.data
+  const {
+    data: customers,
+    total,
+    pageIndex,
+    pageSize,
+  } = customersData ?? {
+    data: [],
+    total: 0,
+    pageIndex: 0,
+    pageSize: 100,
+  }
 
   const pendingDeleteCustomer = useMemo(
     () =>

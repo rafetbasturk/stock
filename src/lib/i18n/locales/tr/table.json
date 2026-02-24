@@ -8,8 +8,11 @@
   "selected": "seçenek seçili",
   "columns": "Sütunlar",
   "no_results": "Sonuç bulunamadı.",
+  "updating": "Güncelleniyor...",
   "records_count": "{{count}} kayıt",
   "rows_per_page": "Sayfa başı:",
   "page_status": "Sayfa {{current}} / {{total}}",
-  "filters": "Filtreler"
+  "filters": "Filtreler",
+  "cancel": "Vazgeç",
+  "apply": "Uygula"
 }

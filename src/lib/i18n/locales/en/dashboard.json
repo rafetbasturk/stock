@@ -9,7 +9,10 @@
   "filters": {
     "all": "All",
     "all_years": "All years",
-    "clear": "Clear"
+    "clear": "Clear",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "trigger": "Filters"
   },
   "metrics": {
     "load_error_title": "Failed to load metrics",

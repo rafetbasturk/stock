@@ -2,7 +2,6 @@ import { ActionMenuItem, MovementRow } from '@/types'
 import { ColumnDef } from '@tanstack/react-table'
 import { Badge } from '../ui/badge'
 import { DataTableRowActions } from '../DataTableRowActions'
-import { HistoryModalState } from '@/lib/types/types.modal'
 import type { TFunction } from 'i18next'
 import { formatDateTime } from '@/lib/datetime'
 import {
@@ -12,9 +11,10 @@ import {
   getStockQuantityClass,
 } from './movementPresentation'
 import { cn } from '@/lib/utils'
+import { ModalState } from '@/lib/types/types.modal'
 
 export const getColumns = (
-  setModalState: (state: HistoryModalState) => void,
+  setModalState: (state: ModalState<MovementRow>) => void,
   t: TFunction,
   onNavigateToSource: (movement: MovementRow) => void,
   locale: string,
@@ -47,12 +47,12 @@ export const getColumns = (
           actions.push(
             {
               label: t('entities:actions.edit'),
-              action: (m) => setModalState({ type: 'editing', movement: m }),
+              action: (m) => setModalState({ type: 'editing', item: m }),
               separatorAfter: true,
             },
             {
               label: t('entities:actions.delete'),
-              action: (m) => setModalState({ type: 'deleting', movement: m }),
+              action: (m) => setModalState({ type: 'deleting', item: m }),
               isDestructive: true,
             },
           )
@@ -73,6 +73,7 @@ export const getColumns = (
   columns.push({
     accessorKey: 'created_at',
     header: t('date'),
+    meta: { filterTitle: t('date') },
     size: 180,
     enableSorting: false,
     cell: ({ row }) => (
@@ -93,6 +94,7 @@ export const getColumns = (
     columns.push({
       id: 'product',
       header: t('product'),
+      meta: { filterTitle: t('product') },
       minSize: 200,
       size: 280,
       enableSorting: false,
@@ -100,9 +102,7 @@ export const getColumns = (
         const product = row.original.product
         return (
           <div className="flex flex-col truncate">
-            <span className="font-medium text-foreground">
-              {product.code}
-            </span>
+            <span className="font-medium text-foreground">{product.code}</span>
             <span className="text-xs text-muted-foreground">
               {product.name}
             </span>
@@ -114,21 +114,23 @@ export const getColumns = (
 
   columns.push({
     accessorKey: 'movement_type',
-    header: () => <div className="m-auto">{t('type')}</div>,
+    header: () => <div className="text-right md:m-auto">{t('type')}</div>,
+    meta: { filterTitle: t('type') },
     size: 130,
     enableSorting: false,
     cell: ({ row }) => {
       const type = row.original.movement_type as StockMovementType
 
       return (
-        <div className="flex justify-center">
-          <Badge
-            variant="outline"
-            className={cn('w-full', STOCK_MOVEMENT_BADGE_CLASSES[type])}
-          >
-            {getStockMovementTypeLabel(t, type)}
-          </Badge>
-        </div>
+        <Badge
+          variant="outline"
+          className={cn(
+            'w-fit md:w-full',
+            STOCK_MOVEMENT_BADGE_CLASSES[type],
+          )}
+        >
+          {getStockMovementTypeLabel(t, type)}
+        </Badge>
       )
     },
   })
@@ -136,13 +138,17 @@ export const getColumns = (
   columns.push({
     accessorKey: 'quantity',
     header: () => <div className="m-auto">{t('quantity')}</div>,
+    meta: { filterTitle: t('quantity') },
     size: 100,
     enableSorting: false,
     cell: ({ row }) => {
       const qty = row.original.quantity
       return (
         <div
-          className={`text-center font-mono font-bold ${getStockQuantityClass(qty)}`}
+          className={cn(
+            'text-right md:text-center font-mono font-bold',
+            getStockQuantityClass(qty),
+          )}
         >
           {qty > 0 ? `+${qty}` : qty}
         </div>
@@ -153,6 +159,7 @@ export const getColumns = (
   columns.push({
     accessorKey: 'createdBy.username',
     header: t('user'),
+    meta: { filterTitle: t('user') },
     size: 120,
     enableSorting: false,
     cell: ({ row }) => (
@@ -165,6 +172,7 @@ export const getColumns = (
   columns.push({
     id: 'reference',
     header: t('reference'),
+    meta: { filterTitle: t('reference') },
     size: 160,
     enableSorting: false,
     cell: ({ row }) => (
@@ -177,6 +185,7 @@ export const getColumns = (
   columns.push({
     accessorKey: 'notes',
     header: t('notes'),
+    meta: { filterTitle: t('notes') },
     minSize: 220,
     size: 300,
     enableSorting: false,

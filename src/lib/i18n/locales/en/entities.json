@@ -126,6 +126,25 @@
       "customer": "Customer",
       "status": "Order Status",
       "daterange": "Date Range"
+    },
+    "history": {
+      "title": "Order Product Details",
+      "progress": "Progress",
+      "qty_suffix": "pcs",
+      "none": "No shipment yet",
+      "empty": "No items found for this order.",
+      "columns": {
+        "status": "Status",
+        "product": "Product",
+        "ordered": "Ordered",
+        "delivered": "Delivered",
+        "remaining": "Remaining",
+        "shipment_history": "Shipment History"
+      },
+      "status": {
+        "missing": "{{count}} missing",
+        "completed": "Completed"
+      }
     }
   },
   "deliveries": {
@@ -144,6 +163,26 @@
       "customer": "Customer",
       "daterange": "Date Range",
       "kind": "Delivery Type"
+    },
+    "history": {
+      "title": "Delivery Product Details",
+      "progress": "Progress",
+      "qty_suffix": "pcs",
+      "none": "No previous shipment",
+      "empty": "No delivered item found.",
+      "columns": {
+        "order_number": "Order No",
+        "product": "Product",
+        "ordered": "Ordered",
+        "total_delivered": "Total Delivered",
+        "current_delivery": "This Delivery",
+        "status": "Status",
+        "shipment_history": "Shipment History"
+      },
+      "status": {
+        "missing": "{{count}} missing",
+        "completed": "Completed"
+      }
     },
     "kinds": {
       "delivery": "Delivery",

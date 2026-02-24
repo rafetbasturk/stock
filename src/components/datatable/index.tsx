@@ -1,6 +1,7 @@
 // src/components/datatable/index.tsx
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
+  type ExpandedState,
   getCoreRowModel,
   getExpandedRowModel,
   useReactTable,
@@ -11,9 +12,8 @@ import {
 
 import type { DataTableFilter, TableSearch } from './types'
 import { useTableFilters } from '@/hooks/useTableFilters'
-
-import DataTableCore from './DataTableCore'
 import DataTableControls from './DataTableControls'
+import DataTableCore from './DataTableCore'
 import DataTablePagination from './DataTablePagination'
 
 interface DataTableProps<TData, TValue> {
@@ -39,6 +39,7 @@ interface DataTableProps<TData, TValue> {
   showColumnVisibilityToggle?: boolean
   allowedSortBy?: ReadonlyArray<string>
   isFetching?: boolean
+  singleExpandedRow?: boolean
 }
 
 export default function DataTable<TData, TValue>({
@@ -61,6 +62,7 @@ export default function DataTable<TData, TValue>({
   showColumnVisibilityToggle = false,
   allowedSortBy,
   isFetching,
+  singleExpandedRow = true,
 }: DataTableProps<TData, TValue>) {
   const globalFilter = search.q ?? ''
 
@@ -88,7 +90,17 @@ export default function DataTable<TData, TValue>({
     initialColumnVisibility ?? {},
   )
 
+  useEffect(() => {
+    if (!initialColumnVisibility) return
+
+    setColumnVisibility((prev) => {
+      if (Object.keys(prev).length > 0) return prev
+      return initialColumnVisibility
+    })
+  }, [initialColumnVisibility])
+
   const [rowSelection, setRowSelection] = useState({})
+  const [expanded, setExpanded] = useState<ExpandedState>({})
 
   const table = useReactTable({
     data,
@@ -98,6 +110,7 @@ export default function DataTable<TData, TValue>({
       sorting,
       columnVisibility,
       rowSelection,
+      expanded,
     },
 
     manualSorting: true,
@@ -128,6 +141,38 @@ export default function DataTable<TData, TValue>({
     onColumnVisibilityChange: setColumnVisibility,
 
     onRowSelectionChange: setRowSelection,
+    onExpandedChange: (updater) => {
+      setExpanded((prev) => {
+        const next = typeof updater === 'function' ? updater(prev) : updater
+
+        if (!singleExpandedRow) {
+          return next
+        }
+
+        if (!next || next === true) {
+          return {}
+        }
+
+        const expandedIds = Object.keys(next).filter(
+          (id) => next[id as keyof typeof next],
+        )
+
+        if (expandedIds.length <= 1) {
+          return next
+        }
+
+        const prevExpanded =
+          prev && prev !== true
+            ? Object.keys(prev).filter((id) => prev[id as keyof typeof prev])
+            : []
+
+        const newlyExpandedId =
+          expandedIds.find((id) => !prevExpanded.includes(id)) ??
+          expandedIds[expandedIds.length - 1]
+
+        return { [newlyExpandedId]: true }
+      })
+    },
 
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
@@ -148,9 +193,10 @@ export default function DataTable<TData, TValue>({
   const safePageSize = Math.max(1, Number(serverPageSize) || 100)
   const safeTotal = Math.max(0, Number(total) || 0)
   const pageCount = Math.max(1, Math.ceil(safeTotal / safePageSize))
+  const skeletonRowCount = Math.min(8, Math.max(3, safePageSize))
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex flex-col gap-2 md:gap-4 p-2 md:p-4 relative">
       {/* 🔍 Search + Filters */}
       <DataTableControls
         table={table}
@@ -174,6 +220,7 @@ export default function DataTable<TData, TValue>({
         getRowClassName={getRowClassName}
         allowedSortBy={allowedSortBy}
         isFetching={isFetching}
+        skeletonRowCount={skeletonRowCount}
       />
 
       {/* Pagination */}

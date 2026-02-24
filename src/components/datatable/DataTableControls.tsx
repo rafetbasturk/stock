@@ -79,23 +79,74 @@ export default function DataTableControls<TData>({
   }, [debouncedSearch])
 
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const [mobileDraftFilters, setMobileDraftFilters] = useState<TableSearch>({})
 
-  const renderFilter = () =>
+  const buildDraftFromSearch = () => {
+    const draft: TableSearch = {}
+
+    customFilters.forEach((filter) => {
+      if (filter.type === 'daterange') {
+        draft.startDate = search.startDate
+        draft.endDate = search.endDate
+      } else {
+        draft[filter.columnId] = search[filter.columnId]
+      }
+    })
+
+    return draft
+  }
+
+  useEffect(() => {
+    if (!mobileFiltersOpen) return
+    setMobileDraftFilters(buildDraftFromSearch())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mobileFiltersOpen])
+
+  const buildResetPayload = () => {
+    const reset: Record<string, string | number | undefined> = {
+      q: undefined,
+      startDate: undefined,
+      endDate: undefined,
+      pageIndex: 0,
+      pageSize: serverPageSize,
+    }
+
+    customFilters.forEach((f) => {
+      reset[f.columnId] = undefined
+    })
+
+    return reset
+  }
+
+  const renderFilter = (
+    source: TableSearch,
+    options?: { mobileDraft?: boolean },
+  ) =>
     customFilters.map((filter) => {
+      const isMobileDraft = options?.mobileDraft === true
+
       switch (filter.type) {
         case 'daterange':
           return (
             <DateRangeFilter
               key={filter.columnId}
               label={filter.label}
-              start={search.startDate as string | undefined}
-              end={search.endDate as string | undefined}
-              onChange={(updates) =>
+              start={source.startDate as string | undefined}
+              end={source.endDate as string | undefined}
+              onChange={(updates) => {
+                if (isMobileDraft) {
+                  setMobileDraftFilters((prev) => ({
+                    ...prev,
+                    ...updates,
+                  }))
+                  return
+                }
+
                 onSearchChange({
                   pageIndex: 0,
                   ...updates,
                 })
-              }
+              }}
             />
           )
 
@@ -111,11 +162,19 @@ export default function DataTableControls<TData>({
                 options: filter.options,
               }}
               selectedValues={
-                search[filter.columnId]
-                  ? String(search[filter.columnId])!.split(',')
+                source[filter.columnId]
+                  ? String(source[filter.columnId])!.split(',')
                   : []
               }
               onChange={(colId, values) => {
+                if (isMobileDraft) {
+                  setMobileDraftFilters((prev) => ({
+                    ...prev,
+                    [colId]: values.length ? values.join(',') : undefined,
+                  }))
+                  return
+                }
+
                 handleMultiFilterChange(colId, values)
 
                 onSearchChange({
@@ -132,8 +191,16 @@ export default function DataTableControls<TData>({
           return (
             <Select
               key={filter.columnId}
-              value={String(search[filter.columnId] ?? 'all')}
+              value={String(source[filter.columnId] ?? 'all')}
               onValueChange={(v) => {
+                if (isMobileDraft) {
+                  setMobileDraftFilters((prev) => ({
+                    ...prev,
+                    [filter.columnId]: v === 'all' ? undefined : v,
+                  }))
+                  return
+                }
+
                 handleSingleFilterChange(filter.columnId, v)
 
                 onSearchChange({
@@ -164,14 +231,23 @@ export default function DataTableControls<TData>({
             <Input
               key={filter.columnId}
               placeholder={filter.label}
-              value={String(search[filter.columnId] || '')}
-              onChange={(e) =>
+              value={String(source[filter.columnId] || '')}
+              onChange={(e) => {
+                if (isMobileDraft) {
+                  setMobileDraftFilters((prev) => ({
+                    ...prev,
+                    [filter.columnId]:
+                      e.target.value === '' ? undefined : e.target.value,
+                  }))
+                  return
+                }
+
                 onSearchChange({
                   pageIndex: 0,
                   [filter.columnId]:
                     e.target.value === '' ? undefined : e.target.value,
                 })
-              }
+              }}
               className="w-full md:w-40"
             />
           )
@@ -194,25 +270,13 @@ export default function DataTableControls<TData>({
             className="w-full md:max-w-sm"
           />
 
-          {renderFilter()}
+          {renderFilter(search)}
 
           {hasActiveFilters && (
             <Button
               variant="outline"
               onClick={() => {
-                const reset: Record<string, string | number | undefined> = {
-                  q: undefined,
-                  startDate: undefined,
-                  endDate: undefined,
-                  pageIndex: 0,
-                  pageSize: serverPageSize,
-                }
-
-                customFilters.forEach((f) => {
-                  reset[f.columnId] = undefined
-                })
-
-                onSearchChange(reset, true)
+                onSearchChange(buildResetPayload(), true)
               }}
             >
               {t('clear_filters', { count: activeFilters.length })}
@@ -278,31 +342,43 @@ export default function DataTableControls<TData>({
             </SheetHeader>
 
             <div className="mt-4 space-y-4 p-4">
-              {renderFilter()}
+              {renderFilter(mobileDraftFilters, { mobileDraft: true })}
 
-              {hasActiveFilters && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const reset = buildResetPayload()
+                  setMobileDraftFilters(reset)
+                  onSearchChange(reset, true)
+                  setMobileFiltersOpen(false)
+                }}
+                className="w-full"
+              >
+                {t('clear_filters', { count: activeFilters.length })}
+              </Button>
+
+              <div className="grid grid-cols-2 gap-2">
                 <Button
                   variant="outline"
+                  onClick={() => setMobileFiltersOpen(false)}
+                >
+                  {t('cancel')}
+                </Button>
+                <Button
                   onClick={() => {
-                    const reset: Record<string, string | number | undefined> = {
-                      q: undefined,
-                      startDate: undefined,
-                      endDate: undefined,
-                      pageIndex: 0,
-                      pageSize: serverPageSize,
-                    }
-
-                    customFilters.forEach((f) => {
-                      reset[f.columnId] = undefined
-                    })
-
-                    onSearchChange(reset, true)
+                    onSearchChange(
+                      {
+                        ...mobileDraftFilters,
+                        pageIndex: 0,
+                      },
+                      false,
+                    )
                     setMobileFiltersOpen(false)
                   }}
                 >
-                  {t('clear_filters', { count: activeFilters.length })}
+                  {t('apply')}
                 </Button>
-              )}
+              </div>
             </div>
           </SheetContent>
         </Sheet>

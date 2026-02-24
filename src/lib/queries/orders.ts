@@ -85,4 +85,5 @@ export const getFilterOptions = queryOptions({
 export const yearRangeQuery = queryOptions({
   queryKey: orderQueryKeys.yearRange(),
   queryFn: () => getYearRange(),
+  staleTime: Infinity,
 })

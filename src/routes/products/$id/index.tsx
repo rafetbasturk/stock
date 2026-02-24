@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAppTimeZone } from '@/hooks/useAppTimeZone'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { productQuery } from '@/lib/queries/products'
 import ProductForm from '@/components/products/ProductForm'
 import { formatPrice } from '@/lib/currency'
@@ -55,6 +56,7 @@ export const Route = createFileRoute('/products/$id/')({
 function RouteComponent() {
   const { t, i18n } = useTranslation('details')
   const timeZone = useAppTimeZone()
+  const isMobile = useIsMobile()
   const { id } = Route.useParams()
   const productId = parseProductId(id)
 
@@ -83,6 +85,7 @@ function RouteComponent() {
     <div className="space-y-6">
       <PageHeader
         title={t('products.detail_page_title')}
+        showActionsOnMobile
         actions={
           <>
             <Link to="/products/$id/activities" params={{ id }}>
@@ -90,14 +93,12 @@ function RouteComponent() {
                 {t('actions.stock_activity')}
               </Button>
             </Link>
-            <Button
-              size="sm"
-              onClick={() => setIsEditing(true)}
-              className="gap-2"
-            >
-              <Edit className="size-4" />
-              {t('actions.edit')}
-            </Button>
+            {!isMobile && (
+              <Button size="sm" onClick={() => setIsEditing(true)} className="gap-2">
+                <Edit className="size-4" />
+                {t('actions.edit')}
+              </Button>
+            )}
           </>
         }
       />
@@ -110,7 +111,7 @@ function RouteComponent() {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col md:flex-row gap-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-4 flex-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 flex-1">
             <DetailItem
               icon={User}
               label={t('products.fields.code')}
@@ -121,6 +122,7 @@ function RouteComponent() {
               icon={User}
               label={t('products.fields.product_name')}
               value={product.name}
+              className='truncate'
             />
             <DetailItem
               icon={User}
@@ -129,7 +131,7 @@ function RouteComponent() {
               highlight
             />
             <DetailItem icon={Box} label={t('products.fields.unit')}>
-              <Badge variant="secondary" className="text-base font-normal">
+              <Badge variant="secondary" className="text-sm font-mono">
                 {product.unit}
               </Badge>
             </DetailItem>
@@ -163,7 +165,7 @@ function RouteComponent() {
             />
           </div>
 
-          <div className="flex flex-col justify-between gap-4 border-t pt-4 md:border-none md:pt-0 md:min-w-45 md:items-end">
+          <div className="flex flex-col justify-between gap-4 border-t-2 border-t-primary/30 pt-10 md:border-none md:pt-0 md:min-w-45 md:items-end">
             <div className="flex flex-col md:items-end">
               <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
                 <CreditCard className="size-5" />
@@ -200,7 +202,7 @@ function RouteComponent() {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col md:flex-row gap-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-4 flex-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 flex-1">
             <DetailItem
               icon={Layers}
               label={t('products.fields.material')}

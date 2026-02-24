@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
+import { useMobileReadonly } from "@/hooks/useMobileReadonly";
 
 type Props = {
   productId: number | undefined;
@@ -17,6 +18,7 @@ export default function ProductFormFooter({
   hasChanged,
 }: Props) {
   const { t } = useTranslation("entities");
+  const isMobileReadonly = useMobileReadonly();
 
   return (
     <DialogFooter className="flex justify-end gap-2 p-8 pt-4 border-t">
@@ -31,7 +33,7 @@ export default function ProductFormFooter({
 
       <Button
         type="submit"
-        disabled={isSubmitting || (!!productId && !hasChanged)}
+        disabled={isSubmitting || (!!productId && !hasChanged) || isMobileReadonly}
         className="disabled:cursor-not-allowed disabled:opacity-40 min-w-20"
       >
         {isSubmitting ? (

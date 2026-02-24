@@ -42,7 +42,8 @@ function normalizePath(path: string) {
 
 export function AppSidebar({ settings }: { settings: AppSettings }) {
   const { t } = useTranslation('sidebar')
-  const { toggleSidebar, open } = useSidebar()
+  const { toggleSidebar, open, openMobile, isMobile, setOpenMobile } =
+    useSidebar()
   const { lang } = settings
   const { toggleTheme } = useThemeToggle()
 
@@ -56,6 +57,7 @@ export function AppSidebar({ settings }: { settings: AppSettings }) {
   const setPreferredCurrency = useExchangeRatesStore(
     (s) => s.setPreferredCurrency,
   )
+  const isSidebarExpanded = isMobile ? openMobile : open
 
   const logoutMutation = useLogoutMutation()
 
@@ -107,6 +109,9 @@ export function AppSidebar({ settings }: { settings: AppSettings }) {
                       isActive={isExact}
                       onClick={(e) => {
                         e.stopPropagation()
+                        if (isMobile) {
+                          setOpenMobile(false)
+                        }
                         if (isExact) e.preventDefault()
                       }}
                       className={cn(
@@ -144,12 +149,12 @@ export function AppSidebar({ settings }: { settings: AppSettings }) {
                     data-sidebar-interactive
                     className={cn(
                       'w-full',
-                      !open &&
+                      !isSidebarExpanded &&
                         'justify-center w-8 px-0 [&>svg:last-child]:hidden',
                     )}
                   >
                     <HandCoinsIcon className="h-4 w-4 text-sidebar-foreground" />
-                    {open && (
+                    {isSidebarExpanded && (
                       <div className="flex items-center gap-1">
                         <span>{currencyFlags[preferredCurrency]}</span>
                         <span>{preferredCurrency}</span>
@@ -175,17 +180,25 @@ export function AppSidebar({ settings }: { settings: AppSettings }) {
             {/* Language (reload by design) */}
             <SidebarMenuItem data-sidebar-interactive>
               {mounted ? (
-                <Select value={lang} onValueChange={setLanguage}>
+                <Select
+                  value={lang}
+                  onValueChange={(value) => {
+                    if (isMobile) {
+                      setOpenMobile(false)
+                    }
+                    setLanguage(value as Language)
+                  }}
+                >
                   <SelectTrigger
                     data-sidebar-interactive
                     className={cn(
                       'w-full',
-                      !open &&
+                      !isSidebarExpanded &&
                         'justify-center w-8 px-0 [&>svg:last-child]:hidden',
                     )}
                   >
                     <LanguagesIcon className="h-4 w-4 text-sidebar-foreground" />
-                    {open && <span className="uppercase">{lang}</span>}
+                    {isSidebarExpanded && <span className="uppercase">{lang}</span>}
                   </SelectTrigger>
 
                   <SelectContent position="popper" side="top" sideOffset={8}>
@@ -208,6 +221,9 @@ export function AppSidebar({ settings }: { settings: AppSettings }) {
               data-sidebar-interactive
               onClick={(e) => {
                 e.stopPropagation()
+                if (isMobile) {
+                  setOpenMobile(false)
+                }
                 toggleTheme()
               }}
             >
@@ -233,6 +249,9 @@ export function AppSidebar({ settings }: { settings: AppSettings }) {
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
+                    if (isMobile) {
+                      setOpenMobile(false)
+                    }
                     if (!logoutMutation.isPending) {
                       logoutMutation.mutate('manual')
                     }

@@ -20,7 +20,7 @@ import { convertToCurrencyFormat } from '@/lib/currency'
 import { formatNumberForDisplay, parseLocaleNumber } from '@/lib/inputUtils'
 
 const getItemKey = (item: OrderFormState['items'][number], index: number) => {
-  return `item-${item.id || item.tempId || index}`
+  return `item-${item.id || index}`
 }
 
 const calculateItemTotal = (item: OrderFormState['items'][number]) => {

@@ -3,7 +3,6 @@ import type { Customer } from '@/types'
 import type { CustomersSearch } from '@/lib/types/types.search'
 import type { DataTableFilter } from '@/components/datatable/types'
 import DataTable from '@/components/datatable'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
 
 type SearchUpdates = Record<string, string | number | undefined>
 
@@ -40,7 +39,6 @@ export function CustomersDataTable({
 }: TableProps) {
   return (
     <div className="mt-6 border rounded-lg shadow-sm">
-      {isFetching && <LoadingSpinner variant="inline" />}
       <DataTable
         data={customers}
         columns={columns}
@@ -54,6 +52,7 @@ export function CustomersDataTable({
         onSearchChange={onSearchChange}
         onRowClick={(row) => onRowClick(row.id)}
         allowedSortBy={allowedSortBy}
+        isFetching={isFetching}
       />
     </div>
   )

@@ -19,6 +19,7 @@ import {
   useUpdateDeliveryMutation,
 } from '@/lib/mutations/deliveries'
 import type { FieldErrors } from '@/lib/error/utils/formErrors'
+import { useMobileReadonly } from '@/hooks/useMobileReadonly'
 
 function incrementDeliveryNumber(num: string) {
   const match = num.match(/(\d+)$/)
@@ -231,6 +232,7 @@ export function DeliveryForm({
   lastReturnDeliveryNumber = '',
   onClose,
 }: DeliveryFormProps) {
+  const isMobileReadonly = useMobileReadonly()
   const [form, setForm] = useState<DeliveryFormState>(formInitials)
   const [errors, setErrors] = useState<FieldErrors>({})
 
@@ -604,6 +606,7 @@ export function DeliveryForm({
   // --------------------------------------------
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (isMobileReadonly) return
     if (!validateForm()) return
 
     const payload: any = {

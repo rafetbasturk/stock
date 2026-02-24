@@ -8,8 +8,11 @@
   "selected": "options selected",
   "columns": "Columns",
   "no_results": "No results found.",
+  "updating": "Updating...",
   "records_count": "{{count}} records",
   "rows_per_page": "Rows per page:",
   "page_status": "Page {{current}} / {{total}}",
-  "filters": "Filters"
+  "filters": "Filters",
+  "cancel": "Cancel",
+  "apply": "Apply"
 }

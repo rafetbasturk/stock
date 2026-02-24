@@ -1,9 +1,12 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import type { DataTableFilter } from '@/components/datatable/types'
-import type { ProductDemandSearch } from '@/lib/types/types.search'
-import type { ProductDemandRow } from './columns'
+import type {
+  ProductDemandSearch,
+  SearchUpdates,
+} from '@/lib/types/types.search'
 import DataTable from '@/components/datatable'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { useIsMobile } from '@/hooks/use-mobile'
+import type { ProductDemandRow } from '@/types'
 
 interface ProductDemandDataTableProps {
   data: Array<ProductDemandRow>
@@ -14,9 +17,10 @@ interface ProductDemandDataTableProps {
   search: ProductDemandSearch
   columns: Array<ColumnDef<ProductDemandRow>>
   customFilters: Array<DataTableFilter>
-  onSearchChange: (updates: Record<string, string | number | undefined>) => void
+  onSearchChange: (updates: SearchUpdates) => void
   onPageChange: (pageIndex: number) => void
   onPageSizeChange: (pageSize: number) => void
+  allowedSortBy?: ReadonlyArray<string>
 }
 
 export function ProductDemandDataTable({
@@ -31,10 +35,12 @@ export function ProductDemandDataTable({
   onSearchChange,
   onPageChange,
   onPageSizeChange,
+  allowedSortBy,
 }: ProductDemandDataTableProps) {
+  const isMobile = useIsMobile()
+
   return (
     <div className="mt-6 border rounded-lg shadow-sm">
-      {isFetching && <LoadingSpinner variant="inline" />}
       <DataTable
         data={data}
         columns={columns}
@@ -46,6 +52,17 @@ export function ProductDemandDataTable({
         onSearchChange={onSearchChange}
         onServerPageChange={onPageChange}
         onServerPageSizeChange={onPageSizeChange}
+        allowedSortBy={allowedSortBy}
+        isFetching={isFetching}
+        initialColumnVisibility={
+          isMobile
+            ? {
+                customer_code: false,
+                last_order_date: false,
+              }
+            : undefined
+        }
+        showColumnVisibilityToggle={!isMobile}
       />
     </div>
   )

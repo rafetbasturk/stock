@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { DialogFooter } from '@/components/ui/dialog'
+import { useMobileReadonly } from '@/hooks/useMobileReadonly'
 
 type Props = { orderId?: number; isSubmitting: boolean; onClose: () => void }
 
@@ -10,6 +11,7 @@ export default function OrderFormFooter({
   onClose,
 }: Props) {
   const { t } = useTranslation('orders')
+  const isMobileReadonly = useMobileReadonly()
 
   return (
     <DialogFooter className="flex justify-end gap-2 pt-4 border-t">
@@ -18,7 +20,7 @@ export default function OrderFormFooter({
       </Button>
       <Button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || isMobileReadonly}
         className="disabled:cursor-not-allowed disabled:opacity-40"
       >
         {isSubmitting

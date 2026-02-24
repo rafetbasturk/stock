@@ -194,3 +194,16 @@ export type MovementRow = StockMovement & {
     deleted_at: Date | null
   }
 }
+
+export type ProductDemandRow = {
+  customer_id: number
+  customer_code: string
+  customer_name: string
+  product_id: number
+  product_code: string
+  product_name: string
+  ordered_times: number
+  total_pieces: number
+  avg_pieces_per_order: number
+  last_order_date: Date | null
+}

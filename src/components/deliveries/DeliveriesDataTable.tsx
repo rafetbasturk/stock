@@ -1,11 +1,9 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import type { DeliveryListRow } from '@/types'
-import type { DeliveriesSearch } from '@/lib/types/types.search'
+import type { DeliveriesSearch, SearchUpdates } from '@/lib/types/types.search'
 import type { DataTableFilter } from '../datatable/types'
 import DataTable from '@/components/datatable'
 import { DeliveryProductsHistoryTable } from './DeliveryProductsHistoryTable'
-
-type SearchUpdates = Record<string, string | number | undefined>
 
 interface TableProps {
   deliveries: Array<DeliveryListRow>

@@ -1,7 +1,7 @@
 // src/routes/products/index.tsx
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { useTranslation } from 'react-i18next'
 
@@ -24,16 +24,17 @@ import { ProductDeleteDialog } from '@/components/products/ProductDeleteDialog'
 import { ProductListHeader } from '@/components/products/ProductListHeader'
 import { ProductsDataTable } from '@/components/products/ProductsDataTable'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { StockAdjustmentDialog } from '@/components/stock/StockAdjustmentDialog'
+import { StockMovementDialog } from '@/components/stock/StockMovementDialog'
 
 export const Route = createFileRoute('/products/')({
   validateSearch: zodValidator(productsSearchSchema),
   loaderDeps: ({ search }) => normalizeProductsSearch(search),
   loader: async ({ context, deps }) => {
-    return await Promise.all([
-      context.queryClient.prefetchQuery(getFilterOptions()),
-      context.queryClient.ensureQueryData(productsQuery(deps)),
-    ])
+    const normalizedDeps = normalizeProductsSearch(deps)
+
+    void context.queryClient.ensureQueryData(productsQuery(normalizedDeps))
+
+    return await context.queryClient.prefetchQuery(getFilterOptions())
   },
   component: ProductList,
   pendingComponent: ProductsPending,
@@ -67,8 +68,13 @@ function ProductList() {
 
   const { data: filterOptions } = useSuspenseQuery(getFilterOptions())
 
-  const productsQ = useSuspenseQuery(productsQuery(search))
-  const { data: products, total, pageIndex, pageSize } = productsQ.data
+  const productsQ = useQuery(productsQuery(search))
+
+  const productsData = productsQ.data
+  const products = productsData?.data ?? []
+  const total = productsData?.total ?? 0
+  const pageIndex = productsData?.pageIndex ?? search.pageIndex
+  const pageSize = productsData?.pageSize ?? search.pageSize
 
   const pendingDeleteProduct = useMemo(
     () =>
@@ -214,7 +220,8 @@ function ProductList() {
         onConfirm={confirmDeleteProduct}
       />
 
-      <StockAdjustmentDialog
+      <StockMovementDialog
+        mode="adjust"
         product={modalState.type === 'adjusting' ? modalState.item : null}
         open={modalState.type === 'adjusting'}
         onOpenChange={(open) => !open && closeModal()}

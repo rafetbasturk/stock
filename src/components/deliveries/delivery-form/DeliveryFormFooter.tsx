@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
+import { useMobileReadonly } from "@/hooks/useMobileReadonly";
 
 type Props = {
   deliveryId?: number;
@@ -11,6 +12,8 @@ export default function DeliveryFormFooter({
   isSubmitting,
   onClose,
 }: Props) {
+  const isMobileReadonly = useMobileReadonly();
+
   return (
     <DialogFooter className="flex justify-end gap-2 pt-4 border-t">
       <Button type="button" variant="outline" onClick={onClose}>
@@ -18,7 +21,7 @@ export default function DeliveryFormFooter({
       </Button>
       <Button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || isMobileReadonly}
         className="disabled:cursor-not-allowed disabled:opacity-40"
       >
         {deliveryId ? "Güncelle" : "Ekle"}

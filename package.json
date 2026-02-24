@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 3000",
+    "prebuild": "node scripts/check-node-version.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
@@ -63,6 +64,9 @@
     "vite-tsconfig-paths": "^6.0.2",
     "zod": "^4.3.6",
     "zustand": "^5.0.11"
+  },
+  "engines": {
+    "node": ">=20.19.0"
   },
   "devDependencies": {
     "@tanstack/devtools-vite": "^0.3.11",

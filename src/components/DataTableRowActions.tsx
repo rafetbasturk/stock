@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import type { ActionMenuItem } from '@/types'
+import { useMobileReadonly } from '@/hooks/useMobileReadonly'
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>
@@ -22,6 +23,12 @@ export function DataTableRowActions<TData>({
   actions,
   alignment = 'start',
 }: DataTableRowActionsProps<TData>) {
+  const isMobileReadonly = useMobileReadonly()
+
+  if (isMobileReadonly) {
+    return null
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>

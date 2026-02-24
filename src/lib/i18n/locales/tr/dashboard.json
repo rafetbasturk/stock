@@ -9,7 +9,10 @@
   "filters": {
     "all": "Tümü",
     "all_years": "Tüm yıllar",
-    "clear": "Temizle"
+    "clear": "Temizle",
+    "cancel": "Vazgeç",
+    "apply": "Uygula",
+    "trigger": "Filtreler"
   },
   "metrics": {
     "load_error_title": "Veriler yüklenirken hata oluştu",
@@ -66,7 +69,7 @@
     "long": [
       "Ocak",
       "Şubat",
-      "mart",
+      "Mart",
       "Nisan",
       "Mayıs",
       "Haziran",

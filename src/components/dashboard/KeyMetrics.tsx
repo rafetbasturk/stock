@@ -26,7 +26,7 @@ export default function KeyMetrics({ filters }: Props) {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Skeleton className="h-49.5 rounded-xl" />
         <Skeleton className="h-49.5 rounded-xl" />
         <Skeleton className="h-49.5 rounded-xl" />
@@ -62,7 +62,7 @@ export default function KeyMetrics({ filters }: Props) {
   })
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <DashboardCard
         title={t('metrics.total_order_amount')}
         value={totalRevenue}

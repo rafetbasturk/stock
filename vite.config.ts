@@ -8,10 +8,32 @@ import { fileURLToPath, URL } from 'url'
 import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
 
+function getVendorChunkName(id: string): string | null {
+  if (!id.includes('node_modules')) return null
+
+  if (id.includes('recharts') || id.includes('victory-vendor'))
+    return 'vendor-charts'
+  if (id.includes('i18next') || id.includes('react-i18next'))
+    return 'vendor-i18n'
+  if (id.includes('date-fns') || id.includes('react-day-picker'))
+    return 'vendor-dates'
+
+  return null
+}
+
 const config = defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          return getVendorChunkName(id)
+        },
+      },
     },
   },
   plugins: [

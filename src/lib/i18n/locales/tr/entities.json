@@ -126,6 +126,25 @@
       "customer": "Müşteri",
       "status": "Sipariş Durumu",
       "daterange": "Tarih Aralığı"
+    },
+    "history": {
+      "title": "Sipariş Ürün Detayları",
+      "progress": "İlerleme",
+      "qty_suffix": "adet",
+      "none": "Henüz sevk yapılmadı",
+      "empty": "Bu siparişe ait ürün bulunamadı.",
+      "columns": {
+        "status": "Durum",
+        "product": "Ürün",
+        "ordered": "Sipariş",
+        "delivered": "Sevk",
+        "remaining": "Kalan",
+        "shipment_history": "Sevkiyat Geçmişi"
+      },
+      "status": {
+        "missing": "{{count}} eksik",
+        "completed": "Tamamlandı"
+      }
     }
   },
   "deliveries": {
@@ -144,6 +163,26 @@
       "customer": "Müşteri",
       "daterange": "Tarih Aralığı",
       "kind": "Sevk Türü"
+    },
+    "history": {
+      "title": "Sevk Ürün Detayları",
+      "progress": "İlerleme",
+      "qty_suffix": "adet",
+      "none": "Önceki sevk yok",
+      "empty": "Sevk ürünü bulunamadı.",
+      "columns": {
+        "order_number": "Sipariş No",
+        "product": "Ürün",
+        "ordered": "Sipariş",
+        "total_delivered": "Toplam Sevk",
+        "current_delivery": "Bu Sevk",
+        "status": "Durum",
+        "shipment_history": "Sevkiyat Geçmişi"
+      },
+      "status": {
+        "missing": "{{count}} eksik",
+        "completed": "Tamamlandı"
+      }
     },
     "kinds": {
       "delivery": "Teslimat",

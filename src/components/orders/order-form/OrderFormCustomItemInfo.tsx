@@ -21,7 +21,7 @@ const getItemKey = (
   item: OrderFormState['customItems'][number],
   index: number,
 ) => {
-  return `item-${item.id || item.tempId || index}`
+  return `item-${item.id || index}`
 }
 
 type Props = {

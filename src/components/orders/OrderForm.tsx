@@ -27,13 +27,13 @@ import {
 } from '@/lib/mutations/orders'
 import { useQuery } from '@tanstack/react-query'
 import { lastOrderNumberQuery } from '@/lib/queries/orders'
+import { useMobileReadonly } from '@/hooks/useMobileReadonly'
 
 export type OrderFormState = InsertOrder & {
   is_custom_order?: boolean
   items: Array<
     NewOrderItem & {
       id?: number
-      tempId?: string
       unit_price_raw?: string
     }
   >
@@ -46,7 +46,6 @@ export type OrderFormState = InsertOrder & {
     unit_price_raw?: string
     currency?: Currency | null
     notes?: string | null
-    tempId?: string
   }>
 }
 
@@ -78,6 +77,7 @@ export default function OrderForm({
   onClose,
   onSuccess,
 }: OrderFormProps) {
+  const isMobileReadonly = useMobileReadonly()
   const { data: products = [], isLoading } = useSelectProducts()
   const { data: lastOrderNumber } = useQuery(lastOrderNumberQuery)
 
@@ -219,7 +219,6 @@ export default function OrderForm({
       customItems: [
         ...prev.customItems,
         {
-          tempId: crypto.randomUUID(),
           name: '',
           unit: 'adet',
           quantity: 1,
@@ -260,6 +259,7 @@ export default function OrderForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (isMobileReadonly) return
     if (!validateForm()) return
 
     const payload: OrderSubmitPayload = {
@@ -299,7 +299,7 @@ export default function OrderForm({
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="w-[96vw] max-w-[96vw] sm:max-w-360 h-[min(94vh,60rem)] overflow-y-auto p-3 md:p-6">
-        <OrderFormHeader orderId={order?.id} isSubmitting={submitting} />
+        <OrderFormHeader orderId={order?.id} />
 
         <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
           <OrderFormBasicInfo

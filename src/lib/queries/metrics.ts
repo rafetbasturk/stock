@@ -1,5 +1,5 @@
 // src/lib/queries/metrics.ts
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import type { HomeSearch } from '../types/types.search'
 import type { Currency } from '@/types'
 import type { Rate } from '../currency'
@@ -121,6 +121,12 @@ export const useFetchMonthlyOverview = (
         }
         throw appError
       }
+    },
+    staleTime: 60 * 1000,
+    placeholderData: keepPreviousData,
+    meta: {
+      feature: 'dashboard',
+      silentOnBackground: true,
     },
   })
 }

@@ -4,12 +4,27 @@ import type { TitleKey } from "./errorTitleKeys";
 import type { Language } from "@/lib/types/types.settings";
 import { getUserLang } from "@/lib/i18n/getUserLang";
 
-import trTitles from "@/lib/i18n/locales/tr/errors.titles.json";
-import enTitles from "@/lib/i18n/locales/en/errors.titles.json";
-
 const TITLES_BY_LANG: Record<Language, Record<TitleKey, string>> = {
-  tr: trTitles,
-  en: enTitles,
+  en: {
+    AUTH_ERROR: "Login failed",
+    SESSION_EXPIRED: "Session expired",
+    UNAUTHORIZED: "Unauthorized",
+    FORBIDDEN: "Access denied",
+    NETWORK_ERROR: "Connection error",
+    VALIDATION_ERROR: "Invalid data",
+    SYSTEM_ERROR: "System error",
+    UNKNOWN_ERROR: "Error",
+  },
+  tr: {
+    AUTH_ERROR: "Giris basarisiz",
+    SESSION_EXPIRED: "Oturum suresi doldu",
+    UNAUTHORIZED: "Yetkisiz islem",
+    FORBIDDEN: "Erisim engellendi",
+    NETWORK_ERROR: "Baglanti hatasi",
+    VALIDATION_ERROR: "Gecersiz veri",
+    SYSTEM_ERROR: "Sistem hatasi",
+    UNKNOWN_ERROR: "Hata",
+  },
 };
 
 const DEFAULT_TITLE_KEY: TitleKey = "UNKNOWN_ERROR";

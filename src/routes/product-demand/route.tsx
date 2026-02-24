@@ -7,7 +7,7 @@ export const Route = createFileRoute('/product-demand')({
     sidebar: {
       label: 'nav.product_demand',
       icon: BarChart3Icon,
-      order: 70,
+      order: 60,
     },
   },
 })

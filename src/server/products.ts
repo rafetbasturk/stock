@@ -124,24 +124,19 @@ export const getPaginated = createServerFn()
       ? sql<number>`
         (
           CASE
-            WHEN ${productsTable.code} = ${q} THEN 1000
+            WHEN ${productsTable.code} = ${normalizedQ} THEN 1000
             ELSE 0
           END
-
           +
-
-          CASE
-            WHEN ${productsTable.code} ILIKE ${q + '%'} THEN 200
-            ELSE 0
-          END
-
+          similarity(${productsTable.code}, ${normalizedQ}) * 100
           +
-
-          similarity(${productsTable.code}, ${q}) * 50 +
-          similarity(${productsTable.name}, ${q}) * 30 +
-          similarity(${productsTable.material}, ${q}) * 20 +
-          similarity(${productsTable.other_codes}, ${q}) * 10 +
-          similarity(${productsTable.notes}, ${q}) * 5
+          similarity(${productsTable.name}, ${normalizedQ}) * 50
+          +
+          similarity(${productsTable.material}, ${normalizedQ}) * 20
+          +
+          similarity(${productsTable.other_codes}, ${normalizedQ}) * 30
+          +
+          similarity(${productsTable.notes}, ${normalizedQ}) * 10
         )
       `
       : undefined
@@ -203,7 +198,28 @@ export const getPaginated = createServerFn()
           }
         },
       }),
-    ])
+    ]).catch((error) => {
+      console.error('[getPaginatedProducts] query failed', {
+        error,
+        input: {
+          pageIndex,
+          pageSize,
+          q,
+          material,
+          customerId,
+          sortBy,
+          sortDir,
+        },
+        normalized: {
+          normalizedQ,
+          normalizedMaterial,
+          normalizedCustomerId,
+          safePageIndex,
+          safePageSize,
+        },
+      })
+      throw error
+    })
 
     const total = totalResult[0]?.count ?? 0
 

@@ -1,5 +1,6 @@
 import {
   HeadContent,
+  ClientOnly,
   Outlet,
   ScriptOnce,
   Scripts,
@@ -13,21 +14,17 @@ import {
 import { createServerFn } from '@tanstack/react-start'
 import { useMemo } from 'react'
 import { I18nextProvider, useTranslation } from 'react-i18next'
-import { Toaster } from 'sonner'
 import appCss from '../styles.css?url'
 import type { QueryClient } from '@tanstack/react-query'
-import { AppSidebar } from '@/components/AppSidebar'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { AppSidebar } from '@/components/AppSidebar'
 import { ErrorComponent } from '@/components/error/ErrorComponent'
+import GlobalClientEffects from '@/components/GlobalClientEffects'
+import GlobalToaster from '@/components/GlobalToaster'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { createI18n } from '@/lib/i18n/createI18n'
-import { useErrorToast } from '@/hooks/useErrorToast'
-import { useSessionPolicy } from '@/hooks/useSessionManager'
 import { meQuery } from '@/lib/queries/auth'
-import enRoot from '@/lib/i18n/locales/en/root.json'
-import trRoot from '@/lib/i18n/locales/tr/root.json'
 import { createSettingsScript } from '@/lib/settings/settingsScript'
-import { ClientOnly } from '@tanstack/react-router'
 import { SetTimeZoneCookie } from '@/components/SetTimeZoneCookie'
 import type { AppSettings, Language } from '@/lib/types/types.settings'
 import { settingsMiddleware } from '@/middleware/settings'
@@ -38,8 +35,8 @@ interface MyRouterContext {
 }
 
 const ROOT_TITLE_BY_LANG: Record<Language, string> = {
-  en: enRoot.app_title,
-  tr: trRoot.app_title,
+  en: 'Stock-Order Tracking App',
+  tr: 'Stok-Siparis Takip Uygulaması',
 }
 
 export const getServerCookies = createServerFn()
@@ -106,9 +103,6 @@ function RootComponent() {
   const matches = useRouterState({ select: (s) => s.matches })
   const isAuthLayout = matches.some((m) => m.routeId === '/_auth')
 
-  useErrorToast()
-  useSessionPolicy()
-
   const content = isAuthLayout ? (
     <div className="min-h-svh flex items-center justify-center p-4">
       <Outlet />
@@ -118,7 +112,7 @@ function RootComponent() {
       <div className="flex min-h-svh w-full">
         <AppSidebar settings={settings} />
         <main className="flex-1 overflow-x-hidden">
-          <SidebarTrigger className="md:hidden" />
+          <SidebarTrigger className="md:hidden text-primary" size={"icon-lg"}/>
           <Outlet />
         </main>
       </div>
@@ -132,9 +126,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const { settings } = Route.useRouteContext()
 
   const i18n = useMemo(() => createI18n(settings.lang), [settings.lang])
+  const initialHtmlClassName = settings.theme === 'dark' ? 'dark' : undefined
 
   return (
-    <html lang={settings.lang}>
+    <html
+      lang={settings.lang}
+      className={initialHtmlClassName}
+    >
       <head>
         <HeadContent />
         <title>{ROOT_TITLE_BY_LANG[settings.lang]}</title>
@@ -143,10 +141,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         <I18nextProvider i18n={i18n}>
           <ClientOnly fallback={null}>
+            <GlobalClientEffects />
+          </ClientOnly>
+          <ClientOnly fallback={null}>
             <SetTimeZoneCookie />
           </ClientOnly>
           {children}
-          <Toaster position="bottom-right" closeButton />
+          <ClientOnly fallback={null}>
+            <GlobalToaster />
+          </ClientOnly>
           {/* <ClientOnly>
             <TanStackDevtools
               config={{

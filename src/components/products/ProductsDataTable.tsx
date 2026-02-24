@@ -1,9 +1,8 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import type { ProductListRow } from '@/types'
 import type { ProductsSearch, SearchUpdates } from '@/lib/types/types.search'
-import type { DataTableFilter } from '@/components/datatable/types'
-import DataTable from '@/components/datatable'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import type { DataTableFilter } from '../datatable/types'
+import DataTable from '../datatable'
 
 interface ProductsDataTableProps {
   products: Array<ProductListRow>
@@ -38,7 +37,6 @@ export function ProductsDataTable({
 }: ProductsDataTableProps) {
   return (
     <div className="mt-6 border rounded-lg shadow-sm">
-      {isFetching && <LoadingSpinner variant="inline" />}
       <DataTable
         data={products}
         columns={columns}
@@ -61,6 +59,7 @@ export function ProductsDataTable({
         onRowClick={(row) => onRowClick(row.id)}
         allowedSortBy={allowedSortBy}
         showColumnVisibilityToggle={true}
+        isFetching={isFetching}
       />
     </div>
   )

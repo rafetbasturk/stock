@@ -1,4 +1,4 @@
-import { flexRender, type Table } from '@tanstack/react-table'
+import { flexRender, type Cell, type Table } from '@tanstack/react-table'
 import {
   TableBody,
   TableCell,
@@ -12,6 +12,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
 import { Fragment } from 'react/jsx-runtime'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../ui/button'
+import { LoadingSpinner } from '../LoadingSpinner'
 
 interface DataTableCoreProps<TData> {
   table: Table<TData>
@@ -20,6 +21,7 @@ interface DataTableCoreProps<TData> {
   getRowClassName?: (row: TData) => string
   allowedSortBy?: ReadonlyArray<string>
   isFetching?: boolean
+  skeletonRowCount?: number
 }
 
 export default function DataTableCore<TData>({
@@ -29,17 +31,40 @@ export default function DataTableCore<TData>({
   getRowClassName,
   allowedSortBy,
   isFetching,
+  skeletonRowCount = 12,
 }: DataTableCoreProps<TData>) {
   const { t } = useTranslation('table')
 
   const rows = table.getRowModel().rows
-
-  const visibleLeafColumnCount = table
+  const isInitialLoading = Boolean(isFetching && rows.length === 0)
+  const isBackgroundFetching = Boolean(isFetching && rows.length > 0)
+  const visibleColumns = table
     .getVisibleLeafColumns()
-    .filter((c) => !c.columnDef.meta?.isFilterOnly).length
+    .filter((c) => !c.columnDef.meta?.isFilterOnly)
+
+  const visibleLeafColumnCount = visibleColumns.length
+
+  const getMobileCellLabel = (cell: Cell<TData, unknown>) => {
+    const filterTitle = cell.column.columnDef.meta?.filterTitle
+    if (filterTitle) return String(filterTitle)
+
+    if (typeof cell.column.columnDef.header === 'string') {
+      return cell.column.columnDef.header
+    }
+
+    return cell.column.id
+      .split('.')
+      .pop()
+      ?.replace(/[_-]+/g, ' ')
+      .trim() || cell.column.id
+  }
 
   return (
-    <div className="max-h-[70vh] overflow-auto rounded-md border relative">
+    <div
+      className="max-h-[70vh] overflow-auto rounded-md border"
+      aria-busy={isFetching}
+    >
+      {/* Desktop */}
       <div className="hidden md:block">
         <table className="w-full caption-bottom text-sm table-fixed">
           {/* Header */}
@@ -124,7 +149,23 @@ export default function DataTableCore<TData>({
           </TableHeader>
           {/* Scrollable body + footer */}
           <TableBody>
-            {rows.length ? (
+            {isInitialLoading ? (
+              Array.from({ length: skeletonRowCount }).map((_, rowIndex) => (
+                <TableRow
+                  key={`skeleton-desktop-${rowIndex}`}
+                  className="even:bg-background odd:bg-muted/30"
+                >
+                  {visibleColumns.map((column, columnIndex) => (
+                    <TableCell
+                      key={`${column.id}-skeleton-${rowIndex}-${columnIndex}`}
+                      style={{ width: column.getSize() }}
+                    >
+                      <div className="h-10 w-full rounded bg-primary/10 animate-pulse" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : rows.length ? (
               rows.map((row) => (
                 <Fragment key={row.id}>
                   <TableRow
@@ -184,6 +225,7 @@ export default function DataTableCore<TData>({
               </TableRow>
             )}
           </TableBody>
+          {/* Footer */}
           <TableFooter>
             {table.getFooterGroups().map((footerGroup) => (
               <TableRow key={footerGroup.id}>
@@ -207,12 +249,32 @@ export default function DataTableCore<TData>({
           </TableFooter>
         </table>
       </div>
-      <div className="md:hidden space-y-4 p-4">
-        {rows.length ? (
+
+      {/* Mobile */}
+      <div className="md:hidden space-y-4 p-2">
+        {isInitialLoading ? (
+          Array.from({ length: Math.min(4, skeletonRowCount) }).map((_, i) => (
+            <div
+              key={`skeleton-mobile-${i}`}
+              className="border rounded-lg p-4 shadow-sm bg-background space-y-2"
+            >
+              <div className="h-4 w-2/5 rounded bg-primary/10 animate-pulse" />
+              <div className="h-3 w-full rounded bg-primary/10 animate-pulse" />
+              <div className="h-3 w-2/5 rounded bg-primary/10 animate-pulse" />
+              <div className="h-3 w-full rounded bg-primary/10 animate-pulse" />
+              <div className="h-3 w-4/5 rounded bg-primary/10 animate-pulse" />
+            </div>
+          ))
+        ) : rows.length ? (
           rows.map((row) => {
             const orderNumberCell = row
               .getVisibleCells()
-              .find((cell) => cell.column.id === 'order_number')
+              .find(
+                (cell) =>
+                  cell.column.id === 'order_number' ||
+                  cell.column.id === 'delivery_number' ||
+                  cell.column.id === 'code',
+              )
             const visibleCells = row.getVisibleCells()
             const actionsCell = visibleCells.find(
               (cell) => cell.column.id === 'actions',
@@ -220,7 +282,7 @@ export default function DataTableCore<TData>({
             return (
               <div
                 key={row.id}
-                className="border rounded-lg p-4 shadow-sm bg-background"
+                className="border rounded-lg p-3 shadow-sm bg-background"
                 onClick={() => onRowClick?.(row.original)}
               >
                 {/* Header row */}
@@ -232,36 +294,48 @@ export default function DataTableCore<TData>({
                         orderNumberCell.getContext(),
                       )}
                   </div>
-                  {/* Expand toggle */}
-                  {renderExpandedRow && (
-                    <Button
-                      size="icon-sm"
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        row.toggleExpanded()
-                      }}
-                    >
-                      {row.getIsExpanded() ? '▼' : '▶'}
-                    </Button>
-                  )}
+                  <div
+                    className="flex items-center gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Actions dropdown trigger */}
+                    {actionsCell &&
+                      flexRender(
+                        actionsCell.column.columnDef.cell,
+                        actionsCell.getContext(),
+                      )}
+                    {/* Expand toggle */}
+                    {renderExpandedRow && (
+                      <Button
+                        size="icon-sm"
+                        variant="ghost"
+                        onClick={() => row.toggleExpanded()}
+                      >
+                        {row.getIsExpanded() ? '▼' : '▶'}
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 {/* Content */}
-                <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+                <div className="mt-2 space-y-2 text-sm text-muted-foreground">
                   {visibleCells.map((cell) => {
                     if (
                       cell.column.id === 'expand-toggle' ||
                       cell.column.id === 'actions' ||
-                      cell.column.id === 'order_number'
+                      cell.column.id === 'order_number' ||
+                      cell.column.id === 'delivery_number' ||
+                      cell.column.id === 'code'
                     )
                       return null
                     return (
-                      <div key={cell.id} className="flex justify-between gap-2">
-                        <span className="font-medium text-foreground">
-                          {cell.column.columnDef.meta?.filterTitle ??
-                            String(cell.column.columnDef.header)}
+                      <div
+                        key={cell.id}
+                        className="grid grid-cols-[minmax(84px,1fr)_minmax(0,1.4fr)] items-center gap-2"
+                      >
+                        <span className="font-medium text-foreground leading-5">
+                          {getMobileCellLabel(cell)}
                         </span>
-                        <span className="text-right">
+                        <span className="text-right wrap-break-word leading-5 min-w-0">
                           {flexRender(
                             cell.column.columnDef.cell,
                             cell.getContext(),
@@ -270,17 +344,6 @@ export default function DataTableCore<TData>({
                       </div>
                     )
                   })}
-                </div>
-                {/* Actions */}
-                <div
-                  className="mt-3 flex justify-end"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {actionsCell &&
-                    flexRender(
-                      actionsCell.column.columnDef.cell,
-                      actionsCell.getContext(),
-                    )}
                 </div>
                 {/* Expanded content */}
                 {row.getIsExpanded() && renderExpandedRow && (
@@ -297,10 +360,13 @@ export default function DataTableCore<TData>({
           </div>
         )}
       </div>
-      {isFetching && (
-        <div className="absolute inset-0 bg-background/60 backdrop-blur-[1px] flex items-center justify-center z-20">
-          <div className="animate-pulse text-sm text-muted-foreground">
-            Loading...
+      {isBackgroundFetching && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+          <div
+            className="rounded-md border bg-background/90 p-3 shadow-sm flex items-center justify-center"
+            aria-live="polite"
+          >
+            <LoadingSpinner text={t('updating')} variant="inline" />
           </div>
         </div>
       )}

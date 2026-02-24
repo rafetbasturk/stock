@@ -49,8 +49,9 @@ function Dashboard() {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="px-2 pt-0 pb-8 md:p-6 space-y-6">
+      {/* header */}
+      <div className="flex items-center justify-between gap-6">
         <h1 className="text-3xl font-bold tracking-tight capitalize my-auto">
           {t('heading')}
         </h1>
@@ -64,16 +65,16 @@ function Dashboard() {
 
       <StockIntegrityAlert />
 
-      <div className="space-y-8">
+      <div className="space-y-4">
         <KeyMetrics filters={search} />
 
-        <Card className="lg:col-span-8 shadow-sm border-primary/5">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <Card className="shadow-sm border-primary/5 gap-2">
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base font-semibold">
               {t('sections.monthly_chart')}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className='p-3 md:p-6'>
             <MonthlyChart filters={search} />
           </CardContent>
         </Card>

@@ -18,11 +18,12 @@ import {
   DeliveriesSearch,
   deliveriesSearchSchema,
   deliveriesSortFields,
+  normalizeDeliveriesSearch,
 } from '@/lib/types/types.search'
 import type { DataTableFilter } from '@/components/datatable/types'
 
 import { DeliveryListRow } from '@/types'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -30,22 +31,24 @@ import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/deliveries/')({
   validateSearch: zodValidator(deliveriesSearchSchema),
-  loaderDeps: ({ search }) => search,
-  loader: async ({ context, deps }) => {
-    const data = await Promise.all([
+  loaderDeps: ({ search }) => normalizeDeliveriesSearch(search),
+  loader: async ({ context }) => {
+    // const normalizedDeps = normalizeDeliveriesSearch(deps)
+
+    
+    return await Promise.all([
+      // context.queryClient.ensureQueryData(deliveriesQuery(normalizedDeps)),
       context.queryClient.prefetchQuery(lastDeliveryNumberQuery),
       context.queryClient.prefetchQuery(lastReturnDeliveryNumberQuery),
       context.queryClient.prefetchQuery(getFilterOptions),
       context.queryClient.prefetchQuery(ordersSelectQuery),
-      context.queryClient.ensureQueryData(deliveriesQuery(deps)),
     ])
-    return data
   },
-  component: RouteComponent,
+  component: DeliveryList,
   pendingComponent: DeliveriesPending,
 })
 
-function RouteComponent() {
+function DeliveryList() {
   const { t, i18n } = useTranslation('entities')
   const timeZone = useAppTimeZone()
   const navigate = useNavigate({ from: Route.fullPath })
@@ -64,8 +67,14 @@ function RouteComponent() {
     [],
   )
 
-  const deliveriesQ = useSuspenseQuery(deliveriesQuery(search))
-  const { data: deliveries, total, pageIndex, pageSize } = deliveriesQ.data
+  const deliveriesQ = useQuery(deliveriesQuery(search))
+
+  const deliveriesData = deliveriesQ.data
+
+  const deliveries = deliveriesData?.data ?? []
+  const total = deliveriesData?.total ?? 0
+  const pageIndex = deliveriesData?.pageIndex ?? search.pageIndex
+  const pageSize = deliveriesData?.pageSize ?? search.pageSize
 
   const deleteMutation = useDeleteDeliveryMutation()
 

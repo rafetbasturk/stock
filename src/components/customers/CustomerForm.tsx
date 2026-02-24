@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import InputField from '@/components/form/InputField'
 import { useCreateCustomerMutation, useUpdateCustomerMutation } from '@/lib/mutations/customers'
+import { useMobileReadonly } from '@/hooks/useMobileReadonly'
 
 type CustomerFormValues = {
   code: string
@@ -56,6 +57,7 @@ export default function CustomerForm({
   onClose,
   onSuccess,
 }: CustomerFormProps) {
+  const isMobileReadonly = useMobileReadonly()
   const { t } = useTranslation()
   const [values, setValues] = useState<CustomerFormValues>(() => toFormValues(item))
   const [formErrors, setFormErrors] = useState<FieldErrors>({})
@@ -102,6 +104,7 @@ export default function CustomerForm({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (isMobileReadonly) return
 
     const nextErrors: FieldErrors = {}
 
@@ -159,7 +162,7 @@ export default function CustomerForm({
               value={values.code}
               onChange={(e) => setValue('code', e.target.value)}
               required
-              disabled={isSubmitting}
+              disabled={isSubmitting || isMobileReadonly}
               error={formErrors.code}
             />
             <InputField
@@ -168,7 +171,7 @@ export default function CustomerForm({
               value={values.name}
               onChange={(e) => setValue('name', e.target.value)}
               required
-              disabled={isSubmitting}
+              disabled={isSubmitting || isMobileReadonly}
               error={formErrors.name}
             />
             <InputField
@@ -177,7 +180,7 @@ export default function CustomerForm({
               value={values.email}
               onChange={(e) => setValue('email', e.target.value)}
               type="email"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isMobileReadonly}
               error={formErrors.email}
             />
             <InputField
@@ -185,7 +188,7 @@ export default function CustomerForm({
               label="Telefon"
               value={values.phone}
               onChange={(e) => setValue('phone', e.target.value)}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isMobileReadonly}
               error={formErrors.phone}
             />
           </div>
@@ -195,7 +198,7 @@ export default function CustomerForm({
             label="Adres"
             value={values.address}
             onChange={(e) => setValue('address', e.target.value)}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isMobileReadonly}
             error={formErrors.address}
           />
 
@@ -209,7 +212,10 @@ export default function CustomerForm({
             <Button variant="outline" type="button" onClick={onClose} disabled={isSubmitting}>
               Vazgeç
             </Button>
-            <Button type="submit" disabled={isSubmitting || !hasChanged}>
+            <Button
+              type="submit"
+              disabled={isSubmitting || !hasChanged || isMobileReadonly}
+            >
               {isSubmitting ? 'Kaydediliyor...' : 'Kaydet'}
             </Button>
           </DialogFooter>

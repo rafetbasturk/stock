@@ -9,7 +9,6 @@
     "products": "Products",
     "product_demand": "Product Demand",
     "customers": "Customers",
-    "deliveries": "Deliveries",
-    "stock_history": "Stock Activity"
+    "deliveries": "Deliveries"
   }
 }

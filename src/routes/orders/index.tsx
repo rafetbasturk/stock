@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { useTranslation } from 'react-i18next'
@@ -31,11 +31,13 @@ import { useAppTimeZone } from '@/hooks/useAppTimeZone'
 export const Route = createFileRoute('/orders/')({
   validateSearch: zodValidator(ordersSearchSchema),
   loaderDeps: ({ search }) => normalizeOrdersSearch(search),
-  loader: async ({ context, deps }) => {
+  loader: async ({ context }) => {
+    // const normalizedDeps = normalizeOrdersSearch(deps)
+
     return await Promise.all([
+      // context.queryClient.prefetchQuery(ordersQuery(normalizedDeps)),
       context.queryClient.prefetchQuery(lastOrderNumberQuery),
       context.queryClient.prefetchQuery(getFilterOptions),
-      context.queryClient.ensureQueryData(ordersQuery(deps)),
     ])
   },
   component: OrderList,
@@ -60,11 +62,16 @@ function OrderList() {
     [],
   )
 
+  const ordersQ = useQuery(ordersQuery(search))
+  
+  const ordersData = ordersQ.data
+  
+  const orders = ordersData?.data ?? []
+  const total = ordersData?.total ?? 0
+  const pageIndex = ordersData?.pageIndex ?? search.pageIndex
+  const pageSize = ordersData?.pageSize ?? search.pageSize
+  
   const deleteMutation = useDeleteOrderMutation()
-
-  const ordersQ = useSuspenseQuery(ordersQuery(search))
-  const { data: orders, total, pageIndex, pageSize } = ordersQ.data
-
   const pendingDeleteOrder = useMemo(
     () =>
       pendingDeleteId === null
@@ -172,6 +179,7 @@ function OrderList() {
   return (
     <>
       <OrderListHeader onAdd={openAddModal} />
+
       <OrdersDataTable
         orders={orders}
         columns={columns}
@@ -182,7 +190,6 @@ function OrderList() {
         customFilters={customFilters}
         search={search}
         onSearchChange={handleSearchChange}
-        allowedSortBy={orderSortFields}
         onPageChange={(p) => handleSearchChange({ pageIndex: p })}
         onPageSizeChange={(s) =>
           handleSearchChange({ pageSize: s, pageIndex: 0 })
@@ -193,6 +200,7 @@ function OrderList() {
             params: { id: String(id) },
           })
         }
+        allowedSortBy={orderSortFields}
       />
 
       {modalState.type !== 'closed' && (

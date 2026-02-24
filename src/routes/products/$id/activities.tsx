@@ -4,15 +4,9 @@ import { PlusCircle } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import PageHeader from '@/components/PageHeader'
-import { StockMovementForm } from '@/components/stock/StockMovementForm'
+import { StockMovementDialog } from '@/components/stock/StockMovementDialog'
 import { StockMovementsTable } from '@/components/stock/StockMovementsTable'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { productQuery } from '@/lib/queries/products'
 
 export const Route = createFileRoute('/products/$id/activities')({
@@ -28,7 +22,7 @@ export const Route = createFileRoute('/products/$id/activities')({
 })
 
 function RouteComponent() {
-  const { t } = useTranslation(['stock', 'details'])
+  const { t } = useTranslation('stock')
   const { id } = Route.useParams()
   const productId = parseProductId(id)
   const [isMovementOpen, setIsMovementOpen] = useState(false)
@@ -56,19 +50,12 @@ function RouteComponent() {
         }
       />
 
-      <Dialog open={isMovementOpen} onOpenChange={setIsMovementOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{t('stock:adjust_stock')}</DialogTitle>
-          </DialogHeader>
-          <StockMovementForm
-            id={productId}
-            navigateOnSuccess={false}
-            showCancel={false}
-            onSuccess={() => setIsMovementOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      <StockMovementDialog
+        mode="create"
+        productId={productId}
+        open={isMovementOpen}
+        onOpenChange={setIsMovementOpen}
+      />
 
       <StockMovementsTable productId={productId} enableActions />
     </div>

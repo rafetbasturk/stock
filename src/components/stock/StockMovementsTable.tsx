@@ -5,16 +5,17 @@ import { useTranslation } from 'react-i18next'
 
 import { useDeleteStockMovement } from '@/lib/mutations/stock'
 import { stockQuery } from '@/lib/queries/stock'
-import type { HistoryModalState } from '@/lib/types/types.modal'
 import type { SearchUpdates, StockSearch } from '@/lib/types/types.search'
 import type { MovementRow } from '@/types'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog'
-import { EditStockMovementDialog } from '@/components/stock/EditStockMovementDialog'
-import { StockDataTable } from '@/components/stock/StockDataTable'
+import DataTable from '@/components/datatable'
+import { StockMovementDialog } from '@/components/stock/StockMovementDialog'
 import { getColumns } from '@/components/stock/columns'
 import { getStockMovementFilterOptions } from '@/components/stock/movementPresentation'
 import { DataTableFilter } from '../datatable/types'
+import { ModalState } from '@/lib/types/types.modal'
 
 interface Props {
   productId: number
@@ -38,25 +39,28 @@ export function StockMovementsTable({
   enableActions = false,
 }: Props) {
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const { t, i18n } = useTranslation(['stock', 'entities'])
   const deleteMutation = useDeleteStockMovement()
 
   const [search, setSearch] = useState<StockSearch>({
     pageIndex: 0,
-    pageSize: 20,
+    pageSize: 100,
     productId,
   })
-  const [modalState, setModalState] = useState<HistoryModalState>({
+
+  const [modalState, setModalState] = useState<ModalState<MovementRow>>({
     type: 'closed',
-    movement: null,
   })
+
+  const modalItem =
+    modalState.type === 'editing' || modalState.type === 'deleting'
+      ? modalState.item
+      : null
 
   const { data: result, isFetching } = useQuery(stockQuery(search))
 
-  const closeModal = useCallback(
-    () => setModalState({ type: 'closed', movement: null }),
-    [],
-  )
+  const closeModal = useCallback(() => setModalState({ type: 'closed' }), [])
 
   const navigateToProduct = useCallback(
     (id: number) =>
@@ -107,11 +111,29 @@ export function StockMovementsTable({
 
   const columns = useMemo(
     () =>
-      getColumns(setModalState, t, handleNavigateToSource, i18n.language, {
-        includeActions: enableActions,
-        includeProduct: false,
-      }),
+      getColumns(
+        setModalState,
+        t,
+        handleNavigateToSource,
+        i18n.language,
+        {
+          includeActions: enableActions,
+          includeProduct: false,
+        },
+      ),
     [t, handleNavigateToSource, i18n.language, enableActions],
+  )
+
+  const initialColumnVisibility = useMemo(
+    () =>
+      isMobile
+        ? {
+            createdBy_username: false,
+            reference: false,
+            notes: false,
+          }
+        : undefined,
+    [isMobile],
   )
 
   const handleSearchChange = useCallback(
@@ -142,30 +164,34 @@ export function StockMovementsTable({
 
   return (
     <>
-      <StockDataTable
-        stocks={result?.data ?? []}
-        columns={columns}
-        total={result?.total ?? 0}
-        search={search}
-        customFilters={customFilters}
-        pageIndex={search.pageIndex}
-        pageSize={search.pageSize}
-        onSearchChange={handleSearchChange}
-        onPageChange={(pageIndex) =>
-          setSearch((prev) => ({ ...prev, pageIndex }))
-        }
-        onPageSizeChange={(pageSize) =>
-          setSearch((prev) => ({ ...prev, pageSize, pageIndex: 0 }))
-        }
-        onRowClick={() => {}}
-        isFetching={isFetching}
-      />
+      <div className="mt-6 border rounded-lg shadow-sm">
+        <DataTable
+          data={result?.data ?? []}
+          columns={columns}
+          total={result?.total ?? 0}
+          serverPageIndex={search.pageIndex}
+          serverPageSize={search.pageSize}
+          onServerPageChange={(pageIndex) =>
+            setSearch((prev) => ({ ...prev, pageIndex }))
+          }
+          onServerPageSizeChange={(pageSize) =>
+            setSearch((prev) => ({ ...prev, pageSize, pageIndex: 0 }))
+          }
+          search={search}
+          onSearchChange={handleSearchChange}
+          customFilters={customFilters}
+          isFetching={isFetching}
+          initialColumnVisibility={initialColumnVisibility}
+          showColumnVisibilityToggle={!isMobile}
+        />
+      </div>
 
       {enableActions && (
         <>
-          <EditStockMovementDialog
+          <StockMovementDialog
+            mode="edit"
             open={modalState.type === 'editing'}
-            movement={modalState.movement}
+            movement={modalState.type === 'editing' ? modalState.item : null}
             onOpenChange={(open) => {
               if (!open) closeModal()
             }}
@@ -176,15 +202,15 @@ export function StockMovementsTable({
             isDeleting={deleteMutation.isPending}
             title={t('delete_title')}
             description={t('delete_desc')}
-            itemLabel={`#${modalState.movement?.id}`}
+            itemLabel={`#${modalItem?.id}`}
             cancelLabel={t('cancel')}
             confirmLabel={t('entities:actions.delete')}
             confirmingLabel={t('processing')}
             onClose={closeModal}
             onConfirm={() => {
-              if (modalState.movement) {
+              if (modalItem) {
                 deleteMutation.mutate(
-                  { id: modalState.movement.id },
+                  { id: modalItem.id },
                   {
                     onSuccess: closeModal,
                   },

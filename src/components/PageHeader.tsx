@@ -2,6 +2,7 @@ import type { ComponentType, ReactNode, SVGProps } from 'react'
 import { useRouter } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from './ui/button'
+import { useMobileReadonly } from '@/hooks/useMobileReadonly'
 
 export type IconType = ComponentType<SVGProps<SVGSVGElement>>
 
@@ -19,6 +20,8 @@ export interface PageHeaderProps {
 
   /** Optional: Right-side action buttons (Add, Save, Export, etc.) */
   actions?: ReactNode
+  /** Allows rendering actions on mobile even in mobile read-only mode */
+  showActionsOnMobile?: boolean
 
   /** If true, shows a back button (detail pages) */
   showBack?: boolean
@@ -32,11 +35,13 @@ export default function PageHeader({
   description,
   breadcrumbs,
   actions,
+  showActionsOnMobile = false,
   showBack = true,
   backIcon: BackIconProp,
 }: PageHeaderProps) {
   const router = useRouter()
   const BackIcon = BackIconProp ?? ArrowLeft
+  const isMobileReadonly = useMobileReadonly()
 
   return (
     <header className="flex flex-col gap-3">
@@ -57,7 +62,9 @@ export default function PageHeader({
             <h2 className="text-xl font-bold capitalize">{title}</h2>
             {description && <p className="text-sm font-light">{description}</p>}
           </div>
-          {actions && <div className="flex items-center gap-2">{actions}</div>}
+          {(!isMobileReadonly || showActionsOnMobile) && actions && (
+            <div className="flex items-center gap-2">{actions}</div>
+          )}
         </div>
       </div>
 

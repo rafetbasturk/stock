@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { useTranslation } from 'react-i18next'
@@ -11,22 +11,27 @@ import { useAppTimeZone } from '@/hooks/useAppTimeZone'
 import { customersListQuery } from '@/lib/queries/customers'
 import { productDemandQuery } from '@/lib/queries/productDemand'
 import {
-  normalizeProductDemandSearch,
   productDemandSearchSchema,
+  productDemandSortFields,
 } from '@/lib/types/types.search'
 import { Language } from '@/lib/types/types.settings'
 import { DataTableFilter } from '@/components/datatable/types'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
 
 export const Route = createFileRoute('/product-demand/')({
   validateSearch: zodValidator(productDemandSearchSchema),
-  loaderDeps: ({ search }) => normalizeProductDemandSearch(search),
-  loader: async ({ context, deps }) => {
-    return await Promise.all([
-      context.queryClient.prefetchQuery(customersListQuery({ distinct: true })),
-      context.queryClient.ensureQueryData(productDemandQuery(deps)),
-    ])
+  loader: async ({ context }) => {
+    return await context.queryClient.prefetchQuery(
+      customersListQuery({ distinct: true }),
+    )
   },
   component: RouteComponent,
+  pendingComponent: () => {
+    const { t } = useTranslation('entities')
+    return (
+      <LoadingSpinner variant="full-page" text={t('productDemand.loading')} />
+    )
+  },
 })
 
 function RouteComponent() {
@@ -35,12 +40,18 @@ function RouteComponent() {
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
 
-  const demandQ = useSuspenseQuery(productDemandQuery(search))
   const customerOptionsQ = useSuspenseQuery(
     customersListQuery({ distinct: true }),
   )
 
-  const { data, pageIndex, pageSize, total } = demandQ.data
+  const demandQ = useQuery(productDemandQuery(search))
+
+  const demandData = demandQ.data
+
+  const demand = demandData?.data ?? []
+  const total = demandData?.total ?? 0
+  const pageIndex = demandData?.pageIndex ?? search.pageIndex
+  const pageSize = demandData?.pageSize ?? search.pageSize
 
   const columns = useMemo(
     () => getColumns(t, i18n.language as Language, timeZone),
@@ -98,19 +109,20 @@ function RouteComponent() {
       />
 
       <ProductDemandDataTable
-        data={data}
+        data={demand}
         columns={columns}
         total={total}
         pageIndex={pageIndex}
         pageSize={pageSize}
         isFetching={demandQ.isFetching}
-        search={search}
         customFilters={customFilters}
+        search={search}
         onSearchChange={handleSearchChange}
         onPageChange={(p) => handleSearchChange({ pageIndex: p })}
         onPageSizeChange={(s) =>
           handleSearchChange({ pageSize: s, pageIndex: 0 })
         }
+        allowedSortBy={productDemandSortFields}
       />
     </>
   )
