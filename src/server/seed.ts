@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 
-export const seedDatabase = createServerFn().handler(async () => {
+export const seedDatabase = createServerFn().handler(() => {
   console.log('--- Seeding Started ---')
   // try {
   //   // 1. Clear existing data

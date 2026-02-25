@@ -1,12 +1,12 @@
 // src/components/deliveries/deliveryItemsColumns.tsx
-import { DeliveryItemRow } from '@/types'
 import type { ColumnDef } from '@tanstack/react-table'
+import type { DeliveryItemRow } from '@/types'
 import { formatDateTime } from '@/lib/datetime'
 
 export const getColumns = (
   locale: string,
   timeZone: string,
-): ColumnDef<DeliveryItemRow>[] => [
+): Array<ColumnDef<DeliveryItemRow>> => [
   // ROW NUMBER
   {
     id: 'row_number',

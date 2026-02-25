@@ -9,7 +9,7 @@ type SidebarRoute = {
   order: number;
 };
 
-function collectSidebarRoutes(route: any, acc: SidebarRoute[]) {
+function collectSidebarRoutes(route: any, acc: Array<SidebarRoute>) {
   const sidebar = route.options?.staticData?.sidebar;
 
   if (sidebar) {
@@ -29,10 +29,10 @@ function collectSidebarRoutes(route: any, acc: SidebarRoute[]) {
   }
 }
 
-export function useSidebarRoutes(): SidebarRoute[] {
+export function useSidebarRoutes(): Array<SidebarRoute> {
   const router = useRouter();
 
-  const routes: SidebarRoute[] = [];
+  const routes: Array<SidebarRoute> = [];
   collectSidebarRoutes(router.routeTree, routes);
 
   return routes.sort((a, b) => a.order - b.order);

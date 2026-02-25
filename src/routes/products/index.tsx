@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next'
 
 import type { ProductListRow } from '@/types'
 import type { ProductsSearch } from '@/lib/types/types.search'
+import type { DataTableFilter } from '@/components/datatable/types'
+import type { ModalState } from '@/lib/types/types.modal'
 import { useDeleteProductMutation } from '@/lib/mutations/products'
 import { getFilterOptions, productsQuery } from '@/lib/queries/products'
 import {
@@ -15,8 +17,6 @@ import {
   productsSearchSchema,
 } from '@/lib/types/types.search'
 
-import type { DataTableFilter } from '@/components/datatable/types'
-import type { ModalState } from '@/lib/types/types.modal'
 
 import { getColumns } from '@/components/products/columns'
 import ProductForm from '@/components/products/ProductForm'

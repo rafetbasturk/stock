@@ -1,9 +1,9 @@
+import { DeliveryProductsHistoryTable } from './DeliveryProductsHistoryTable'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { DeliveryListRow } from '@/types'
 import type { DeliveriesSearch, SearchUpdates } from '@/lib/types/types.search'
 import type { DataTableFilter } from '../datatable/types'
 import DataTable from '@/components/datatable'
-import { DeliveryProductsHistoryTable } from './DeliveryProductsHistoryTable'
 
 interface TableProps {
   deliveries: Array<DeliveryListRow>

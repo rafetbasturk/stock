@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import {
   Bar,
   CartesianGrid,
@@ -9,16 +10,18 @@ import {
   YAxis,
 } from 'recharts'
 import { useTranslation } from 'react-i18next'
-import { useMemo } from 'react'
-import { ErrorMessage } from '../error/ErrorMessage'
-import { Skeleton } from '../ui/skeleton'
-import { LoadingSpinner } from '../LoadingSpinner'
-import { useFetchMonthlyOverview } from '@/lib/queries/metrics'
-import { useExchangeRatesStore } from '@/stores/exchangeRatesStore'
-import { convertToCurrencyFormat } from '@/lib/currency'
+
+import type { HomeSearch } from '@/lib/types/types.search'
 import { useMounted } from '@/hooks/useMounted'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { HomeSearch } from '@/lib/types/types.search'
+
+import { useExchangeRatesStore } from '@/stores/exchangeRatesStore'
+import { useFetchMonthlyOverview } from '@/lib/queries/metrics'
+import { convertToCurrencyFormat } from '@/lib/currency'
+
+import { ErrorMessage } from '@/components/error/ErrorMessage'
+import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
 
 interface Props {
   filters: HomeSearch
@@ -69,10 +72,10 @@ export default function MonthlyChart({ filters }: Props) {
 
     return chartData.reduce(
       (acc, item) => {
-        acc.orders += Number(item.orders ?? 0)
-        acc.deliveries += Number(item.deliveries ?? 0)
-        acc.revenue += Number(item.revenue ?? 0)
-        acc.deliveredRevenue += Number(item.deliveredRevenue ?? 0)
+        acc.orders += Number(item.orders)
+        acc.deliveries += Number(item.deliveries)
+        acc.revenue += Number(item.revenue)
+        acc.deliveredRevenue += Number(item.deliveredRevenue)
         return acc
       },
       {
@@ -99,7 +102,7 @@ export default function MonthlyChart({ filters }: Props) {
   }
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full min-h-[20rem] md:min-h-[25rem]">
       {isFetching && (
         <div className="absolute top-2 right-2 z-10">
           <LoadingSpinner variant="overlay" size="sm" />
@@ -321,12 +324,12 @@ export default function MonthlyChart({ filters }: Props) {
             </div>
           </div>
         ) : (
-          <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
+          <div className="flex min-h-[20rem] md:min-h-[25rem] flex-col items-center justify-center text-muted-foreground">
             <p>{t('monthly_orders.no_data')}</p>
           </div>
         )
       ) : (
-        <Skeleton className="h-full w-full" />
+        <Skeleton className="h-80 md:h-100 w-full rounded-xl" />
       )}
     </div>
   )

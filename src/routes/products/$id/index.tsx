@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { Link, createFileRoute, redirect } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -67,8 +67,6 @@ function RouteComponent() {
   const { data: product } = useSuspenseQuery(productQuery(Number(id)))
   const [isEditing, setIsEditing] = useState(false)
 
-  if (!product) return null
-
   const handleEditSuccess = () => {
     setIsEditing(false)
     toast.success(t('products.updated_success'))
@@ -76,7 +74,7 @@ function RouteComponent() {
 
   const formattedPrice = formatPrice(
     product.price ?? 0,
-    product.currency ?? 'TRY',
+    product.currency,
   )
 
   const hasLowStock = product.stock_quantity <= product.min_stock_level
@@ -127,7 +125,7 @@ function RouteComponent() {
             <DetailItem
               icon={User}
               label={t('products.fields.customer_name')}
-              value={product.customer?.name}
+              value={product.customer.name}
               highlight
             />
             <DetailItem icon={Box} label={t('products.fields.unit')}>

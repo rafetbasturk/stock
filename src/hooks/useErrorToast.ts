@@ -1,10 +1,11 @@
 // src/hooks/useErrorToast.ts
 import { useEffect, useRef } from "react";
 import {
-  useQueryClient,
-  type QueryCacheNotifyEvent,
-  type MutationCacheNotifyEvent,
+  
+  
+  useQueryClient
 } from "@tanstack/react-query";
+import type {MutationCacheNotifyEvent, QueryCacheNotifyEvent} from "@tanstack/react-query";
 import { AppError, handleAppError } from "@/lib/error/core";
 import { clearAuth } from "@/lib/queries/auth";
 import { useLogoutMutation } from "@/lib/mutations/auth";

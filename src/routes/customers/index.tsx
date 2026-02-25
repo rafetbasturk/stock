@@ -4,6 +4,9 @@ import { zodValidator } from '@tanstack/zod-adapter'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Customer } from '@/types'
+import type {
+  CustomersSearch} from '@/lib/types/types.search';
+import type { ModalState } from '@/lib/types/types.modal'
 import { CustomerDeleteDialog } from '@/components/customers/CustomerDeleteDialog'
 import CustomerForm from '@/components/customers/CustomerForm'
 import { getColumns } from '@/components/customers/columns'
@@ -13,12 +16,10 @@ import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { useDeleteCustomerMutation } from '@/lib/mutations/customers'
 import { customersPaginatedQuery } from '@/lib/queries/customers'
 import {
-  CustomersSearch,
+  customerSortFields,
   customersSearchSchema,
   normalizeCustomersSearch,
-  customerSortFields,
 } from '@/lib/types/types.search'
-import { ModalState } from '@/lib/types/types.modal'
 
 export const Route = createFileRoute('/customers/')({
   validateSearch: zodValidator(customersSearchSchema),

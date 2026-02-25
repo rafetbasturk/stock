@@ -1,9 +1,9 @@
+import { useTranslation } from 'react-i18next'
 import EntityCombobox from '@/components/form/EntityCombobox'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { useTranslation } from 'react-i18next'
 
 type MovementType = 'IN' | 'OUT' | 'TRANSFER'
 
@@ -22,7 +22,7 @@ interface StockMovementFieldsProps {
   onMovementTypeChange?: (value: MovementType) => void
   allowTypeToggle?: boolean
   allowTransfer?: boolean
-  transferTargets?: TransferTarget[]
+  transferTargets?: Array<TransferTarget>
   toProductId?: number | null
   onToProductIdChange?: (value: number) => void
   transferLoading?: boolean

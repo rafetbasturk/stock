@@ -1,12 +1,12 @@
 // src/hooks/useTableFilters.ts
 import { useMemo } from 'react'
-import type { Table } from '@tanstack/react-table'
 import { useTranslation } from 'react-i18next'
+import type { Table } from '@tanstack/react-table'
 import type { DataTableFilter, TableSearch } from '@/components/datatable/types'
 
 interface UseTableFiltersProps<TData> {
   table: Table<TData>
-  filters?: DataTableFilter[]
+  filters?: Array<DataTableFilter>
   search?: TableSearch
   globalFilter?: string
 }
@@ -34,7 +34,7 @@ export function useTableFilters<TData>({
 
   const handleMultiFilterChange = (
     columnId: string,
-    selectedValues: string[],
+    selectedValues: Array<string>,
   ) => {
     if (!hasColumn(columnId)) return
     table
@@ -47,7 +47,7 @@ export function useTableFilters<TData>({
   */
 
   const activeFilters = useMemo(() => {
-    const items: string[] = []
+    const items: Array<string> = []
 
     /*
     Global search

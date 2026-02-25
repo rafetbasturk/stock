@@ -1,8 +1,8 @@
+import { and, eq, lt, sql } from 'drizzle-orm'
+import { LOCK_TIME_MS, MAX_ATTEMPTS, SESSION_TTL_SECONDS } from './constants'
 import { db } from '@/db'
 import { loginAttemptsTable } from '@/db/schema'
 import { fail } from '@/lib/error/core/serverError'
-import { and, eq, lt, sql } from 'drizzle-orm'
-import { LOCK_TIME_MS, MAX_ATTEMPTS, SESSION_TTL_SECONDS } from './constants'
 
 export async function checkLoginAllowed(username: string, ip: string | null) {
   if (!ip) return true
@@ -20,7 +20,7 @@ export async function checkLoginAllowed(username: string, ip: string | null) {
     )
     .limit(1)
 
-  const record = rows[0]
+  const record = rows.at(0)
 
   if (!record) return true
 

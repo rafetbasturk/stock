@@ -7,8 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { currencyArray } from "@/lib/currency";
 import type { Currency } from "@/types";
+import { currencyArray } from "@/lib/currency";
 
 type Props = {
   value: Currency;

@@ -1,9 +1,9 @@
 import { createServerFn } from '@tanstack/react-start'
-import { db } from '@/db'
-import { productsTable, stockMovementsTable } from '@/db/schema'
-import { eq, sql, isNull } from 'drizzle-orm'
+import { eq, isNull, sql } from 'drizzle-orm'
 import { reconcileProductStockTx } from './services/stockService'
 import { requireAuth } from './auth/requireAuth'
+import { productsTable, stockMovementsTable } from '@/db/schema'
+import { db } from '@/db'
 
 export const getStockIntegrityReport = createServerFn().handler(async () => {
   await requireAuth()

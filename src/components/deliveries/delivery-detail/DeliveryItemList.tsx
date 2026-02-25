@@ -1,8 +1,8 @@
-import { DetailTable } from '@/components/DetailTable'
-import { getColumns } from './columns'
-import { DeliveryItemRow, DeliveryWithItems } from '@/types'
-import { useAppTimeZone } from '@/hooks/useAppTimeZone'
 import { useTranslation } from 'react-i18next'
+import { getColumns } from './columns'
+import type { DeliveryItemRow, DeliveryWithItems } from '@/types'
+import { DetailTable } from '@/components/DetailTable'
+import { useAppTimeZone } from '@/hooks/useAppTimeZone'
 
 interface Props {
   delivery: DeliveryWithItems
@@ -11,10 +11,10 @@ interface Props {
 export default function DeliveryItemList({ delivery }: Props) {
   const { i18n } = useTranslation()
   const timeZone = useAppTimeZone()
-  const items = delivery?.items ?? []
+  const items = delivery.items
   const sign = delivery.kind === 'RETURN' ? -1 : 1
 
-  const rows: DeliveryItemRow[] = items
+  const rows: Array<DeliveryItemRow> = items
     .sort((a: any, b: any) => a.order_number - b.order_number)
     .map((di: any) => {
       const isCustom = !!di.customOrderItem

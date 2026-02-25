@@ -1,6 +1,6 @@
 // src/lib/error/core/isTransportError.ts
-import type { TransportError } from "./errorTransport";
 import { isErrorCode } from "../utils/isErrorCode";
+import type { TransportError } from "./errorTransport";
 
 export function isTransportError(value: unknown): value is TransportError {
   if (typeof value !== "object" || value === null) return false;

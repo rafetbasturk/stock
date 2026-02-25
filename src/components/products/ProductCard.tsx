@@ -1,3 +1,4 @@
+import { MoreHorizontal } from "lucide-react";
 import type { Product } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -6,7 +7,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
 
 type ProductCardProps = {
   product: Product;

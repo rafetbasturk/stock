@@ -10,7 +10,7 @@ export type CustomItemRow = {
   notes: string | undefined | null
 }
 
-export const getCustomColumns = (): ColumnDef<CustomItemRow>[] => {
+export const getCustomColumns = (): Array<ColumnDef<CustomItemRow>> => {
   return [
     {
       accessorKey: 'number',
@@ -60,7 +60,7 @@ export const getCustomColumns = (): ColumnDef<CustomItemRow>[] => {
       footer: ({ table }) => {
         const total = table
           .getFilteredRowModel()
-          .rows.reduce((sum, r) => sum + (r.original.quantity ?? 0), 0)
+          .rows.reduce((sum, r) => sum + r.original.quantity, 0)
         return <div className="text-center font-bold">{total}</div>
       },
     },
@@ -90,7 +90,7 @@ export const getCustomColumns = (): ColumnDef<CustomItemRow>[] => {
       size: 130,
       cell: ({ row }) => {
         const total =
-          ((row.original.unit_price ?? 0) * (row.original.quantity ?? 0)) / 100
+          (row.original.unit_price * row.original.quantity) / 100
         const formatted = new Intl.NumberFormat('tr', {
           style: 'currency',
           currency: row.original.currency || 'TRY',
@@ -103,7 +103,7 @@ export const getCustomColumns = (): ColumnDef<CustomItemRow>[] => {
           .rows.reduce(
             (sum, r) =>
               sum +
-              ((r.original.unit_price ?? 0) * (r.original.quantity ?? 0)) / 100,
+              (r.original.unit_price * r.original.quantity) / 100,
             0,
           )
         const formatted = new Intl.NumberFormat('tr', {

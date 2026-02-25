@@ -1,50 +1,43 @@
 // src/components/DateRangeFilter.tsx
 
-import * as React from "react"
-import { CalendarIcon } from "lucide-react"
+import * as React from 'react'
+import { CalendarIcon } from 'lucide-react'
 
 import {
-  format,
-  startOfMonth,
   endOfMonth,
-  subMonths,
+  format,
   isSameDay,
-} from "date-fns"
+  startOfMonth,
+  subMonths,
+} from 'date-fns'
 
-import { tr } from "date-fns/locale"
+import { tr, enUS } from 'date-fns/locale'
 
+import { useTranslation } from 'react-i18next'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from '@/components/ui/popover'
 
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button'
 
-import { Calendar } from "@/components/ui/calendar"
+import { Calendar } from '@/components/ui/calendar'
 
-import { cn } from "@/lib/utils"
-import { useAppTimeZone } from "@/hooks/useAppTimeZone"
-import { formatDateTime } from "@/lib/datetime"
-import { useTranslation } from "react-i18next"
+import { cn } from '@/lib/utils'
+import { useAppTimeZone } from '@/hooks/useAppTimeZone'
+import { formatDateTime } from '@/lib/datetime'
 
 interface DateRangeFilterProps {
-
   label: string
 
   start?: string
   end?: string
 
-  onChange: (updates: {
-    startDate?: string
-    endDate?: string
-  }) => void
+  onChange: (updates: { startDate?: string; endDate?: string }) => void
 }
 
-type PresetKey =
-  | "thisMonth"
-  | "lastMonth"
-  | "twoMonthsAgo"
+type PresetKey = 'thisMonth' | 'lastMonth' | 'twoMonthsAgo'
 
 export function DateRangeFilter({
   label,
@@ -54,7 +47,7 @@ export function DateRangeFilter({
 }: DateRangeFilterProps) {
   const { i18n } = useTranslation()
   const timeZone = useAppTimeZone()
-
+  const locale = i18n.language === 'tr' ? tr : enUS
   const [open, setOpen] = React.useState(false)
 
   /*
@@ -62,48 +55,33 @@ export function DateRangeFilter({
   */
 
   const startDate = React.useMemo(
-    () =>
-      start
-        ? new Date(start + "T00:00:00")
-        : undefined,
+    () => (start ? new Date(start + 'T00:00:00') : undefined),
     [start],
   )
 
   const endDate = React.useMemo(
-    () =>
-      end
-        ? new Date(end + "T00:00:00")
-        : undefined,
+    () => (end ? new Date(end + 'T00:00:00') : undefined),
     [end],
   )
-
 
   /*
   Draft state (UI only)
   */
 
-  const [draftStart, setDraftStart] =
-    React.useState<Date | undefined>(
-      startDate,
-    )
+  const [draftStart, setDraftStart] = React.useState<Date | undefined>(
+    startDate,
+  )
 
-  const [draftEnd, setDraftEnd] =
-    React.useState<Date | undefined>(
-      endDate,
-    )
-
+  const [draftEnd, setDraftEnd] = React.useState<Date | undefined>(endDate)
 
   /*
   Sync draft when URL changes externally
   */
 
   React.useEffect(() => {
-
     setDraftStart(startDate)
     setDraftEnd(endDate)
-
   }, [startDate, endDate])
-
 
   /*
   Presets
@@ -112,22 +90,18 @@ export function DateRangeFilter({
   const now = new Date()
 
   const presets = React.useMemo(() => {
+    const twoAgo = subMonths(now, 2)
 
-    const twoAgo =
-      subMonths(now, 2)
-
-    const last =
-      subMonths(now, 1)
+    const last = subMonths(now, 1)
 
     return {
-
       thisMonth: {
         start: startOfMonth(now),
         end: endOfMonth(now),
         label: formatDateTime(now, {
           locale: i18n.language,
           timeZone,
-          month: "long",
+          month: 'long',
         }),
       },
 
@@ -137,7 +111,7 @@ export function DateRangeFilter({
         label: formatDateTime(last, {
           locale: i18n.language,
           timeZone,
-          month: "long",
+          month: 'long',
         }),
       },
 
@@ -147,87 +121,49 @@ export function DateRangeFilter({
         label: formatDateTime(twoAgo, {
           locale: i18n.language,
           timeZone,
-          month: "long",
+          month: 'long',
         }),
       },
-
     }
-
   }, [now, i18n.language, timeZone])
 
-
-  function applyRange(
-    s?: Date,
-    e?: Date,
-  ) {
-
+  function applyRange(s?: Date, e?: Date) {
     onChange({
-
-      startDate:
-        s
-          ? format(s, "yyyy-MM-dd")
-          : undefined,
-
-      endDate:
-        e
-          ? format(e, "yyyy-MM-dd")
-          : undefined,
-
+      startDate: s ? format(s, 'yyyy-MM-dd') : undefined,
+      endDate: e ? format(e, 'yyyy-MM-dd') : undefined,
     })
 
     setOpen(false)
   }
 
-
-  function applyPreset(
-    key: PresetKey,
-  ) {
-
-    const preset =
-      presets[key]
+  function applyPreset(key: PresetKey) {
+    const preset = presets[key]
 
     setDraftStart(preset.start)
     setDraftEnd(preset.end)
 
-    applyRange(
-      preset.start,
-      preset.end,
-    )
+    applyRange(preset.start, preset.end)
   }
 
-
   function clear() {
-
     setDraftStart(undefined)
     setDraftEnd(undefined)
 
-    applyRange(
-      undefined,
-      undefined,
-    )
+    applyRange(undefined, undefined)
   }
-
 
   /*
   Range selection logic
   */
 
-  function handleSelect(
-    date?: Date,
-  ) {
-
+  function handleSelect(date?: Date) {
     if (!date) return
 
     /*
     First click
     */
 
-    if (
-      !draftStart ||
-      draftEnd ||
-      date < draftStart
-    ) {
-
+    if (!draftStart || draftEnd || date < draftStart) {
       setDraftStart(date)
       setDraftEnd(undefined)
       return
@@ -240,8 +176,7 @@ export function DateRangeFilter({
     let s = draftStart
     let e = date
 
-    if (e < s)
-      [s, e] = [e, s]
+    if (e < s) [s, e] = [e, s]
 
     setDraftStart(s)
     setDraftEnd(e)
@@ -249,172 +184,104 @@ export function DateRangeFilter({
     applyRange(s, e)
   }
 
-
   /*
   Detect active preset
   */
 
-  const activePreset =
-    React.useMemo<
-      PresetKey | null
-    >(() => {
+  const activePreset = React.useMemo<PresetKey | null>(() => {
+    if (!draftStart || !draftEnd) return null
 
-      if (!draftStart || !draftEnd)
-        return null
+    for (const key of Object.keys(presets) as Array<PresetKey>) {
+      const p = presets[key]
 
-      for (const key of Object.keys(
-        presets,
-      ) as PresetKey[]) {
-
-        const p =
-          presets[key]
-
-        if (
-          isSameDay(
-            draftStart,
-            p.start,
-          ) &&
-          isSameDay(
-            draftEnd,
-            p.end,
-          )
-        ) {
-          return key
-        }
+      if (isSameDay(draftStart, p.start) && isSameDay(draftEnd, p.end)) {
+        return key
       }
+    }
 
-      return null
-
-    }, [draftStart, draftEnd, presets])
-
+    return null
+  }, [draftStart, draftEnd, presets])
 
   /*
   Display label
   */
 
-  const displayLabel =
-    React.useMemo(() => {
+  const displayLabel = React.useMemo(() => {
+    if (!startDate || !endDate) return label
 
-      if (!startDate || !endDate)
-        return label
+    try {
+      return `${formatDateTime(startDate, {
+        locale: i18n.language,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      })} - ${formatDateTime(endDate, {
+        locale: i18n.language,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      })}`
+    } catch {
+      return label
+    }
+  }, [startDate, endDate, label])
 
-      try {
-
-        return `${format(
-          startDate,
-          "dd.MM.yyyy",
-        )} - ${format(
-          endDate,
-          "dd.MM.yyyy",
-        )}`
-
-      } catch {
-
-        return label
-
-      }
-
-    }, [
-      startDate,
-      endDate,
-      label,
-    ])
-
-
-  const hasActiveRange =
-    Boolean(startDate && endDate)
-
+  const hasActiveRange = Boolean(startDate && endDate)
 
   /*
   Render
   */
 
   return (
-
-    <Popover
-      open={open}
-      onOpenChange={setOpen}
-    >
-
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-
         <Button
           type="button"
           variant="outline"
           className={cn(
-            "w-full md:w-72 justify-start font-normal",
-            !hasActiveRange &&
-              "text-muted-foreground",
+            'w-full md:w-72 justify-start font-normal',
+            !hasActiveRange && 'text-muted-foreground',
           )}
         >
-
-          <CalendarIcon className="mr-2 h-4 w-4"/>
+          <CalendarIcon className="mr-2 h-4 w-4" />
 
           {displayLabel}
-
         </Button>
-
       </PopoverTrigger>
-
 
       <PopoverContent
         className="w-(--radix-popover-trigger-width) max-w-[calc(100vw-2rem)] p-3"
         align="start"
       >
-
         {/* Presets */}
 
         <div className="grid grid-cols-3 gap-2 mb-3">
+          {(Object.keys(presets) as Array<PresetKey>).map((key) => {
+            const preset = presets[key]
 
-          {(Object.keys(
-            presets,
-          ) as PresetKey[]).map(
-            key => {
-
-              const preset =
-                presets[key]
-
-              return (
-
-                <Button
-                  type="button"
-                  key={key}
-                  size="sm"
-                  variant={
-                    activePreset === key
-                      ? "default"
-                      : "outline"
-                  }
-                  onClick={() =>
-                    applyPreset(key)
-                  }
-                >
-
-                  {preset.label}
-
-                </Button>
-
-              )
-
-            },
-          )}
-
+            return (
+              <Button
+                type="button"
+                key={key}
+                size="sm"
+                variant={activePreset === key ? 'default' : 'outline'}
+                onClick={() => applyPreset(key)}
+              >
+                {preset.label}
+              </Button>
+            )
+          })}
         </div>
-
 
         {/* Calendar */}
 
         <Calendar
           mode="single"
-          selected={
-            draftEnd ??
-            draftStart
-          }
+          selected={draftEnd ?? draftStart}
           onSelect={handleSelect}
-          locale={tr}
+          locale={locale}
           className="w-full"
         />
-
 
         {/* Clear */}
 
@@ -423,17 +290,12 @@ export function DateRangeFilter({
           variant="secondary"
           size="sm"
           className="mt-3 w-full"
-          disabled={
-            !hasActiveRange
-          }
+          disabled={!hasActiveRange}
           onClick={clear}
         >
           Temizle
         </Button>
-
       </PopoverContent>
-
     </Popover>
-
   )
 }

@@ -1,8 +1,8 @@
 // src/lib/debounce.ts
-export function debounce<F extends (...args: any[]) => void>(fn: F, delay = 400) {
+export function debounce<TFn extends (...args: Array<any>) => void>(fn: TFn, delay = 400) {
   let timer: ReturnType<typeof setTimeout> | undefined;
 
-  const run = (...args: Parameters<F>) => {
+  const run = (...args: Parameters<TFn>) => {
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => fn(...args), delay);
   };
@@ -14,5 +14,5 @@ export function debounce<F extends (...args: any[]) => void>(fn: F, delay = 400)
     }
   };
 
-  return run as ((...args: Parameters<F>) => void) & { cancel: () => void };
+  return run as ((...args: Parameters<TFn>) => void) & { cancel: () => void };
 }

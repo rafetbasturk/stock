@@ -1,7 +1,8 @@
-import { clsx, type ClassValue } from 'clsx'
+import {  clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import type {ClassValue} from 'clsx';
 
-export function cn(...inputs: ClassValue[]) {
+export function cn(...inputs: Array<ClassValue>) {
   return twMerge(clsx(inputs))
 }
 
@@ -44,7 +45,7 @@ export function generateYearOptions(
   startYear: number,
   endYear: number = new Date().getFullYear(),
   descending: boolean = true,
-): string[] {
+): Array<string> {
   const years = []
   for (let y = startYear; y <= endYear; y++) {
     years.push(String(y))

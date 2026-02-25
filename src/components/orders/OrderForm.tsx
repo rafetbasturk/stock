@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useOrderForm } from './order-form/hooks/useOrderForm'
 import {
   OrderFormBasicInfo,
@@ -25,7 +26,6 @@ import {
   useCreateOrderMutation,
   useUpdateOrderMutation,
 } from '@/lib/mutations/orders'
-import { useQuery } from '@tanstack/react-query'
 import { lastOrderNumberQuery } from '@/lib/queries/orders'
 import { useMobileReadonly } from '@/hooks/useMobileReadonly'
 

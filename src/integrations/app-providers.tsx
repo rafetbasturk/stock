@@ -1,8 +1,9 @@
 // src/integrations/app-providers.tsx
-import { Suspense, PropsWithChildren } from 'react'
+import { Suspense } from 'react'
 import { ExchangeRatesBootstrap } from '../components/ExchangeRatesBootstrap'
 import { AuthBootstrap } from '../components/AuthBootstrap'
 import { LoadingSpinner } from '../components/LoadingSpinner'
+import type { PropsWithChildren } from 'react';
 
 export function AppProviders({ children }: PropsWithChildren) {
   return (

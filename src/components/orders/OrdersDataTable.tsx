@@ -1,9 +1,9 @@
+import { OrderProductHistoryTable } from './OrderProductHistoryTable'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { OrderListRow } from '@/types'
 import type { OrdersSearch, SearchUpdates } from '@/lib/types/types.search'
 import type { DataTableFilter } from '../datatable/types'
 import DataTable from '@/components/datatable'
-import { OrderProductHistoryTable } from './OrderProductHistoryTable'
 
 interface TableProps {
   orders: Array<OrderListRow>

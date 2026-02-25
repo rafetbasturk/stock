@@ -1,12 +1,12 @@
 import type { ColumnDef } from '@tanstack/react-table'
+import type { ProductDemandRow } from '@/types'
 import type { DataTableFilter } from '@/components/datatable/types'
 import type {
   ProductDemandSearch,
   SearchUpdates,
 } from '@/lib/types/types.search'
-import DataTable from '@/components/datatable'
 import { useIsMobile } from '@/hooks/use-mobile'
-import type { ProductDemandRow } from '@/types'
+import DataTable from '@/components/datatable'
 
 interface ProductDemandDataTableProps {
   data: Array<ProductDemandRow>

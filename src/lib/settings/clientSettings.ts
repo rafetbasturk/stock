@@ -1,4 +1,4 @@
-import { Language, Theme } from '../types/types.settings'
+import type { Language, Theme } from '../types/types.settings'
 
 function applyThemeToDom(theme: Theme) {
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches

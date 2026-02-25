@@ -3,10 +3,12 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
-import { useDeleteStockMovement } from '@/lib/mutations/stock'
-import { stockQuery } from '@/lib/queries/stock'
 import type { SearchUpdates, StockSearch } from '@/lib/types/types.search'
 import type { MovementRow } from '@/types'
+import type { DataTableFilter } from '../datatable/types'
+import type { ModalState } from '@/lib/types/types.modal'
+import { useDeleteStockMovement } from '@/lib/mutations/stock'
+import { stockQuery } from '@/lib/queries/stock'
 import { useIsMobile } from '@/hooks/use-mobile'
 
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog'
@@ -14,8 +16,6 @@ import DataTable from '@/components/datatable'
 import { StockMovementDialog } from '@/components/stock/StockMovementDialog'
 import { getColumns } from '@/components/stock/columns'
 import { getStockMovementFilterOptions } from '@/components/stock/movementPresentation'
-import { DataTableFilter } from '../datatable/types'
-import { ModalState } from '@/lib/types/types.modal'
 
 interface Props {
   productId: number

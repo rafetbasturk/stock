@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
+import type { MovementRow } from '@/types'
 import { StockMovementFields } from '@/components/stock/StockMovementFields'
 import { Button } from '@/components/ui/button'
 import {
@@ -17,7 +18,6 @@ import { useUpdateStockMovement } from '@/lib/mutations/stock'
 import { productQueryKeys, selectProductsQuery } from '@/lib/queries/products'
 import { stockQueryKeys } from '@/lib/queries/stock'
 import { createStockMovement, createStockTransfer } from '@/server/stock'
-import type { MovementRow } from '@/types'
 
 type MovementType = 'IN' | 'OUT' | 'TRANSFER'
 

@@ -1,10 +1,11 @@
-import { QueryClient, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { useServerFn } from '@tanstack/react-start'
-import { createProduct, removeProduct, updateProduct } from '@/server/products'
 import { toast } from 'sonner'
-import { useFormMutation } from '@/hooks/useFormMutation'
 import { productQueryKeys } from '../queries/products'
-import { MutationFormErrors } from '../types/types.form'
+import type { MutationFormErrors } from '../types/types.form'
+import type { QueryClient} from '@tanstack/react-query';
+import { useFormMutation } from '@/hooks/useFormMutation'
+import { createProduct, removeProduct, updateProduct } from '@/server/products'
 
 export const invalidateProductQueries = async (qc: QueryClient) =>
   await Promise.all([

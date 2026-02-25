@@ -6,7 +6,7 @@ export type StockMovementType =
   | 'RESERVE'
   | 'RELEASE'
 
-export const STOCK_MOVEMENT_TYPES: StockMovementType[] = [
+export const STOCK_MOVEMENT_TYPES: Array<StockMovementType> = [
   'IN',
   'OUT',
   'TRANSFER',

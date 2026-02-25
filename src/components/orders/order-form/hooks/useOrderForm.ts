@@ -46,10 +46,10 @@ function toInitialForm(order?: OrderWithItems): OrderFormState {
     order?.customItems.map((item) => ({
       id: item.id,
       name: item.name,
-      unit: item.unit ?? 'adet',
+      unit: item.unit,
       quantity: item.quantity,
       unit_price: item.unit_price,
-      currency: item.currency ?? currency,
+      currency: item.currency,
       notes: item.notes ?? '',
     })) ?? []
 

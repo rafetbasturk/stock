@@ -1,5 +1,5 @@
-import { DeliveryRow, DeliveryWithItems, OrderWithItems } from '@/types'
 import { getColumns } from './columns'
+import type { DeliveryRow, DeliveryWithItems, OrderWithItems } from '@/types'
 import { DetailTable } from '@/components/DetailTable'
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
 const flattenDeliveryItems = (
   delivery: DeliveryWithItems,
   order: OrderWithItems,
-): DeliveryRow[] => {
+): Array<DeliveryRow> => {
   const sign = delivery.kind === 'RETURN' ? -1 : 1
 
   return delivery.items.map((item) => {
@@ -25,7 +25,7 @@ const flattenDeliveryItems = (
       productName: orderItem?.product.name || '-',
       deliveredQuantity: sign * item.delivered_quantity,
       deliveryDate: new Date(delivery.delivery_date),
-      deliveryNumber: delivery.delivery_number ?? null,
+      deliveryNumber: delivery.delivery_number,
       notes: delivery.notes ?? null,
       deliveryId: delivery.id,
       unitPrice,

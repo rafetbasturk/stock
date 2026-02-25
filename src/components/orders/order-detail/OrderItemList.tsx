@@ -1,14 +1,15 @@
-import { DetailTable } from '@/components/DetailTable'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ListCheckIcon } from 'lucide-react'
-import { CustomItemRow, getCustomColumns } from './customColumns'
+import { getCustomColumns } from './customColumns'
 import { getColumns } from './columns'
-import { DeliveryWithItems, OrderWithItems } from '@/types'
-import { TFunction } from 'i18next'
+import type { CustomItemRow} from './customColumns';
+import type { DeliveryWithItems, OrderWithItems } from '@/types'
+import type { TFunction } from 'i18next'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { DetailTable } from '@/components/DetailTable'
 
 type Props = {
   order: OrderWithItems
-  deliveries: DeliveryWithItems[]
+  deliveries: Array<DeliveryWithItems>
   t: TFunction
   onProductClick: (productId: number) => void
 }

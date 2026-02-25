@@ -1,11 +1,11 @@
+import { DataTableRowActions } from '../DataTableRowActions'
+import { Button } from '../ui/button'
+import { Badge } from '../ui/badge'
 import type { ColumnDef } from '@tanstack/react-table'
 
 import type { ActionMenuItem, DeliveryListRow } from '@/types'
 
-import { DataTableRowActions } from '../DataTableRowActions'
 import { convertToCurrencyFormat } from '@/lib/currency'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
 import { formatDateTime } from '@/lib/datetime'
 import { cn } from '@/lib/utils'
 
@@ -15,8 +15,8 @@ export function getColumns(
   t: (key: string) => string,
   locale: string,
   timeZone: string,
-): ColumnDef<DeliveryListRow, unknown>[] {
-  const deliveryActions: ActionMenuItem<DeliveryListRow>[] = [
+): Array<ColumnDef<DeliveryListRow, unknown>> {
+  const deliveryActions: Array<ActionMenuItem<DeliveryListRow>> = [
     {
       label: t('actions.edit'),
       action: (delivery) => onEdit(delivery),
@@ -71,7 +71,7 @@ export function getColumns(
       size: 200,
       cell: ({ row }) => {
         const formatted = formatDateTime(
-          row.getValue('delivery_date') as string,
+          row.getValue('delivery_date'),
           {
             locale,
             timeZone,
@@ -105,7 +105,7 @@ export function getColumns(
           <Badge
             variant="outline"
             className={cn(
-              'w-full',
+              'px-4 md:px-0 md:w-full',
               isReturn
                 ? 'border-red-300 text-red-700 bg-red-50'
                 : 'border-green-300 text-green-700 bg-green-50',

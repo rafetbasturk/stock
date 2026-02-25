@@ -1,11 +1,11 @@
 // src/middleware/settings.ts
-import { AppSettings, Language, Theme } from '@/lib/types/types.settings'
 import { createMiddleware } from '@tanstack/react-start'
 import {
   getCookie,
   getRequestHeader,
   setCookie,
 } from '@tanstack/react-start/server'
+import type { AppSettings, Language, Theme } from '@/lib/types/types.settings'
 
 export const settingsMiddleware = createMiddleware().server(
   async ({ next }) => {

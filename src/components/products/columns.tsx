@@ -1,7 +1,7 @@
 import { DataTableRowActions } from '../DataTableRowActions'
+import { Badge } from '../ui/badge'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { ActionMenuItem, ProductListRow } from '@/types'
-import { Badge } from '../ui/badge'
 
 export const getColumns = (
   onEdit: (product: ProductListRow) => void,

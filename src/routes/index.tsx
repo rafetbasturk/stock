@@ -3,8 +3,10 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { LucideLayoutDashboard } from 'lucide-react'
-import { homeSearchSchema, type HomeSearch } from '@/lib/types/types.search'
-import { generateYearOptions } from '@/lib/utils'
+import { zodValidator } from '@tanstack/zod-adapter'
+import type {HomeSearch} from '@/lib/types/types.search';
+import {  homeSearchSchema } from '@/lib/types/types.search'
+import { delay, generateYearOptions } from '@/lib/utils'
 import { yearRangeQuery } from '@/lib/queries/orders'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,13 +16,13 @@ import {
   MonthlyChart,
   StockIntegrityAlert,
 } from '@/components/dashboard'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { zodValidator } from '@tanstack/zod-adapter'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export const Route = createFileRoute('/')({
   validateSearch: zodValidator(homeSearchSchema),
   loader: async ({ context }) => {
     const years = await context.queryClient.ensureQueryData(yearRangeQuery)
+    await delay(2000)
     return generateYearOptions(years.minYear, years.maxYear)
   },
   component: Dashboard,
@@ -84,6 +86,40 @@ function Dashboard() {
 }
 
 function DashboardPending() {
-  const { t } = useTranslation('dashboard')
-  return <LoadingSpinner variant="full-page" text={t('pending')} />
+  return (
+    <div className="px-2 pt-0 pb-8 md:p-6 space-y-6">
+      <div className="flex items-center justify-between gap-6">
+        <Skeleton className="h-9 w-48 md:w-72" />
+        <div className="hidden md:flex items-center gap-4">
+          <Skeleton className="h-10 w-40" />
+          <Skeleton className="h-10 w-40" />
+          <Skeleton className="h-10 w-28" />
+        </div>
+        <div className="md:hidden">
+          <Skeleton className="h-10 w-24" />
+        </div>
+      </div>
+
+      <Skeleton className="h-16 w-full rounded-lg" />
+
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Skeleton className="h-49.5 rounded-xl" />
+          <Skeleton className="h-49.5 rounded-xl" />
+          <Skeleton className="h-49.5 rounded-xl" />
+        </div>
+
+        <Card className="shadow-sm border-primary/5 gap-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base font-semibold">
+              <Skeleton className="h-5 w-40" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 md:p-6">
+            <Skeleton className="h-80 md:h-100 rounded-xl" />
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
 }

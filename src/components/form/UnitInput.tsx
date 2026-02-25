@@ -1,4 +1,3 @@
-import { unitArray } from "@/lib/constants";
 import { Label } from "../ui/label";
 import {
   Select,
@@ -8,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { unitArray } from "@/lib/constants";
 
 type Props = {
   unit: (typeof unitArray)[number];
@@ -20,7 +20,7 @@ export default function UnitInput({ unit, setValue, label }: Props) {
       {label && <Label className="flex">Birim</Label>}
       <Select
         name="unit"
-        value={unit ?? unitArray[0]}
+        value={unit}
         onValueChange={(value) =>
           setValue((prev: any) => ({
             ...prev,
@@ -32,9 +32,9 @@ export default function UnitInput({ unit, setValue, label }: Props) {
           <SelectValue placeholder="Birim seçin" />
         </SelectTrigger>
         <SelectContent>
-          {unitArray.map((unit) => (
-            <SelectItem key={unit} value={String(unit)} className="capitalize">
-              {unit}
+          {unitArray.map((unitValue) => (
+            <SelectItem key={unitValue} value={String(unitValue)} className="capitalize">
+              {unitValue}
             </SelectItem>
           ))}
         </SelectContent>

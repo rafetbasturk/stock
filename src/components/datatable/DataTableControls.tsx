@@ -1,40 +1,42 @@
 import { useEffect, useMemo, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import type { Table } from '@tanstack/react-table'
+
 import type { DataTableFilter, TableSearch } from './types'
-import { Input } from '../ui/input'
-import { Button } from '../ui/button'
+
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '../ui/sheet'
+} from '@/components/ui/sheet'
 import { debounce } from '@/lib/debounce'
-import { DateRangeFilter } from '../DateRangeFilter'
-import { MultiSelectFilter } from '../form/MultiSelectFilter'
+import { DateRangeFilter } from '@/components/DateRangeFilter'
+import { MultiSelectFilter } from '@/components/form/MultiSelectFilter'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../ui/select'
-import { Table } from '@tanstack/react-table'
+} from '@/components/ui/select'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from '../ui/dropdown-menu'
-import { ChevronDown } from 'lucide-react'
+} from '@/components/ui/dropdown-menu'
 
 interface DataTableControlsProps<TData> {
   search: TableSearch
-  customFilters: DataTableFilter[]
-  activeFilters: string[]
+  customFilters: Array<DataTableFilter>
+  activeFilters: Array<string>
   hasActiveFilters: boolean
-  handleMultiFilterChange: (columnId: string, selectedValues: string[]) => void
+  handleMultiFilterChange: (columnId: string, selectedValues: Array<string>) => void
   handleSingleFilterChange: (columnId: string, value: string) => void
   onSearchChange: (updates: Record<string, any>, replaceAll?: boolean) => void
   serverPageSize: number
@@ -99,7 +101,6 @@ export default function DataTableControls<TData>({
   useEffect(() => {
     if (!mobileFiltersOpen) return
     setMobileDraftFilters(buildDraftFromSearch())
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mobileFiltersOpen])
 
   const buildResetPayload = () => {
@@ -163,7 +164,7 @@ export default function DataTableControls<TData>({
               }}
               selectedValues={
                 source[filter.columnId]
-                  ? String(source[filter.columnId])!.split(',')
+                  ? String(source[filter.columnId]).split(',')
                   : []
               }
               onChange={(colId, values) => {

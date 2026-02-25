@@ -1,6 +1,5 @@
 // src/components/deliveries/DeliveryForm.ts
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
 import {
   DeliveryFormBasicInfo,
   DeliveryFormFooter,
@@ -9,16 +8,17 @@ import {
 } from './delivery-form'
 
 import type {
-  DeliveryListRow,
   Currency,
-  Status,
+  DeliveryListRow,
   DeliveryWithItems,
+  Status,
 } from '@/types'
+import type { FieldErrors } from '@/lib/error/utils/formErrors'
 import {
   useCreateDeliveryMutation,
   useUpdateDeliveryMutation,
 } from '@/lib/mutations/deliveries'
-import type { FieldErrors } from '@/lib/error/utils/formErrors'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useMobileReadonly } from '@/hooks/useMobileReadonly'
 
 function incrementDeliveryNumber(num: string) {
@@ -26,7 +26,7 @@ function incrementDeliveryNumber(num: string) {
   if (!match) return num + '000001'
 
   const prefix = num.slice(0, match.index)
-  const digits = match[1] ?? ''
+  const digits = match[1]
   const nextNumber = String(Number(digits) + 1).padStart(digits.length, '0')
 
   return prefix + nextNumber
@@ -44,7 +44,7 @@ export interface NormalOrderItem {
   unit_price: number
   product: ProductMinimal
   currency?: Currency
-  deliveries: any[]
+  deliveries: Array<any>
 }
 
 export interface CustomOrderItem {
@@ -55,15 +55,15 @@ export interface CustomOrderItem {
   custom_name?: string
   unit?: string | null
   currency?: Currency
-  deliveries: any[]
+  deliveries: Array<any>
 }
 
 export interface OrderMinimal {
   id: number
   customer_id: number
   order_number: string
-  items?: NormalOrderItem[]
-  customItems?: CustomOrderItem[]
+  items?: Array<NormalOrderItem>
+  customItems?: Array<CustomOrderItem>
   status: Status | string // check later - added string to prevent types mismatch
   order_date?: Date
   items_count?: number
@@ -96,7 +96,7 @@ interface DeliveryFormState {
   delivery_number: string
   delivery_date: Date | null
   notes: string
-  items: DeliveryItem[]
+  items: Array<DeliveryItem>
 }
 
 const emptyItem: DeliveryItem = {
@@ -120,7 +120,7 @@ const formInitials: DeliveryFormState = {
   items: [structuredClone(emptyItem)],
 }
 
-function getNetDeliveredFromHistory(deliveries?: any[]): number {
+function getNetDeliveredFromHistory(deliveries?: Array<any>): number {
   return (
     deliveries?.reduce(
       (sum: number, d: any) =>
@@ -147,9 +147,9 @@ function getRemainingQuantityByKind(
 }
 
 function normalizeDeliveryItems(
-  items: any[] | undefined,
+  items: Array<any> | undefined,
   kind: DeliveryKind,
-): DeliveryItem[] {
+): Array<DeliveryItem> {
   if (!items?.length) return [structuredClone(emptyItem)]
 
   return items.map((i) => {
@@ -219,7 +219,7 @@ function normalizeDeliveryItems(
 
 interface DeliveryFormProps {
   item?: DeliveryListRow | DeliveryWithItems
-  orders: OrderMinimal[]
+  orders: Array<OrderMinimal>
   lastDeliveryNumber?: string
   lastReturnDeliveryNumber?: string
   onClose: () => void
@@ -270,7 +270,7 @@ export function DeliveryForm({
     const qtyError = form.items.some(
       (i) =>
         (i.order_item_id || i.custom_order_item_id) &&
-        i.delivered_quantity > (i.remaining_quantity ?? Infinity),
+        i.delivered_quantity > i.remaining_quantity,
     )
 
     if (qtyError) {
@@ -382,7 +382,7 @@ export function DeliveryForm({
         if (!selected) return item
 
         const netDelivered = getNetDeliveredFromHistory(selected.deliveries)
-        const orderQuantity = selected.quantity ?? 0
+        const orderQuantity = selected.quantity
         const currentDelivered = item.id ? item.delivered_quantity : 0
         const remaining_quantity = getRemainingQuantityByKind(
           orderQuantity,
@@ -402,7 +402,7 @@ export function DeliveryForm({
         ...next,
         ...(delivery?.id
           ? {}
-          : { delivery_number: incrementDeliveryNumber(baseNumber ?? '') }),
+          : { delivery_number: incrementDeliveryNumber(baseNumber) }),
         items: recalculatedItems,
       }
     })
@@ -444,11 +444,10 @@ export function DeliveryForm({
       setForm((prev) => {
         const items = [...prev.items]
         const current = items[idx]
-        if (!current) return prev
 
         const updated: DeliveryItem = {
           ...current,
-          delivered_quantity: current.delivered_quantity ?? 1,
+          delivered_quantity: current.delivered_quantity,
         }
 
         /* ────────────────────────────────
@@ -476,7 +475,7 @@ export function DeliveryForm({
           if (first) {
             updated.order_item_id = first.id
 
-            const deliveries = first.deliveries ?? []
+            const deliveries = first.deliveries
             const netDelivered = getNetDeliveredFromHistory(deliveries)
 
             updated.remaining_quantity = getRemainingQuantityByKind(
@@ -519,7 +518,7 @@ export function DeliveryForm({
           const itemObj = normal ?? custom
 
           if (itemObj) {
-            const deliveries = itemObj.deliveries ?? []
+            const deliveries = itemObj.deliveries
             const netDelivered = getNetDeliveredFromHistory(deliveries)
 
             updated.remaining_quantity = getRemainingQuantityByKind(
@@ -543,7 +542,7 @@ export function DeliveryForm({
             updated.price = itemObj.unit_price
             updated.currency = itemObj.currency
             updated.total_price =
-              updated.delivered_quantity * (itemObj.unit_price ?? 0)
+              updated.delivered_quantity * itemObj.unit_price
           }
 
           items[idx] = updated
@@ -554,7 +553,7 @@ export function DeliveryForm({
           3) DELIVERED QTY EDIT
          ──────────────────────────────── */
         if (field === 'delivered_quantity') {
-          const max = current.remaining_quantity ?? Infinity
+          const max = current.remaining_quantity
           const qty = Math.max(0, Number(value) || 0)
 
           updated.delivered_quantity = Math.min(qty, max)
@@ -582,10 +581,8 @@ export function DeliveryForm({
       setForm({
         customer_id: delivery.customer_id,
         kind,
-        delivery_number: delivery.delivery_number ?? '',
-        delivery_date: delivery.delivery_date
-          ? new Date(delivery.delivery_date)
-          : new Date(),
+        delivery_number: delivery.delivery_number,
+        delivery_date: new Date(delivery.delivery_date),
         notes: delivery.notes ?? '',
         items: normalizeDeliveryItems(delivery.items, kind),
       })
@@ -596,7 +593,7 @@ export function DeliveryForm({
           : lastDeliveryNumber
       setForm({
         ...formInitials,
-        delivery_number: incrementDeliveryNumber(baseNumber ?? ''),
+        delivery_number: incrementDeliveryNumber(baseNumber),
       })
     }
   }, [delivery, lastDeliveryNumber, lastReturnDeliveryNumber, orders])

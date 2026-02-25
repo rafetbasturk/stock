@@ -13,21 +13,18 @@ export function ExchangeRatesBootstrap() {
     };
 
     // If hydration already completed, run immediately
-    if (exchangeRatesStore.persist?.hasHydrated?.()) {
+    if (exchangeRatesStore.persist.hasHydrated()) {
       run();
       return;
     }
 
     // Otherwise wait until hydration finishes, then run once
-    const unsub = exchangeRatesStore.persist?.onFinishHydration?.(() => {
+    const unsub = exchangeRatesStore.persist.onFinishHydration(() => {
       run();
     });
 
-    // Defensive fallback (in case persist API isn't present for some reason)
-    if (!unsub) run();
-
     return () => {
-      unsub?.();
+      unsub();
     };
   }, []);
 

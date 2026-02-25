@@ -1,8 +1,8 @@
+import DataTable from '../datatable'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { ProductListRow } from '@/types'
 import type { ProductsSearch, SearchUpdates } from '@/lib/types/types.search'
 import type { DataTableFilter } from '../datatable/types'
-import DataTable from '../datatable'
 
 interface ProductsDataTableProps {
   products: Array<ProductListRow>

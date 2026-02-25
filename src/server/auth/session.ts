@@ -1,16 +1,16 @@
-import { db } from '@/db'
-import { sessionsTable, usersTable } from '@/db/schema'
-import { eq, gt, and, or, lt } from 'drizzle-orm'
-import { fail } from '@/lib/error/core/serverError'
+import { and, eq, gt, lt, or } from 'drizzle-orm'
 import {
+  clearSessionCookie,
   getSessionCookie,
   setSessionCookie,
-  clearSessionCookie,
 } from './cookies'
 import { getUserAgent } from './clientInfo'
-import { SESSION_TTL_SECONDS, INACTIVITY_LIMIT_MS } from './constants'
+import { INACTIVITY_LIMIT_MS, SESSION_TTL_SECONDS } from './constants'
 import { cleanupRateLimits } from './rateLimit'
 import { cleanupLoginAttempts } from './loginAttempts'
+import { fail } from '@/lib/error/core/serverError'
+import { sessionsTable, usersTable } from '@/db/schema'
+import { db } from '@/db'
 
 export async function deleteExpiredSessions() {
   const now = new Date()
@@ -84,7 +84,7 @@ export async function getUserFromSession() {
     )
     .limit(1)
 
-  const row = rows[0]
+  const row = rows.at(0)
 
   if (!row) {
     await destroySession()

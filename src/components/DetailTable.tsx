@@ -1,25 +1,26 @@
 // src/components/DetailTable.tsx
 import { Fragment } from "react";
 import {
+  
   flexRender,
   getCoreRowModel,
-  useReactTable,
-  type ColumnDef,
+  useReactTable
 } from "@tanstack/react-table";
+import type {ColumnDef} from "@tanstack/react-table";
 
 import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
-  TableFooter,
 } from "@/components/ui/table";
 
 interface DetailTableProps<TData, TValue> {
-  data: TData[];
-  columns: ColumnDef<TData, TValue>[];
+  data: Array<TData>;
+  columns: Array<ColumnDef<TData, TValue>>;
   onRowClick?: (row: TData) => void;
   getRowClassName?: (row: TData) => string;
   renderExpandedRow?: (row: TData) => React.ReactNode;

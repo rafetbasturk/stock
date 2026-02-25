@@ -1,7 +1,7 @@
-import { db } from '@/db'
-import { rateLimitsTable } from '@/db/schema'
 import { lt, sql } from 'drizzle-orm'
 import { GLOBAL_LIMIT, GLOBAL_LOCK_MS, GLOBAL_WINDOW_MS } from './constants'
+import { db } from '@/db'
+import { rateLimitsTable } from '@/db/schema'
 import { fail } from '@/lib/error/core/serverError'
 
 export async function checkGlobalRateLimit(ip: string | null) {

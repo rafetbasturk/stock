@@ -1,5 +1,5 @@
-import { FieldErrors } from "@/lib/error/utils/formErrors";
 import { useTranslation } from "react-i18next";
+import type { FieldErrors } from "@/lib/error/utils/formErrors";
 
 export function useFormErrorMessage(errors: FieldErrors): string | null {
   const { t } = useTranslation();

@@ -1,9 +1,9 @@
 import { CheckCircle, Clock } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { OrderListRow } from '@/types'
 import { cn } from '@/lib/utils'
 import { useAppTimeZone } from '@/hooks/useAppTimeZone'
 import { formatDateTime } from '@/lib/datetime'
-import { useTranslation } from 'react-i18next'
 import {
   Table,
   TableBody,
@@ -31,14 +31,14 @@ export function OrderProductHistoryTable({ order }: { order: OrderListRow }) {
   const preparedItems = allItems.map((item) => {
     const productCode = 'product' in item ? item.product.code : item.name
     const productName = 'product' in item ? item.product.name : null
-    const qty = item.quantity ?? 0
+    const qty = item.quantity
 
     const pastDeliveries = (
       'deliveries' in item ? item.deliveries : []
     ) as Array<DeliveryHistory>
 
     const signedQty = (d: DeliveryHistory) =>
-      d.delivery?.kind === 'RETURN' ? -d.delivered_quantity : d.delivered_quantity
+      d.delivery.kind === 'RETURN' ? -d.delivered_quantity : d.delivered_quantity
 
     const delivered = pastDeliveries.reduce((s, d) => s + signedQty(d), 0)
     const remaining = qty - delivered

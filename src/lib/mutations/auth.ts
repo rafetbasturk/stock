@@ -3,12 +3,12 @@ import { useNavigate } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import type { MutationFormErrors } from '../types/types.form'
+import type { LogoutReason } from '../types/types.auth'
 import { authLogin, authLogout } from '@/server/auth'
 import { useAuthStore } from '@/stores/authStore'
 import { meQuery } from '@/lib/queries/auth'
 import { useFormMutation } from '@/hooks/useFormMutation'
-import { MutationFormErrors } from '../types/types.form'
-import { LogoutReason } from '../types/types.auth'
 
 function safeRedirect(redirect?: string) {
   if (!redirect) return '/'
@@ -96,7 +96,7 @@ export function useLogoutMutation() {
       })
     },
 
-    onError: async (_err, reason = 'manual') => {
+    onError: (_err, reason = 'manual') => {
       clearSessionStore()
       qc.setQueryData(['auth', 'me'], null)
 

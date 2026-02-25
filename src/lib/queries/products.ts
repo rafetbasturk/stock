@@ -1,7 +1,7 @@
 // src/lib/queries/products.ts
 import { keepPreviousData, queryOptions } from '@tanstack/react-query'
-import type { ProductsSearch } from '../types/types.search'
 import { normalizeProductsSearch } from '../types/types.search'
+import type { ProductsSearch } from '../types/types.search'
 import {
   getPaginated,
   getProductById,

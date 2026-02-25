@@ -24,5 +24,5 @@ export type FormController<T> = {
   
   mutationErrors: MutationFormErrors;
 
-  setValue: <K extends keyof T>(key: K, value: T[K]) => void;
+  setValue: <TKey extends keyof T>(key: TKey, value: T[TKey]) => void;
 };

@@ -1,4 +1,5 @@
 import { tr } from "react-day-picker/locale";
+import type { FieldErrors } from "@/lib/error/utils/formErrors";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -11,12 +12,11 @@ import {
 import CustomerInput from "@/components/form/CustomerInput";
 import InputField from "@/components/form/InputField";
 import { Field, FieldLabel, FieldSet } from "@/components/ui/field";
-import type { FieldErrors } from "@/lib/error/utils/formErrors";
 
 interface Props {
   form: any;
   onChange: (field: string, value: any) => void;
-  customerIds: number[];
+  customerIds: Array<number>;
   errors: FieldErrors;
   disableKindEdit?: boolean;
 }

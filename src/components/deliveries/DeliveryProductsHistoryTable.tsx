@@ -1,7 +1,7 @@
 import { CheckCircle, Clock } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import type { DeliveryWithItems } from '@/types'
 import { useTranslation } from 'react-i18next'
+import type { DeliveryWithItems } from '@/types'
+import { cn } from '@/lib/utils'
 import {
   Table,
   TableBody,
@@ -35,9 +35,9 @@ export function DeliveryProductsHistoryTable({
 
   const preparedItems = delivery.items.map((item, index) => {
     const productCode =
-      item.orderItem?.product?.code ?? item.customOrderItem?.name ?? '-'
+      item.orderItem?.product.code ?? item.customOrderItem?.name ?? '-'
     const productName =
-      item.orderItem?.product?.name ?? item.customOrderItem?.name ?? '-'
+      item.orderItem?.product.name ?? item.customOrderItem?.name ?? '-'
     const orderNumber =
       (item.orderItem as any)?.order?.order_number ??
       (item.customOrderItem as any)?.order?.order_number ??
@@ -51,7 +51,7 @@ export function DeliveryProductsHistoryTable({
     ).filter((d) => d.delivery.delivery_number !== delivery.delivery_number)
 
     const signedQty = (d: DeliveryHistory) =>
-      d.delivery?.kind === 'RETURN' ? -d.delivered_quantity : d.delivered_quantity
+      d.delivery.kind === 'RETURN' ? -d.delivered_quantity : d.delivered_quantity
 
     const historicalDelivered = histories.reduce((sum, d) => sum + signedQty(d), 0)
     const currentSigned = isReturn ? -item.delivered_quantity : item.delivered_quantity

@@ -1,15 +1,15 @@
 import type {
-  OrderWithItems,
   DeliveryWithItems,
   OrderItemWithProduct,
+  OrderWithItems,
 } from '@/types'
 import type { ColumnDef, Row } from '@tanstack/react-table'
 
 export type OrderItemRow = OrderWithItems['items'][number]
 
 export const getColumns = (
-  deliveries: DeliveryWithItems[],
-): ColumnDef<OrderItemRow>[] => {
+  deliveries: Array<DeliveryWithItems>,
+): Array<ColumnDef<OrderItemRow>> => {
   const signedDeliveredQuantity = (delivery: DeliveryWithItems, qty: number) =>
     delivery.kind === 'RETURN' ? -qty : qty
 
@@ -129,7 +129,7 @@ export const getColumns = (
 
         const left = row.original.quantity - sent
 
-        let colorClass = left > 0 ? 'text-orange-600' : 'text-green-600'
+        const colorClass = left > 0 ? 'text-orange-600' : 'text-green-600'
 
         return (
           <div className={`text-center font-bold ${colorClass}`}>{left}</div>

@@ -1,7 +1,7 @@
 // src/hooks/useFormState.ts
 import { useCallback, useState } from 'react'
 import { useFormErrors } from './useFormErrors'
-import { FormController } from '@/lib/types/types.form'
+import type { FormController } from '@/lib/types/types.form'
 
 export function useFormState<T extends Record<string, any>>(
   initial: T,
@@ -10,7 +10,7 @@ export function useFormState<T extends Record<string, any>>(
   const errors = useFormErrors()
 
   const setValue = useCallback(
-    <K extends keyof T>(key: K, value: T[K]) => {
+    <TKey extends keyof T>(key: TKey, value: T[TKey]) => {
       setValues((prev) => ({
         ...prev,
         [key]: value,

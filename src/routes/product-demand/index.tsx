@@ -4,9 +4,9 @@ import { createFileRoute } from '@tanstack/react-router'
 import { zodValidator } from '@tanstack/zod-adapter'
 import { useTranslation } from 'react-i18next'
 import type { ProductDemandSearch } from '@/lib/types/types.search'
-import PageHeader from '@/components/PageHeader'
-import { getColumns } from '@/components/product-demand/columns'
-import { ProductDemandDataTable } from '@/components/product-demand/ProductDemandDataTable'
+import type { Language } from '@/lib/types/types.settings'
+import type { DataTableFilter } from '@/components/datatable/types'
+
 import { useAppTimeZone } from '@/hooks/useAppTimeZone'
 import { customersListQuery } from '@/lib/queries/customers'
 import { productDemandQuery } from '@/lib/queries/productDemand'
@@ -14,8 +14,10 @@ import {
   productDemandSearchSchema,
   productDemandSortFields,
 } from '@/lib/types/types.search'
-import { Language } from '@/lib/types/types.settings'
-import { DataTableFilter } from '@/components/datatable/types'
+
+import PageHeader from '@/components/PageHeader'
+import { getColumns } from '@/components/product-demand/columns'
+import { ProductDemandDataTable } from '@/components/product-demand/ProductDemandDataTable'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 
 export const Route = createFileRoute('/product-demand/')({

@@ -1,6 +1,6 @@
-import { cn } from '@/lib/utils'
-import { ElementType, PropsWithChildren } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { ElementType, PropsWithChildren } from 'react'
+import { cn } from '@/lib/utils'
 
 export function DetailItem({
   children,

@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils"
 import { Separator } from "./ui/separator"
+import { cn } from "@/lib/utils"
 
 export function StatBlock({
   label,

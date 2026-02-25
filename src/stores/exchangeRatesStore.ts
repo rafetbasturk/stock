@@ -1,20 +1,21 @@
 // src/stores/exchangeRatesStore.ts
 import { createWithEqualityFn } from "zustand/traditional";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { shallow } from "zustand/shallow";
 import { createSelectors } from "./utils";
-import {
-  fallbackRates,
-  shouldUpdateRates,
-  transformRates,
-  currencyArray,
-  fetchRatesForCurrency,
-  type Rate,
-} from "@/lib/currency";
 import type { Currency } from "@/types";
+import type {Rate} from "@/lib/currency";
+import {
+  
+  currencyArray,
+  fallbackRates,
+  fetchRatesForCurrency,
+  shouldUpdateRates,
+  transformRates
+} from "@/lib/currency";
 
 type ExchangeRatesState = {
-  rates: Rate[];
+  rates: Array<Rate>;
   lastUpdated: number | null;
   isLoading: boolean;
   error: string | null;

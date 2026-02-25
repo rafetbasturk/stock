@@ -1,3 +1,12 @@
+import { and, eq, isNull, sql } from 'drizzle-orm'
+import type {
+  Currency,
+  DeliveryListRow,
+  DeliveryWithItems,
+  InsertCustomer,
+  InsertProduct,
+  OrderWithItems,
+} from '@/types'
 import {
   customOrderItemsTable,
   deliveryItemsTable,
@@ -6,15 +15,6 @@ import {
 } from '@/db/schema'
 import { TR } from '@/lib/constants'
 import { failValidation } from '@/lib/error/core/serverError'
-import {
-  Currency,
-  DeliveryListRow,
-  DeliveryWithItems,
-  InsertCustomer,
-  InsertProduct,
-  OrderWithItems,
-} from '@/types'
-import { and, eq, isNull, sql } from 'drizzle-orm'
 
 export function normalizeText(input?: string | null) {
   const s = (input ?? '')
@@ -45,12 +45,12 @@ export function normalizeProcess(input?: string | null) {
 }
 
 export const validateProduct = (product: InsertProduct) => {
-  if (!product.code?.trim()) {
+  if (!product.code.trim()) {
     failValidation({
       code: { i18n: { ns: 'validation', key: 'required' } },
     })
   }
-  if (!product.name?.trim()) {
+  if (!product.name.trim()) {
     failValidation({
       name: { i18n: { ns: 'validation', key: 'required' } },
     })
@@ -63,18 +63,13 @@ export const validateProduct = (product: InsertProduct) => {
 }
 
 export const editProductBeforeInsert = (product: InsertProduct) => {
-  // Required fields (create). For update, these guards avoid runtime errors.
-  if (product.code != null) {
-    const code = normalizeCode(product.code)
-    if (code) product.code = code
-  }
+  const code = normalizeCode(product.code)
+  if (code) product.code = code
 
-  if (product.name != null) {
-    const name = normalizeText(product.name)
-    if (name) {
-      // keep your “capitalize first letter” behavior, but TR-locale safe
-      product.name = name[0]!.toLocaleUpperCase(TR) + name.slice(1)
-    }
+  const name = normalizeText(product.name)
+  if (name) {
+    // keep your “capitalize first letter” behavior, but TR-locale safe
+    product.name = name[0].toLocaleUpperCase(TR) + name.slice(1)
   }
 
   // Normalize common text columns (prevents trailing/duplicate whitespace variants)
@@ -103,12 +98,12 @@ export function addTotalAmount<T extends OrderWithItems | DeliveryWithItems>(
   // ---- Case 1: Order object ----
   if ('is_custom_order' in data) {
     const sourceItems = data.is_custom_order
-      ? (data.customItems ?? [])
-      : (data.items ?? [])
+      ? data.customItems
+      : data.items
 
     totalCents = sourceItems.reduce((sum, item) => {
-      const price = item.unit_price ?? 0 // already cents
-      const qty = item.quantity ?? 0
+      const price = item.unit_price // already cents
+      const qty = item.quantity
       return sum + price * qty
     }, 0)
   }
@@ -116,10 +111,10 @@ export function addTotalAmount<T extends OrderWithItems | DeliveryWithItems>(
   // ---- Case 2: Delivery object ----
   if ('delivery_number' in data) {
     const sign = data.kind === 'RETURN' ? -1 : 1
-    totalCents = (data.items ?? []).reduce((sum, item) => {
+    totalCents = data.items.reduce((sum, item) => {
       const price =
         item.orderItem?.unit_price ?? item.customOrderItem?.unit_price ?? 0 // cents
-      const qty = item.delivered_quantity ?? 0
+      const qty = item.delivered_quantity
       return sum + sign * price * qty
     }, 0)
   }
@@ -136,16 +131,16 @@ export function addDeliveryTotals(
   const sign = delivery.kind === 'RETURN' ? -1 : 1
 
   // 1) Sum in cents to avoid floating-point issues
-  const totalCents = (delivery.items ?? []).reduce((sum, item) => {
+  const totalCents = delivery.items.reduce((sum, item) => {
     const price =
       item.orderItem?.unit_price ?? item.customOrderItem?.unit_price ?? 0 // cents
-    const qty = item.delivered_quantity ?? 0
+    const qty = item.delivered_quantity
     return sum + sign * price * qty
   }, 0)
 
   // 2) Derive currency from the first item
   //    Business rule: a delivery can't mix currencies (enforced in the form).
-  const firstItem = delivery.items?.[0]
+  const firstItem = delivery.items.at(0)
 
   const currency = (firstItem?.orderItem?.currency ??
     firstItem?.customOrderItem?.currency ??

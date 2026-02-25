@@ -1,7 +1,7 @@
 import type { DeliveryRow } from '@/types'
 import type { ColumnDef } from '@tanstack/react-table'
 
-export const getColumns = (): ColumnDef<DeliveryRow>[] => {
+export const getColumns = (): Array<ColumnDef<DeliveryRow>> => {
   return [
     {
       accessorKey: 'order_no',

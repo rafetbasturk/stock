@@ -1,13 +1,13 @@
-import { relations, sql, isNull } from 'drizzle-orm'
+import { isNull, relations, sql } from 'drizzle-orm'
 import {
+  boolean,
+  check,
+  index,
+  integer,
   pgTable,
   serial,
-  integer,
   text,
   timestamp,
-  boolean,
-  index,
-  check,
   uniqueIndex,
 } from 'drizzle-orm/pg-core'
 import {

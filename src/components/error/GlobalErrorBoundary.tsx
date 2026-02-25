@@ -5,9 +5,9 @@ import { handleAppError } from "@/lib/error/core/errorHandler";
 
 export class GlobalErrorBoundary extends React.Component<
   { children: React.ReactNode },
-  { error: unknown }
+  { error: unknown | null }
 > {
-  state = { error: null };
+  state: { error: unknown | null } = { error: null };
 
   static getDerivedStateFromError(error: unknown) {
     return { error };
@@ -18,7 +18,7 @@ export class GlobalErrorBoundary extends React.Component<
   }
 
   render() {
-    if (!this.state.error) return this.props.children;
+    if (this.state.error === null) return this.props.children;
 
     const err = AppError.from(this.state.error);
 

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 
+import { useTranslation } from 'react-i18next'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 
 import { Button } from '../ui/button'
@@ -15,18 +16,17 @@ import {
   CommandItem,
   CommandList,
 } from '../ui/command'
-import { useTranslation } from 'react-i18next'
 
 export interface MultiSelectFilterProps {
   filter: {
     columnId: string
     label: string
-    options: { value: string; label: string }[]
+    options: Array<{ value: string; label: string }>
   }
 
-  selectedValues: string[]
+  selectedValues: Array<string>
 
-  onChange: (columnId: string, selectedValues: string[]) => void
+  onChange: (columnId: string, selectedValues: Array<string>) => void
 }
 
 export function MultiSelectFilter({
@@ -43,7 +43,7 @@ export function MultiSelectFilter({
     selectedValues.length === 0 || selectedValues.length === allValues.length
 
   function toggleValue(value: string) {
-    let next: string[]
+    let next: Array<string>
 
     if (value === '__all__') {
       next = []

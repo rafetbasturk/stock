@@ -9,7 +9,6 @@ import {
   isNull,
   ne,
   or,
-  SQL,
   sql,
 } from 'drizzle-orm'
 import z from 'zod'
@@ -22,6 +21,12 @@ import {
   updateOrderStatusIfComplete,
 } from './utils'
 import { requireAuth } from './auth/requireAuth'
+import {
+  createStockMovementTx,
+  internalStockMovementCleanupTx,
+} from './services/stockService'
+import type {
+  SQL} from 'drizzle-orm';
 import { db } from '@/db'
 import {
   customOrderItemsTable,
@@ -32,10 +37,6 @@ import {
 } from '@/db/schema'
 import { fail, failValidation } from '@/lib/error/core/serverError'
 import { BaseAppError } from '@/lib/error/core'
-import {
-  createStockMovementTx,
-  internalStockMovementCleanupTx,
-} from './services/stockService'
 import { deliveriesSearchSchema } from '@/lib/types/types.search'
 
 type DeliveryKind = 'DELIVERY' | 'RETURN'
@@ -46,10 +47,8 @@ export interface CreateDeliveryInput {
   delivery_date: Date | string
   kind?: DeliveryKind
   notes?: string
-  items: (
-    | { order_item_id: number; delivered_quantity: number }
-    | { custom_order_item_id: number; delivered_quantity: number }
-  )[]
+  items: Array<| { order_item_id: number; delivered_quantity: number }
+    | { custom_order_item_id: number; delivered_quantity: number }>
 }
 
 function resolveDeliveryStockMovement(kind: DeliveryKind, quantity: number) {
@@ -120,7 +119,7 @@ async function assertReturnQuantitiesWithinDeliveredTx(
   `
 
   if (standardRequested.size > 0) {
-    const conditions: SQL[] = [
+    const conditions: Array<SQL> = [
       inArray(deliveryItemsTable.order_item_id, [...standardRequested.keys()]),
       isNull(deliveryItemsTable.deleted_at),
       isNull(deliveriesTable.deleted_at),
@@ -158,7 +157,7 @@ async function assertReturnQuantitiesWithinDeliveredTx(
   }
 
   if (customRequested.size > 0) {
-    const conditions: SQL[] = [
+    const conditions: Array<SQL> = [
       inArray(deliveryItemsTable.custom_order_item_id, [
         ...customRequested.keys(),
       ]),
@@ -215,13 +214,13 @@ export const createDelivery = createServerFn()
       fieldErrors.customer_id = { i18n: { ns: 'validation', key: 'required' } }
     }
 
-    if (!delivery_number?.trim()) {
+    if (!delivery_number.trim()) {
       fieldErrors.delivery_number = {
         i18n: { ns: 'validation', key: 'required' },
       }
     }
 
-    if (!items?.length) {
+    if (!items.length) {
       fieldErrors.items = { i18n: { ns: 'validation', key: 'required' } }
     }
 
@@ -231,17 +230,17 @@ export const createDelivery = createServerFn()
 
     try {
       const result = await db.transaction(async (tx) => {
-        /*───────────────────────────────────────────────
+        /* ───────────────────────────────────────────────
           1️⃣ VALIDATE STOCK
         ───────────────────────────────────────────────*/
         const standardItems = items.filter(
           (i): i is { order_item_id: number; delivered_quantity: number } =>
-            'order_item_id' in i && i.order_item_id != null,
+            'order_item_id' in i,
         )
 
         const affectedOrderIds = new Set<number>()
 
-        let standardOrderItems: {
+        let standardOrderItems: Array<{
           id: number
           order_id: number | null
           product_id: number | null
@@ -251,7 +250,7 @@ export const createDelivery = createServerFn()
             code: string | null
             name: string | null
           } | null
-        }[] = []
+        }> = []
 
         if (standardItems.length > 0) {
           const ids = standardItems.map((i) => i.order_item_id)
@@ -302,7 +301,7 @@ export const createDelivery = createServerFn()
           ): i is {
             custom_order_item_id: number
             delivered_quantity: number
-          } => 'custom_order_item_id' in i && i.custom_order_item_id != null,
+          } => 'custom_order_item_id' in i,
         )
 
         if (customItems.length > 0) {
@@ -329,7 +328,7 @@ export const createDelivery = createServerFn()
           await assertReturnQuantitiesWithinDeliveredTx(tx, items)
         }
 
-        /*───────────────────────────────────────────────
+        /* ───────────────────────────────────────────────
           2️⃣ INSERT DELIVERY HEADER
         ───────────────────────────────────────────────*/
         const [delivery] = await tx
@@ -343,11 +342,7 @@ export const createDelivery = createServerFn()
           })
           .returning()
 
-        if (!delivery) {
-          fail('DELIVERY_CREATION_FAILED')
-        }
-
-        /*───────────────────────────────────────────────
+        /* ───────────────────────────────────────────────
           3️⃣ INSERT DELIVERY ITEMS
         ───────────────────────────────────────────────*/
         await tx.insert(deliveryItemsTable).values(
@@ -360,7 +355,7 @@ export const createDelivery = createServerFn()
           })),
         )
 
-        /*───────────────────────────────────────────────
+        /* ───────────────────────────────────────────────
           4️⃣ DEDUCT STOCK
         ───────────────────────────────────────────────*/
         if (standardItems.length > 0) {
@@ -396,14 +391,14 @@ export const createDelivery = createServerFn()
           }
         }
 
-        /*───────────────────────────────────────────────
+        /* ───────────────────────────────────────────────
           5️⃣ UPDATE ORDER STATUS
         ───────────────────────────────────────────────*/
         for (const orderId of affectedOrderIds) {
           await updateOrderStatusIfComplete(tx, orderId)
         }
 
-        /*───────────────────────────────────────────────
+        /* ───────────────────────────────────────────────
           6️⃣ RETURN CREATED DELIVERY
         ───────────────────────────────────────────────*/
         const created = await tx.query.deliveriesTable.findFirst({
@@ -559,7 +554,7 @@ export const getPaginatedDeliveries = createServerFn()
     const normalizedCustomerId = normalizeParams(customerId)
     const normalizedKind = normalizeParams(kind)
 
-    const conditions: SQL[] = [notDeleted(deliveriesTable)]
+    const conditions: Array<SQL> = [notDeleted(deliveriesTable)]
 
     // Search condition
     if (normalizedQ) {
@@ -805,7 +800,7 @@ export const removeDelivery = createServerFn()
   })
 
 export const getLastDeliveryNumber = createServerFn().handler(async () => {
-  const [lastDelivery] = await db
+  const deliveryRows = await db
     .select({
       delivery_number: deliveriesTable.delivery_number,
     })
@@ -819,12 +814,13 @@ export const getLastDeliveryNumber = createServerFn().handler(async () => {
     )
     .limit(1)
 
+  const lastDelivery = deliveryRows.at(0)
   return lastDelivery?.delivery_number
 })
 
 export const getLastReturnDeliveryNumber = createServerFn().handler(
   async () => {
-    const [lastReturn] = await db
+    const returnRows = await db
       .select({
         delivery_number: deliveriesTable.delivery_number,
       })
@@ -842,6 +838,7 @@ export const getLastReturnDeliveryNumber = createServerFn().handler(
         throw error
       })
 
+    const lastReturn = returnRows.at(0)
     return lastReturn?.delivery_number
   },
 )

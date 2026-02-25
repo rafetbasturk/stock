@@ -13,7 +13,7 @@ const stripOuterQuotes = (s: string) => {
 
 export function encodeFiltersToParams(
   filters: ColumnFiltersState,
-  filterDefs?: { columnId: string }[],
+  filterDefs?: Array<{ columnId: string }>,
 ) {
   const params: Record<string, string | undefined> = {}
   const allowedFilterIds = filterDefs?.map((f) => f.columnId)
@@ -40,7 +40,7 @@ export function encodeFiltersToParams(
 
 export function decodeParamsToFilters(
   search: Record<string, string | undefined>,
-  filterDefs: DataTableFilter[],
+  filterDefs: Array<DataTableFilter>,
 ): ColumnFiltersState {
   const out: ColumnFiltersState = []
 

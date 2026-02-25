@@ -1,6 +1,7 @@
 import React from 'react'
-import type { Row } from '@tanstack/react-table'
 import { MoreHorizontal } from 'lucide-react'
+import type { Row } from '@tanstack/react-table'
+import type { ActionMenuItem } from '@/types'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,12 +10,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
-import type { ActionMenuItem } from '@/types'
 import { useMobileReadonly } from '@/hooks/useMobileReadonly'
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>
-  actions: ActionMenuItem<TData>[]
+  actions: Array<ActionMenuItem<TData>>
   alignment?: 'start' | 'center' | 'end' | undefined
 }
 

@@ -3,9 +3,6 @@ import { eq } from 'drizzle-orm'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 
-import { db } from '@/db'
-import { usersTable } from '@/db/schema'
-import { fail, throwTransportError } from '@/lib/error/core/serverError'
 
 import { checkGlobalRateLimit } from './rateLimit'
 import { getClientIP } from './clientInfo'
@@ -15,6 +12,9 @@ import {
   recordFailedAttempt,
 } from './loginAttempts'
 import { createSession, destroySession, getUserFromSession } from './session'
+import { fail, throwTransportError } from '@/lib/error/core/serverError'
+import { usersTable } from '@/db/schema'
+import { db } from '@/db'
 
 export const LoginSchema = z.object({
   username: z.string().min(3),
@@ -59,7 +59,7 @@ export const authLogin = createServerFn({
         .where(eq(usersTable.username, username))
         .limit(1)
 
-      const user = rows[0]
+      const user = rows.at(0)
 
       if (!user) {
         await recordFailedAttempt(username, ip)

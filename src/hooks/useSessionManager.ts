@@ -69,7 +69,7 @@ export function useSessionPolicy() {
       }, SESSION_POLICY.inactivityLimitMs);
     };
 
-    const events: (keyof WindowEventMap)[] = [
+    const events: Array<keyof WindowEventMap> = [
       "mousemove",
       "mousedown",
       "keydown",

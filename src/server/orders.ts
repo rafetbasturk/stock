@@ -13,9 +13,9 @@ import {
 } from 'drizzle-orm'
 import z from 'zod'
 import { addTotalAmount, normalizeParams, notDeleted } from './utils'
-import { ordersSearchSchema } from '@/lib/types/types.search'
 import type { SQL } from 'drizzle-orm'
 import type { OrderSubmitPayload } from '@/types'
+import { ordersSearchSchema } from '@/lib/types/types.search'
 import { db } from '@/db'
 import {
   customOrderItemsTable,
@@ -614,7 +614,7 @@ export const updateOrder = createServerFn()
           })
 
         const itemIdsToKeep = new Set<number>()
-        const customItemsToInsert: any[] = []
+        const customItemsToInsert: Array<any> = []
 
         for (const item of order.customItems) {
           if (!item.name?.trim()) continue
@@ -684,7 +684,7 @@ export const updateOrder = createServerFn()
         })
 
         const itemIdsToKeep = new Set<number>()
-        const itemsToInsert: any[] = []
+        const itemsToInsert: Array<any> = []
 
         for (const item of order.items) {
           const itemData = {

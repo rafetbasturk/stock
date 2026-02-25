@@ -9,6 +9,7 @@ import {
   Moon,
   Sun,
 } from 'lucide-react'
+import { Image } from '@unpic/react'
 import { Select, SelectContent, SelectItem, SelectTrigger } from './ui/select'
 import type { AppSettings, Language } from '@/lib/types/types.settings'
 
@@ -34,7 +35,6 @@ import { setLanguage } from '@/lib/settings/clientSettings'
 import { useThemeToggle } from '@/lib/settings/useThemeToggle'
 import { useMounted } from '@/hooks/useMounted'
 import { useLogoutMutation } from '@/lib/mutations/auth'
-import { Image } from '@unpic/react'
 
 function normalizePath(path: string) {
   return path.replace(/\/+$/, '') || '/'

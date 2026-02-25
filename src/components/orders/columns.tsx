@@ -1,8 +1,8 @@
 import { Button } from '../ui/button'
+import StatusBadge from '../StatusBadge'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { ActionMenuItem, OrderListRow } from '@/types'
 import { DataTableRowActions } from '@/components/DataTableRowActions'
-import StatusBadge from '../StatusBadge'
 import { formatDateTime } from '@/lib/datetime'
 
 export const getColumns = (
@@ -64,7 +64,7 @@ export const getColumns = (
       header: t('orders.columns.order_date'),
       cell: ({ row }) => (
         <div className="font-medium truncate">
-          {formatDateTime(row.getValue('order_date') as string, {
+          {formatDateTime(row.getValue('order_date'), {
             locale,
             timeZone,
             year: 'numeric',
@@ -101,7 +101,7 @@ export const getColumns = (
       cell: ({ row }) => {
         const status = row.original.status
 
-        return <StatusBadge status={status} className="w-full" />
+        return <StatusBadge status={status} className="px-4 md:px-0 md:w-full" />
       },
       meta: {
         headerAlign: 'center',

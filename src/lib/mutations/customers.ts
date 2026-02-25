@@ -1,14 +1,15 @@
-import { type QueryClient, useQueryClient } from '@tanstack/react-query'
+import {  useQueryClient } from '@tanstack/react-query'
 import { useServerFn } from '@tanstack/react-start'
 import { toast } from 'sonner'
+import { customerQueryKeys } from '../queries/customers'
+import type {QueryClient} from '@tanstack/react-query';
+import type { MutationFormErrors } from '../types/types.form'
 import { useFormMutation } from '@/hooks/useFormMutation'
 import {
   createCustomer,
   removeCustomer,
   updateCustomer,
 } from '@/server/customers'
-import { customerQueryKeys } from '../queries/customers'
-import { MutationFormErrors } from '../types/types.form'
 
 export const invalidateCustomerQueries = async (qc: QueryClient) =>
   await Promise.all([
@@ -86,8 +87,6 @@ export function useUpdateCustomerMutation(
     },
 
     onSuccess: async (updatedCustomer) => {
-      if (!updatedCustomer) return
-
       await invalidateCustomerQueries(qc)
       qc.setQueryData(
         customerQueryKeys.detail(updatedCustomer.id),

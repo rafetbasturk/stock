@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { Outlet, createFileRoute } from '@tanstack/react-router'
 import { BarChart3Icon } from 'lucide-react'
 
 export const Route = createFileRoute('/product-demand')({

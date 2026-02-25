@@ -1,4 +1,5 @@
-import Combobox, { type ComboItem } from './Combobox'
+import Combobox from './Combobox'
+import type {ComboItem} from './Combobox';
 import type { I18nErrorMessage } from '@/lib/error/core/errorTransport'
 
 type Entity = {
@@ -31,7 +32,7 @@ export default function EntityCombobox<T extends Entity>({
   error,
   required = false,
 }: Props<T>) {
-  const items: ComboItem[] = entities.map((entity) => ({
+  const items: Array<ComboItem> = entities.map((entity) => ({
     value: entity.id,
     label: entity.code ? `${entity.code} - ${entity.name}` : entity.name,
     searchText: `${entity.code ?? ''} ${entity.name}`,

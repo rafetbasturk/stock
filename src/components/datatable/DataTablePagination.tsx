@@ -1,26 +1,27 @@
-import { Button } from '../ui/button'
-import { Label } from '../ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select'
+import { useTranslation } from 'react-i18next'
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
 } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
+
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface DataTablePaginationProps {
   total: number
   serverPageIndex: number
   serverPageSize: number
   pageCount: number
-  activeFilters: string[]
+  activeFilters: Array<string>
   onServerPageChange: (p: number) => void
   onServerPageSizeChange: (s: number) => void
 }

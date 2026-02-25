@@ -1,6 +1,6 @@
-import { cn } from '@/lib/utils'
 import { Badge } from './ui/badge'
-import { PropsWithChildren } from 'react'
+import type { PropsWithChildren } from 'react'
+import { cn } from '@/lib/utils'
 
 type Props = PropsWithChildren & {
   status?: string

@@ -1,15 +1,15 @@
+import { useTranslation } from "react-i18next";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
   InputGroupText,
 } from "../ui/input-group";
-import type { Currency } from "@/types";
-import CurrencyInput from "./CurrencyInput";
 import { Field, FieldError, FieldLabel } from "../ui/field";
+import CurrencyInput from "./CurrencyInput";
+import type { Currency } from "@/types";
+import type { I18nErrorMessage } from "@/lib/error/core/errorTransport";
 import { formatNumberForDisplay } from "@/lib/inputUtils";
-import { I18nErrorMessage } from "@/lib/error/core/errorTransport";
-import { useTranslation } from "react-i18next";
 
 type Props = {
   name: string;

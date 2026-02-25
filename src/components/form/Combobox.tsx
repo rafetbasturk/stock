@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { Check, ChevronsUpDown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Button } from '../ui/button'
-import { ChevronsUpDown, Check } from 'lucide-react'
 import {
   Command,
   CommandEmpty,
@@ -10,10 +11,9 @@ import {
   CommandItem,
   CommandList,
 } from '../ui/command'
-import { cn } from '@/lib/utils'
 import { Field, FieldError, FieldLabel } from '../ui/field'
-import { useTranslation } from 'react-i18next'
 import type { I18nErrorMessage } from '@/lib/error/core/errorTransport'
+import { cn } from '@/lib/utils'
 
 export interface ComboItem {
   value: number | string
@@ -27,7 +27,7 @@ interface ComboboxProps {
   id?: string
   label?: string
   placeholder?: string
-  items: ComboItem[]
+  items: Array<ComboItem>
   value: string | number | null
   onChange: (value: string | number) => void
   searchable?: boolean

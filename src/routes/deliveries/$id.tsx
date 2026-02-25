@@ -10,7 +10,8 @@ import {
   UserRound,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import type { OrderMinimal } from '@/components/deliveries/DeliveryForm'
 import PageHeader from '@/components/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
@@ -21,7 +22,6 @@ import { ordersSelectQuery } from '@/lib/queries/orders'
 import { DeliveryForm } from '@/components/deliveries/DeliveryForm'
 import { Button } from '@/components/ui/button'
 import DeliveryItemList from '@/components/deliveries/delivery-detail/DeliveryItemList'
-import type { OrderMinimal } from '@/components/deliveries/DeliveryForm'
 import { useAppTimeZone } from '@/hooks/useAppTimeZone'
 import { DetailItem } from '@/components/DetailItem'
 import { StatBlock } from '@/components/StatBlock'
@@ -64,10 +64,9 @@ function RouteComponent() {
     const orderMap = new Map<number, OrderMinimal>()
 
     // First, add all available orders for this customer
-    const customerOrders =
-      availableOrders?.filter(
-        (o: any) => o.customer_id === delivery.customer.id,
-      ) || []
+    const customerOrders = availableOrders.filter(
+      (o: any) => o.customer_id === delivery.customer.id,
+    )
 
     customerOrders.forEach((order: any) => {
       if (!orderMap.has(order.id)) {
@@ -101,20 +100,21 @@ function RouteComponent() {
         }
 
         const mapOrder = orderMap.get(order.id)!
-        if (orderItem && !mapOrder.items?.some((i) => i.id === orderItem.id)) {
+        const orderItems = mapOrder.items ?? []
+        if (!orderItems.some((i) => i.id === orderItem.id)) {
           mapOrder.items = [
-            ...(mapOrder.items || []),
+            ...orderItems,
             {
               id: orderItem.id,
               quantity: orderItem.quantity,
               unit_price: orderItem.unit_price,
               product: {
-                code: orderItem.product?.code || '',
-                name: orderItem.product?.name || '',
-                unit: orderItem.product?.unit || 'adet',
+                code: orderItem.product.code,
+                name: orderItem.product.name,
+                unit: orderItem.product.unit,
               },
               currency: orderItem.currency,
-              deliveries: orderItem.deliveries || [],
+              deliveries: orderItem.deliveries,
             },
           ]
         }
@@ -129,14 +129,17 @@ function RouteComponent() {
             customer_id: delivery.customer.id,
             order_number: '',
             status: 'OPEN',
+            order_date: delivery.delivery_date,
+            items: [],
             customItems: [],
           })
         }
 
         const mapOrder = orderMap.get(customOrderItem.order_id)!
-        if (!mapOrder.customItems?.some((i) => i.id === customOrderItem.id)) {
+        const customItems = mapOrder.customItems ?? []
+        if (!customItems.some((i) => i.id === customOrderItem.id)) {
           mapOrder.customItems = [
-            ...(mapOrder.customItems || []),
+            ...customItems,
             {
               id: customOrderItem.id,
               quantity: customOrderItem.quantity || 1,

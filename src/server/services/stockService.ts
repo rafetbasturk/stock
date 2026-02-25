@@ -1,8 +1,8 @@
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import type { InsertStockMovement } from '@/types'
+import type { PgTransaction } from 'drizzle-orm/pg-core'
 import { productsTable, stockMovementsTable } from '@/db/schema'
 import { fail } from '@/lib/error/core/serverError'
-import type { PgTransaction } from 'drizzle-orm/pg-core'
 
 async function findTransferPairTx(
   tx: PgTransaction<any, any, any>,
@@ -55,7 +55,7 @@ export async function createStockMovementTx(
       ),
     )
     .for('update')
-    .then((rows) => rows[0])
+    .then((rows) => rows.at(0))
 
   if (!product) fail('PRODUCT_NOT_FOUND')
 
@@ -164,7 +164,7 @@ export async function deleteStockMovementTx(
     .from(stockMovementsTable)
     .where(eq(stockMovementsTable.id, id))
     .for('update')
-    .then((rows) => rows[0])
+    .then((rows) => rows.at(0))
 
   if (!movement) fail('STOCK_MOVEMENT_NOT_FOUND')
 
@@ -255,7 +255,7 @@ export async function updateStockMovementTx(
     .from(stockMovementsTable)
     .where(eq(stockMovementsTable.id, id))
     .for('update')
-    .then((rows) => rows[0])
+    .then((rows) => rows.at(0))
 
   if (!movement) fail('STOCK_MOVEMENT_NOT_FOUND')
 
@@ -399,7 +399,7 @@ export async function internalStockMovementCleanupTx(
       .from(productsTable)
       .where(eq(productsTable.id, movement.product_id))
       .for('update')
-      .then((rows) => rows[0])
+      .then((rows) => rows.at(0))
 
     if (!product) fail('PRODUCT_NOT_FOUND')
 
@@ -448,7 +448,7 @@ export async function reconcileProductStockTx(
     .from(productsTable)
     .where(eq(productsTable.id, productId))
     .for('update')
-    .then((rows) => rows[0])
+    .then((rows) => rows.at(0))
 
   if (!product) fail('PRODUCT_NOT_FOUND')
 

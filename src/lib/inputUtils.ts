@@ -1,4 +1,4 @@
-import { FieldErrors } from "./error/utils/formErrors";
+import type { FieldErrors } from "./error/utils/formErrors";
 
 export const formatNumberForDisplay = (
   value: number | string | undefined | null,

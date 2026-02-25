@@ -1,6 +1,6 @@
 // src/lib/currency.ts
-import { BaseAppError } from '@/lib/error/core/AppError'
 import type { Currency } from '../types'
+import { BaseAppError } from '@/lib/error/core/AppError'
 
 export const currencyArray = ['TRY', 'EUR', 'USD'] as const
 
@@ -18,7 +18,7 @@ export type Rate = {
   rate: number
 }
 
-export const fallbackRates: Rate[] = [
+export const fallbackRates: Array<Rate> = [
   { currency: 'TRY', targetCurrency: 'EUR', rate: 0.02064 },
   { currency: 'TRY', targetCurrency: 'USD', rate: 0.02397 },
   { currency: 'TRY', targetCurrency: 'TRY', rate: 1 },
@@ -41,7 +41,7 @@ export function shouldUpdateRates(updateTimestamp: number | null): boolean {
 
 // Helper function to filter and transform rates from storage
 export const transformRates = (
-  rates: Rate[],
+  rates: Array<Rate>,
   currency: string,
 ): Record<string, number> => {
   return rates
@@ -56,7 +56,7 @@ export const transformRates = (
 }
 
 // Fetch all rates for a single base currency in one API call
-export async function fetchRatesForCurrency(base: Currency): Promise<Rate[]> {
+export async function fetchRatesForCurrency(base: Currency): Promise<Array<Rate>> {
   const url = new URL('https://api.frankfurter.dev/v1/latest')
   url.searchParams.set('base', base)
 
@@ -97,7 +97,7 @@ export async function fetchRatesForCurrency(base: Currency): Promise<Rate[]> {
       })
     }
 
-    const rates: Rate[] = Object.entries(data.rates)
+    const rates: Array<Rate> = Object.entries(data.rates)
       .map(([target, rate]) => ({
         currency: base,
         targetCurrency: target as Currency,
@@ -123,16 +123,12 @@ export async function fetchRatesForCurrency(base: Currency): Promise<Rate[]> {
   }
 }
 
-function createCurrencyCombinations(currencies: string[]): string[][] {
-  const combinations: string[][] = []
+function createCurrencyCombinations(currencies: Array<string>): Array<Array<string>> {
+  const combinations: Array<Array<string>> = []
 
-  for (let i = 0; i < currencies.length; i++) {
-    for (let j = 0; j < currencies.length; j++) {
-      const from = currencies[i]
-      const to = currencies[j]
-      if (from !== undefined && to !== undefined) {
-        combinations.push([from, to])
-      }
+  for (const from of currencies) {
+    for (const to of currencies) {
+      combinations.push([from, to])
     }
   }
 
@@ -147,7 +143,7 @@ export function convertCurrency(
   amount: number,
   fromCurrency: string,
   toCurrency: string,
-  rates: Rate[],
+  rates: Array<Rate>,
 ) {
   // If same currency, return original amount
   if (fromCurrency === toCurrency) {
@@ -226,7 +222,7 @@ export function convertToBaseCurrency(
   amount: number,
   from: Currency,
   to: Currency,
-  rates: Rate[],
+  rates: Array<Rate>,
 ): number {
   if (from === to) return amount
 
@@ -243,7 +239,7 @@ export function convertToBaseCurrency(
   if (reverse) return amount / reverse.rate
 
   // Indirect conversions via common bridge currencies
-  const bridgeCurrencies: Currency[] = ['TRY', 'USD', 'EUR']
+  const bridgeCurrencies: Array<Currency> = ['TRY', 'USD', 'EUR']
   for (const bridge of bridgeCurrencies) {
     if (bridge === from || bridge === to) continue
 

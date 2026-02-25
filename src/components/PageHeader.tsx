@@ -1,7 +1,7 @@
-import type { ComponentType, ReactNode, SVGProps } from 'react'
 import { useRouter } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from './ui/button'
+import type { ComponentType, ReactNode, SVGProps } from 'react'
 import { useMobileReadonly } from '@/hooks/useMobileReadonly'
 
 export type IconType = ComponentType<SVGProps<SVGSVGElement>>
@@ -16,7 +16,7 @@ export interface PageHeaderProps {
   title?: string
   description?: string
   /** Optional: breadcrumb trail */
-  breadcrumbs?: BreadcrumbItem[]
+  breadcrumbs?: Array<BreadcrumbItem>
 
   /** Optional: Right-side action buttons (Add, Save, Export, etc.) */
   actions?: ReactNode

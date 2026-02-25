@@ -1,7 +1,7 @@
-import { Language } from '@/lib/types/types.settings'
 import type { ColumnDef } from '@tanstack/react-table'
-import { formatDateTime } from '@/lib/datetime'
+import type { Language } from '@/lib/types/types.settings'
 import type { ProductDemandRow } from '@/types'
+import { formatDateTime } from '@/lib/datetime'
 
 export const getColumns = (
   t: (key: string) => string,

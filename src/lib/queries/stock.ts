@@ -10,8 +10,8 @@ export const stockQueryKeys = {
   list: (s: StockSearch) =>
     [
       ...stockQueryKeys.lists(),
-      s.pageIndex ?? 0,
-      s.pageSize ?? 20,
+      s.pageIndex,
+      s.pageSize,
       s.q ?? '',
       s.movementType ?? '',
       s.productId ?? '',

@@ -1,4 +1,9 @@
-import { flexRender, type Cell, type Table } from '@tanstack/react-table'
+import { Fragment } from 'react/jsx-runtime'
+import { flexRender } from '@tanstack/react-table'
+import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import type { Cell, Table } from '@tanstack/react-table'
+import { cn } from '@/lib/utils'
 import {
   TableBody,
   TableCell,
@@ -6,13 +11,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../ui/table'
-import { cn } from '@/lib/utils'
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
-import { Fragment } from 'react/jsx-runtime'
-import { useTranslation } from 'react-i18next'
-import { Button } from '../ui/button'
-import { LoadingSpinner } from '../LoadingSpinner'
+} from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
 
 interface DataTableCoreProps<TData> {
   table: Table<TData>
@@ -52,11 +53,10 @@ export default function DataTableCore<TData>({
       return cell.column.columnDef.header
     }
 
-    return cell.column.id
-      .split('.')
-      .pop()
-      ?.replace(/[_-]+/g, ' ')
-      .trim() || cell.column.id
+    return (
+      cell.column.id.split('.').pop()?.replace(/[_-]+/g, ' ').trim() ||
+      cell.column.id
+    )
   }
 
   return (

@@ -1,6 +1,6 @@
 import * as React from "react";
 import InputField from "./InputField";
-import { FormController } from "@/lib/types/types.form";
+import type { FormController } from "@/lib/types/types.form";
 
 interface FormInputFieldProps<T> extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,

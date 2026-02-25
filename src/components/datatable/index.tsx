@@ -1,31 +1,34 @@
 // src/components/datatable/index.tsx
 import { useEffect, useMemo, useState } from 'react'
 import {
-  type ExpandedState,
   getCoreRowModel,
   getExpandedRowModel,
   useReactTable,
-  type ColumnDef,
-  type SortingState,
-  type VisibilityState,
 } from '@tanstack/react-table'
 
-import type { DataTableFilter, TableSearch } from './types'
-import { useTableFilters } from '@/hooks/useTableFilters'
 import DataTableControls from './DataTableControls'
 import DataTableCore from './DataTableCore'
 import DataTablePagination from './DataTablePagination'
 
+import type {
+  ColumnDef,
+  ExpandedState,
+  SortingState,
+  VisibilityState,
+} from '@tanstack/react-table'
+import type { DataTableFilter, TableSearch } from './types'
+import { useTableFilters } from '@/hooks/useTableFilters'
+
 interface DataTableProps<TData, TValue> {
-  data: TData[]
+  data: Array<TData>
   total: number
   serverPageIndex: number
   serverPageSize: number
   onServerPageChange: (p: number) => void
   onServerPageSizeChange: (s: number) => void
   getRowClassName?: (row: TData) => string
-  columns: ColumnDef<TData, TValue>[]
-  customFilters?: DataTableFilter[]
+  columns: Array<ColumnDef<TData, TValue>>
+  customFilters?: Array<DataTableFilter>
 
   search?: TableSearch
   onSearchChange?: (updates: TableSearch) => void
@@ -123,9 +126,7 @@ export default function DataTable<TData, TValue>({
       const next = typeof updater === 'function' ? updater(sorting) : updater
 
       const s = next[0]
-      const sortBy = s
-        ? (table.getColumn(s.id)?.columnDef.meta?.sortKey ?? s.id)
-        : undefined
+      const sortBy = table.getColumn(s.id)?.columnDef.meta?.sortKey ?? s.id
       const isAllowedSort =
         !sortBy || !allowedSortBy || allowedSortBy.includes(sortBy)
 
@@ -133,7 +134,7 @@ export default function DataTable<TData, TValue>({
 
       onSearchChange({
         sortBy,
-        sortDir: s?.desc ? 'desc' : 'asc',
+        sortDir: s.desc ? 'desc' : 'asc',
         pageIndex: 0,
       })
     },
@@ -149,21 +150,27 @@ export default function DataTable<TData, TValue>({
           return next
         }
 
-        if (!next || next === true) {
+        if (next === true) {
           return {}
         }
 
-        const expandedIds = Object.keys(next).filter(
-          (id) => next[id as keyof typeof next],
+        if (typeof next !== 'object') {
+          return {}
+        }
+
+        const expandedMap = next
+
+        const expandedIds = Object.keys(expandedMap).filter(
+          (id) => expandedMap[id],
         )
 
         if (expandedIds.length <= 1) {
-          return next
+          return expandedMap
         }
 
         const prevExpanded =
-          prev && prev !== true
-            ? Object.keys(prev).filter((id) => prev[id as keyof typeof prev])
+          prev !== true
+            ? Object.keys(prev).filter((id) => prev[id])
             : []
 
         const newlyExpandedId =

@@ -1,28 +1,28 @@
 // src/components/deliveries/delivery-form/DeliveryFormItems.tsx
+import { Plus, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import EmptyDeliveryTable from "./EmptyDeliveryTable";
+import type { DeliveryItem, OrderMinimal } from "../DeliveryForm";
+import type { FieldErrors } from "@/lib/error/utils/formErrors";
+import type { I18nErrorMessage } from "@/lib/error/core/errorTransport";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
 import {
   Table,
+  TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
-  TableBody,
-  TableCell,
 } from "@/components/ui/table";
-import EmptyDeliveryTable from "./EmptyDeliveryTable";
 import { FieldError } from "@/components/ui/field";
 import Combobox from "@/components/form/Combobox";
 import { cn } from "@/lib/utils";
 import { convertToCurrencyFormat } from "@/lib/currency";
-import type { DeliveryItem, OrderMinimal } from "../DeliveryForm";
-import type { FieldErrors } from "@/lib/error/utils/formErrors";
-import type { I18nErrorMessage } from "@/lib/error/core/errorTransport";
-import { useTranslation } from "react-i18next";
 
 interface Props {
-  orders: OrderMinimal[];
-  items: DeliveryItem[];
+  orders: Array<OrderMinimal>;
+  items: Array<DeliveryItem>;
   kind: "DELIVERY" | "RETURN";
   onItemChange: (index: number, field: string, value: any) => void;
   removeItem: (index: number) => void;
@@ -61,7 +61,7 @@ export default function DeliveryFormItems({
     0
   );
 
-  const netDelivered = (deliveries?: any[]) =>
+  const netDelivered = (deliveries?: Array<any>) =>
     deliveries?.reduce(
       (sum, d) =>
         sum +
@@ -112,7 +112,7 @@ export default function DeliveryFormItems({
                       const remaining =
                         kind === "RETURN"
                           ? Math.max(sent, 0)
-                          : Math.max((oi.quantity ?? 0) - sent, 0);
+                          : Math.max(oi.quantity - sent, 0);
 
                       return {
                         value: oi.id,
@@ -132,7 +132,7 @@ export default function DeliveryFormItems({
                       const remaining =
                         kind === "RETURN"
                           ? Math.max(sent, 0)
-                          : Math.max((ci.quantity ?? 0) - sent, 0);
+                          : Math.max(ci.quantity - sent, 0);
 
                       return {
                         value: ci.id,
@@ -149,7 +149,7 @@ export default function DeliveryFormItems({
                     }),
                   ];
 
-                  const remaining = item.remaining_quantity ?? 0;
+                  const remaining = item.remaining_quantity;
                   const deliveredNow = item.delivered_quantity;
 
                   return (

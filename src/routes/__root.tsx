@@ -1,6 +1,6 @@
 import {
-  HeadContent,
   ClientOnly,
+  HeadContent,
   Outlet,
   ScriptOnce,
   Scripts,
@@ -16,6 +16,7 @@ import { useMemo } from 'react'
 import { I18nextProvider, useTranslation } from 'react-i18next'
 import appCss from '../styles.css?url'
 import type { QueryClient } from '@tanstack/react-query'
+import type { AppSettings, Language } from '@/lib/types/types.settings'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { AppSidebar } from '@/components/AppSidebar'
 import { ErrorComponent } from '@/components/error/ErrorComponent'
@@ -26,7 +27,6 @@ import { createI18n } from '@/lib/i18n/createI18n'
 import { meQuery } from '@/lib/queries/auth'
 import { createSettingsScript } from '@/lib/settings/settingsScript'
 import { SetTimeZoneCookie } from '@/components/SetTimeZoneCookie'
-import type { AppSettings, Language } from '@/lib/types/types.settings'
 import { settingsMiddleware } from '@/middleware/settings'
 
 interface MyRouterContext {
@@ -41,7 +41,7 @@ const ROOT_TITLE_BY_LANG: Record<Language, string> = {
 
 export const getServerCookies = createServerFn()
   .middleware([settingsMiddleware])
-  .handler(async ({ context }) => {
+  .handler(({ context }) => {
     return context.settings
   })
 

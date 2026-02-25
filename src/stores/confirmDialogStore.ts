@@ -1,7 +1,7 @@
 import { createWithEqualityFn } from "zustand/traditional";
 import { shallow } from "zustand/shallow";
-import { createSelectors } from "./utils";
 import { toast } from "sonner";
+import { createSelectors } from "./utils";
 
 export type ConfirmOptions = {
   title?: string;

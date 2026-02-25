@@ -1,7 +1,7 @@
 // src/types.d.ts
 import type {
-  customersTable,
   customOrderItemsTable,
+  customersTable,
   deliveriesTable,
   deliveryItemsTable,
   orderItemsTable,
@@ -69,16 +69,16 @@ export interface OrderItemWithProduct extends OrderItem {
 
 export interface OrderWithCustomer extends Order {
   customer: Customer
-  items: OrderItemWithProduct[]
-  customItems: CustomOrderItem[]
+  items: Array<OrderItemWithProduct>
+  customItems: Array<CustomOrderItem>
 }
 
 export type CustomOrderItem = typeof customOrderItemsTable.$inferSelect
 export type NewCustomOrderItem = typeof customOrderItemsTable.$inferInsert
 
 export interface OrderWithItems extends Order {
-  items: OrderItemWithProduct[]
-  customItems: CustomOrderItem[]
+  items: Array<OrderItemWithProduct>
+  customItems: Array<CustomOrderItem>
 }
 
 export type NewOrderItem = Omit<InsertOrderItem, 'order_id'>
@@ -93,7 +93,7 @@ export type InsertDeliveryItem = typeof deliveryItemsTable.$inferInsert
 interface DeliveryItemWithOrderItems extends DeliveryItem {
   orderItem:
     | (OrderItemWithProduct & {
-        deliveries: {
+        deliveries: Array<{
           id: number
           delivered_quantity: number
           delivery: {
@@ -101,7 +101,7 @@ interface DeliveryItemWithOrderItems extends DeliveryItem {
             delivery_date: Date
             kind: DeliveryKind
           }
-        }[]
+        }>
       })
     | null
   customOrderItem: CustomOrderItem | null
@@ -109,7 +109,7 @@ interface DeliveryItemWithOrderItems extends DeliveryItem {
 
 export interface DeliveryWithItems extends Delivery {
   customer: Customer
-  items: DeliveryItemWithOrderItems[]
+  items: Array<DeliveryItemWithOrderItems>
 }
 
 export type DeliveryListRow = DeliveryWithItems & {
@@ -159,8 +159,8 @@ export type CustomOrderItemSubmitPayload = {
 }
 
 export type OrderSubmitPayload = InsertOrder & {
-  items: OrderItemSubmitPayload[]
-  customItems: CustomOrderItemSubmitPayload[]
+  items: Array<OrderItemSubmitPayload>
+  customItems: Array<CustomOrderItemSubmitPayload>
 }
 
 export interface DeliveryRow {
@@ -177,7 +177,7 @@ export interface DeliveryRow {
 }
 
 export interface PaginatedResult<T> {
-  data: T[]
+  data: Array<T>
   pageIndex: number
   pageSize: number
   total: number

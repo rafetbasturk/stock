@@ -45,7 +45,7 @@ export const metricsQueryKeys = {
 
 export const useFetchMetrics = (
   filters: HomeSearch,
-  rates: Rate[],
+  rates: Array<Rate>,
   preferredCurrency: Currency,
 ) => {
   const lastUpdated = useExchangeRatesStore((s) => s.lastUpdated)
@@ -83,6 +83,7 @@ export const useFetchMetrics = (
     enabled: isReady,
 
     staleTime: 60 * 1000,
+    placeholderData: keepPreviousData,
 
     meta: {
       feature: 'dashboard',
@@ -93,10 +94,12 @@ export const useFetchMetrics = (
 
 export const useFetchMonthlyOverview = (
   filters: HomeSearch,
-  rates: Rate[],
+  rates: Array<Rate>,
   preferredCurrency: Currency,
 ) => {
   const lastUpdated = useExchangeRatesStore((s) => s.lastUpdated)
+  const isReady =
+    !!preferredCurrency && lastUpdated !== null && rates.length > 0
 
   return useQuery({
     queryKey: metricsQueryKeys.monthlyOverview(
@@ -122,6 +125,7 @@ export const useFetchMonthlyOverview = (
         throw appError
       }
     },
+    enabled: isReady,
     staleTime: 60 * 1000,
     placeholderData: keepPreviousData,
     meta: {

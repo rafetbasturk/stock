@@ -1,4 +1,6 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query'
+import { normalizeOrdersSearch } from '../types/types.search'
+import type { OrdersSearch } from '../types/types.search';
 import {
   getLastOrderNumber,
   getOrderById,
@@ -9,7 +11,6 @@ import {
   getYearRange,
 } from '@/server/orders'
 
-import { normalizeOrdersSearch, OrdersSearch } from '../types/types.search'
 
 export const orderQueryKeys = {
   all: ['orders'] as const,

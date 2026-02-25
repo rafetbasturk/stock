@@ -1,20 +1,21 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { type ElementType, PropsWithChildren, useState } from 'react'
+import {  useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Calendar,
+  ChevronDown,
+  ChevronRight,
   CoinsIcon,
   Edit,
   InfoIcon,
   MapPin,
   ReceiptText,
-  ChevronDown,
-  ChevronRight,
   Truck,
   UserRound,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import type {ElementType, PropsWithChildren} from 'react';
 
 import { convertToCurrencyFormat } from '@/lib/currency'
 import { formatDateTime } from '@/lib/datetime'
@@ -76,8 +77,7 @@ function RouteComponent() {
     toast.success(t('orders.updated_success'))
   }
 
-  const totalLines =
-    (order.items?.length ?? 0) + (order.customItems?.length ?? 0)
+  const totalLines = order.items.length + order.customItems.length
 
   const totalFormatted = convertToCurrencyFormat({
     cents: order.total_amount * 100,
@@ -137,7 +137,7 @@ function RouteComponent() {
             <DetailItem
               icon={UserRound}
               label={t('orders.fields.customer')}
-              value={order.customer?.name}
+              value={order.customer.name}
               highlight
             />
 

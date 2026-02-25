@@ -14,7 +14,7 @@ export type CustomDeliveryRow = {
   currency: string
 }
 
-export const getCustomDeliveryColumns = (): ColumnDef<CustomDeliveryRow>[] => {
+export const getCustomDeliveryColumns = (): Array<ColumnDef<CustomDeliveryRow>> => {
   return [
     {
       accessorKey: 'name',
@@ -48,7 +48,7 @@ export const getCustomDeliveryColumns = (): ColumnDef<CustomDeliveryRow>[] => {
       footer: ({ table }) => {
         const total = table
           .getFilteredRowModel()
-          .rows.reduce((sum, r) => sum + (r.original.deliveredQuantity ?? 0), 0)
+          .rows.reduce((sum, r) => sum + r.original.deliveredQuantity, 0)
         return <div className="text-center font-bold">{total}</div>
       },
     },
@@ -87,7 +87,7 @@ export const getCustomDeliveryColumns = (): ColumnDef<CustomDeliveryRow>[] => {
       footer: ({ table }) => {
         const total = table
           .getFilteredRowModel()
-          .rows.reduce((sum, r) => sum + (r.original.totalAmount ?? 0), 0)
+          .rows.reduce((sum, r) => sum + r.original.totalAmount, 0)
         const currency =
           table.getFilteredRowModel().rows[0]?.original.currency || 'TRY'
         return (

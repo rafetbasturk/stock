@@ -210,7 +210,7 @@ export const getMonthlyOverview = createServerFn()
     (data: {
       filters?: { customerId?: number; year?: number }
       monthCount?: number
-      rates: Rate[]
+      rates: Array<Rate>
       preferredCurrency: Currency
     }) => data,
   )
@@ -261,14 +261,14 @@ export const getMonthlyOverview = createServerFn()
       // STEP 1 — FETCH ORDERS
       //
 
-      const orderWhere: SQL[] = [
+      const orderWhere: Array<SQL> = [
         notDeleted(ordersTable),
         ne(ordersTable.status, 'İPTAL'),
         gte(ordersTable.order_date, start),
         lt(ordersTable.order_date, end),
       ]
 
-      const deliveriesWhere: SQL[] = [
+      const deliveriesWhere: Array<SQL> = [
         notDeleted(deliveriesTable),
         gte(deliveriesTable.delivery_date, start),
         lt(deliveriesTable.delivery_date, end),

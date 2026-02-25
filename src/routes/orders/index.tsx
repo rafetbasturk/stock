@@ -5,10 +5,12 @@ import { zodValidator } from '@tanstack/zod-adapter'
 import { useTranslation } from 'react-i18next'
 
 import type { OrderListRow } from '@/types'
+import type { OrdersSearch } from '@/lib/types/types.search'
+import type { DataTableFilter } from '@/components/datatable/types'
+import type { ModalState } from '@/lib/types/types.modal'
 import {
   normalizeOrdersSearch,
   orderSortFields,
-  OrdersSearch,
   ordersSearchSchema,
 } from '@/lib/types/types.search'
 import { useDeleteOrderMutation } from '@/lib/mutations/orders'
@@ -18,14 +20,12 @@ import {
   ordersQuery,
 } from '@/lib/queries/orders'
 
-import type { DataTableFilter } from '@/components/datatable/types'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { getColumns } from '@/components/orders/columns'
 import OrderForm from '@/components/orders/OrderForm'
 import { OrderListHeader } from '@/components/orders/OrderListHeader'
 import { OrdersDataTable } from '@/components/orders/OrdersDataTable'
 import { OrderDeleteDialog } from '@/components/orders/OrderDeleteDialog'
-import { ModalState } from '@/lib/types/types.modal'
 import { useAppTimeZone } from '@/hooks/useAppTimeZone'
 
 export const Route = createFileRoute('/orders/')({
@@ -63,14 +63,14 @@ function OrderList() {
   )
 
   const ordersQ = useQuery(ordersQuery(search))
-  
+
   const ordersData = ordersQ.data
-  
+
   const orders = ordersData?.data ?? []
   const total = ordersData?.total ?? 0
   const pageIndex = ordersData?.pageIndex ?? search.pageIndex
   const pageSize = ordersData?.pageSize ?? search.pageSize
-  
+
   const deleteMutation = useDeleteOrderMutation()
   const pendingDeleteOrder = useMemo(
     () =>

@@ -1,15 +1,16 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query'
 import {
+  normalizeDeliveriesSearch,
+} from '../types/types.search'
+import type {
+  DeliveriesSearch} from '../types/types.search';
+import {
   getDeliveryById,
   getDeliveryFilterOptions,
   getLastDeliveryNumber,
   getLastReturnDeliveryNumber,
   getPaginatedDeliveries,
 } from '@/server/deliveries'
-import {
-  DeliveriesSearch,
-  normalizeDeliveriesSearch,
-} from '../types/types.search'
 
 export const deliveryQueryKeys = {
   all: ['deliveries'] as const,

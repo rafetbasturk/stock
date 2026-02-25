@@ -1,9 +1,10 @@
-import { DetailTable } from '@/components/DetailTable'
 import {
-  getCustomDeliveryColumns,
-  type CustomDeliveryRow,
+  
+  getCustomDeliveryColumns
 } from './customColumns'
+import type {CustomDeliveryRow} from './customColumns';
 import type { DeliveryWithItems, OrderWithItems } from '@/types'
+import { DetailTable } from '@/components/DetailTable'
 
 interface Props {
   delivery: DeliveryWithItems
@@ -13,7 +14,7 @@ interface Props {
 const flattenCustomDeliveryItems = (
   delivery: DeliveryWithItems,
   order: OrderWithItems,
-): CustomDeliveryRow[] => {
+): Array<CustomDeliveryRow> => {
   const sign = delivery.kind === 'RETURN' ? -1 : 1
 
   return delivery.items.map((item) => {
@@ -21,7 +22,7 @@ const flattenCustomDeliveryItems = (
 
     const unitPrice = customItem?.unit_price ?? 0
     const currency = customItem?.currency ?? order.currency ?? 'TRY'
-    const deliveredQty = item.delivered_quantity ?? 0
+    const deliveredQty = item.delivered_quantity
     const totalAmount = sign * unitPrice * deliveredQty
 
     return {
@@ -31,7 +32,7 @@ const flattenCustomDeliveryItems = (
       unit: customItem?.unit ?? '',
       deliveredQuantity: sign * deliveredQty,
       deliveryDate: new Date(delivery.delivery_date),
-      deliveryNumber: delivery.delivery_number ?? null,
+      deliveryNumber: delivery.delivery_number,
       notes: delivery.notes ?? null,
       unitPrice,
       totalAmount,

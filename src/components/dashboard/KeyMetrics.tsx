@@ -16,15 +16,19 @@ interface Props {
 export default function KeyMetrics({ filters }: Props) {
   const { t } = useTranslation('dashboard')
   const rates = useExchangeRatesStore((s) => s.rates)
+  const lastUpdated = useExchangeRatesStore((s) => s.lastUpdated)
   const preferredCurrency = useExchangeRatesStore((s) => s.preferredCurrency)
+  const isReady =
+    !!preferredCurrency && lastUpdated !== null && rates.length > 0
 
-  const { data, isLoading, isError, error, refetch } = useFetchMetrics(
+  const { data, isLoading, isFetching, isError, error, refetch } = useFetchMetrics(
     filters,
     rates,
     preferredCurrency,
   )
+  const isInitialLoading = (!isReady || isLoading) && !data
 
-  if (isLoading) {
+  if (isInitialLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Skeleton className="h-49.5 rounded-xl" />
@@ -34,7 +38,7 @@ export default function KeyMetrics({ filters }: Props) {
     )
   }
 
-  if (isError) {
+  if (isError && !data) {
     return (
       <ErrorMessage
         title={t('metrics.load_error_title')}
@@ -62,7 +66,11 @@ export default function KeyMetrics({ filters }: Props) {
   })
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="relative">
+      {isFetching && (
+        <div className="pointer-events-none absolute inset-0 z-10 rounded-xl bg-background/35" />
+      )}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <DashboardCard
         title={t('metrics.total_order_amount')}
         value={totalRevenue}
@@ -100,6 +108,7 @@ export default function KeyMetrics({ filters }: Props) {
           </Badge>
         }
       />
+      </div>
     </div>
   )
 }
