@@ -20,28 +20,26 @@ import {
   ordersQuery,
 } from '@/lib/queries/orders'
 
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { ListPageLayout } from '@/components/layout/ListPageLayout'
 import { getColumns } from '@/components/orders/columns'
 import OrderForm from '@/components/orders/OrderForm'
 import { OrderListHeader } from '@/components/orders/OrderListHeader'
 import { OrdersDataTable } from '@/components/orders/OrdersDataTable'
 import { OrderDeleteDialog } from '@/components/orders/OrderDeleteDialog'
 import { useAppTimeZone } from '@/hooks/useAppTimeZone'
+import { ListPendingComponent } from '@/components/ListPendingComponent'
 
 export const Route = createFileRoute('/orders/')({
   validateSearch: zodValidator(ordersSearchSchema),
   loaderDeps: ({ search }) => normalizeOrdersSearch(search),
   loader: async ({ context }) => {
-    // const normalizedDeps = normalizeOrdersSearch(deps)
-
     return await Promise.all([
-      // context.queryClient.prefetchQuery(ordersQuery(normalizedDeps)),
       context.queryClient.prefetchQuery(lastOrderNumberQuery),
       context.queryClient.prefetchQuery(getFilterOptions),
     ])
   },
   component: OrderList,
-  pendingComponent: OrdersPending,
+  pendingComponent: ListPendingComponent,
 })
 
 function OrderList() {
@@ -177,9 +175,9 @@ function OrderList() {
   )
 
   return (
-    <>
-      <OrderListHeader onAdd={openAddModal} />
-
+    <ListPageLayout
+      header={<OrderListHeader onAdd={openAddModal} />}
+    >
       <OrdersDataTable
         orders={orders}
         columns={columns}
@@ -218,11 +216,6 @@ function OrderList() {
         onClose={closeDeleteDialog}
         onConfirm={confirmDeleteOrder}
       />
-    </>
+    </ListPageLayout>
   )
-}
-
-function OrdersPending() {
-  const { t } = useTranslation('entities')
-  return <LoadingSpinner variant="full-page" text={t('orders.loading')} />
 }

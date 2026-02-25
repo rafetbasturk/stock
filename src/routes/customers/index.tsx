@@ -4,15 +4,13 @@ import { zodValidator } from '@tanstack/zod-adapter'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Customer } from '@/types'
-import type {
-  CustomersSearch} from '@/lib/types/types.search';
+import type { CustomersSearch } from '@/lib/types/types.search'
 import type { ModalState } from '@/lib/types/types.modal'
 import { CustomerDeleteDialog } from '@/components/customers/CustomerDeleteDialog'
 import CustomerForm from '@/components/customers/CustomerForm'
 import { getColumns } from '@/components/customers/columns'
 import { CustomerListHeader } from '@/components/customers/CustomerListHeader'
 import { CustomersDataTable } from '@/components/customers/CustomersDataTable'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { useDeleteCustomerMutation } from '@/lib/mutations/customers'
 import { customersPaginatedQuery } from '@/lib/queries/customers'
 import {
@@ -20,6 +18,8 @@ import {
   customersSearchSchema,
   normalizeCustomersSearch,
 } from '@/lib/types/types.search'
+import { ListPageLayout } from '@/components/layout/ListPageLayout'
+import { ListPendingComponent } from '@/components/ListPendingComponent'
 
 export const Route = createFileRoute('/customers/')({
   validateSearch: zodValidator(customersSearchSchema),
@@ -31,7 +31,7 @@ export const Route = createFileRoute('/customers/')({
     )
   },
   component: CustomerList,
-  pendingComponent: CustomersPending,
+  pendingComponent: ListPendingComponent,
 })
 
 function CustomerList() {
@@ -140,8 +140,7 @@ function CustomerList() {
   )
 
   return (
-    <>
-      <CustomerListHeader onAdd={openAddModal} />
+    <ListPageLayout header={<CustomerListHeader onAdd={openAddModal} />}>
       <CustomersDataTable
         customers={customers}
         columns={columns}
@@ -180,11 +179,6 @@ function CustomerList() {
         onClose={closeDeleteDialog}
         onConfirm={confirmDeleteCustomer}
       />
-    </>
+    </ListPageLayout>
   )
-}
-
-function CustomersPending() {
-  const { t } = useTranslation('entities')
-  return <LoadingSpinner variant="full-page" text={t('customers.loading')} />
 }

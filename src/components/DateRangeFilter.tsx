@@ -11,7 +11,7 @@ import {
   subMonths,
 } from 'date-fns'
 
-import { tr, enUS } from 'date-fns/locale'
+import { enUS, tr } from 'date-fns/locale'
 
 import { useTranslation } from 'react-i18next'
 import {

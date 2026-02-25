@@ -18,6 +18,7 @@ import type {
 } from '@tanstack/react-table'
 import type { DataTableFilter, TableSearch } from './types'
 import { useTableFilters } from '@/hooks/useTableFilters'
+import { cn } from '@/lib/utils'
 
 interface DataTableProps<TData, TValue> {
   data: Array<TData>
@@ -43,6 +44,8 @@ interface DataTableProps<TData, TValue> {
   allowedSortBy?: ReadonlyArray<string>
   isFetching?: boolean
   singleExpandedRow?: boolean
+  className?: string
+  coreContainerClassName?: string
 }
 
 export default function DataTable<TData, TValue>({
@@ -66,6 +69,8 @@ export default function DataTable<TData, TValue>({
   allowedSortBy,
   isFetching,
   singleExpandedRow = true,
+  className,
+  coreContainerClassName,
 }: DataTableProps<TData, TValue>) {
   const globalFilter = search.q ?? ''
 
@@ -203,7 +208,12 @@ export default function DataTable<TData, TValue>({
   const skeletonRowCount = Math.min(8, Math.max(3, safePageSize))
 
   return (
-    <div className="flex flex-col gap-2 md:gap-4 p-2 md:p-4 relative">
+    <div
+      className={cn(
+        'flex flex-col gap-2 md:gap-4 p-2 md:p-4 relative min-h-0',
+        className,
+      )}
+    >
       {/* 🔍 Search + Filters */}
       <DataTableControls
         table={table}
@@ -228,6 +238,7 @@ export default function DataTable<TData, TValue>({
         allowedSortBy={allowedSortBy}
         isFetching={isFetching}
         skeletonRowCount={skeletonRowCount}
+        containerClassName={coreContainerClassName}
       />
 
       {/* Pagination */}

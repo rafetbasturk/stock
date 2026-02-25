@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next'
 
 import { LucideLayoutDashboard } from 'lucide-react'
 import { zodValidator } from '@tanstack/zod-adapter'
-import type {HomeSearch} from '@/lib/types/types.search';
-import {  homeSearchSchema } from '@/lib/types/types.search'
-import { delay, generateYearOptions } from '@/lib/utils'
+import type { HomeSearch } from '@/lib/types/types.search'
+import { homeSearchSchema } from '@/lib/types/types.search'
+import { generateYearOptions } from '@/lib/utils'
 import { yearRangeQuery } from '@/lib/queries/orders'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -22,7 +22,6 @@ export const Route = createFileRoute('/')({
   validateSearch: zodValidator(homeSearchSchema),
   loader: async ({ context }) => {
     const years = await context.queryClient.ensureQueryData(yearRangeQuery)
-    await delay(2000)
     return generateYearOptions(years.minYear, years.maxYear)
   },
   component: Dashboard,
@@ -76,7 +75,7 @@ function Dashboard() {
               {t('sections.monthly_chart')}
             </CardTitle>
           </CardHeader>
-          <CardContent className='p-3 md:p-6'>
+          <CardContent className="p-3 md:p-6">
             <MonthlyChart filters={search} />
           </CardContent>
         </Card>

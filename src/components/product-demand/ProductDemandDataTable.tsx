@@ -40,7 +40,7 @@ export function ProductDemandDataTable({
   const isMobile = useIsMobile()
 
   return (
-    <div className="mt-6 border rounded-lg shadow-sm">
+    <div className="border rounded-lg shadow-sm">
       <DataTable
         data={data}
         columns={columns}

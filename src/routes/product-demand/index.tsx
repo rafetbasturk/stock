@@ -18,7 +18,8 @@ import {
 import PageHeader from '@/components/PageHeader'
 import { getColumns } from '@/components/product-demand/columns'
 import { ProductDemandDataTable } from '@/components/product-demand/ProductDemandDataTable'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { ListPageLayout } from '@/components/layout/ListPageLayout'
+import { ListPendingComponent } from '@/components/ListPendingComponent'
 
 export const Route = createFileRoute('/product-demand/')({
   validateSearch: zodValidator(productDemandSearchSchema),
@@ -28,12 +29,7 @@ export const Route = createFileRoute('/product-demand/')({
     )
   },
   component: RouteComponent,
-  pendingComponent: () => {
-    const { t } = useTranslation('entities')
-    return (
-      <LoadingSpinner variant="full-page" text={t('productDemand.loading')} />
-    )
-  },
+  pendingComponent: ListPendingComponent,
 })
 
 function RouteComponent() {
@@ -103,13 +99,15 @@ function RouteComponent() {
   )
 
   return (
-    <>
-      <PageHeader
-        title={t('productDemand.list_title')}
-        description={t('productDemand.description')}
-        showBack
-      />
-
+    <ListPageLayout
+      header={
+        <PageHeader
+          title={t('productDemand.list_title')}
+          description={t('productDemand.description')}
+          showBack
+        />
+      }
+    >
       <ProductDemandDataTable
         data={demand}
         columns={columns}
@@ -126,6 +124,6 @@ function RouteComponent() {
         }
         allowedSortBy={productDemandSortFields}
       />
-    </>
+    </ListPageLayout>
   )
 }

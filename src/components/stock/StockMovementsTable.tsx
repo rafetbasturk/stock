@@ -164,7 +164,7 @@ export function StockMovementsTable({
 
   return (
     <>
-      <div className="mt-6 border rounded-lg shadow-sm">
+      <div className="border rounded-lg shadow-sm">
         <DataTable
           data={result?.data ?? []}
           columns={columns}

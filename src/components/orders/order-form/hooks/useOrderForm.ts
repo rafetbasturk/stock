@@ -58,7 +58,7 @@ function toInitialForm(order?: OrderWithItems): OrderFormState {
     order_number: order?.order_number ?? '',
     order_date: order?.order_date ? new Date(order.order_date) : new Date(),
     customer_id: order?.customer_id ?? 0,
-    status: order ? (order.status as Status) : 'KAYIT',
+    status: order ? (order.status) : 'KAYIT',
     currency,
     delivery_address: order?.delivery_address ?? null,
     notes: order?.notes ?? null,

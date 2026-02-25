@@ -17,14 +17,14 @@ import {
   productsSearchSchema,
 } from '@/lib/types/types.search'
 
-
 import { getColumns } from '@/components/products/columns'
 import ProductForm from '@/components/products/ProductForm'
 import { ProductDeleteDialog } from '@/components/products/ProductDeleteDialog'
 import { ProductListHeader } from '@/components/products/ProductListHeader'
 import { ProductsDataTable } from '@/components/products/ProductsDataTable'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { StockMovementDialog } from '@/components/stock/StockMovementDialog'
+import { ListPageLayout } from '@/components/layout/ListPageLayout'
+import { ListPendingComponent } from '@/components/ListPendingComponent'
 
 export const Route = createFileRoute('/products/')({
   validateSearch: zodValidator(productsSearchSchema),
@@ -37,7 +37,7 @@ export const Route = createFileRoute('/products/')({
     return await context.queryClient.prefetchQuery(getFilterOptions())
   },
   component: ProductList,
-  pendingComponent: ProductsPending,
+  pendingComponent: ListPendingComponent,
 })
 
 function ProductList() {
@@ -178,8 +178,7 @@ function ProductList() {
   )
 
   return (
-    <>
-      <ProductListHeader onAdd={openAddModal} />
+    <ListPageLayout header={<ProductListHeader onAdd={openAddModal} />}>
       <ProductsDataTable
         products={products}
         total={total}
@@ -230,11 +229,6 @@ function ProductList() {
           productsQ.refetch()
         }}
       />
-    </>
+    </ListPageLayout>
   )
-}
-
-function ProductsPending() {
-  const { t } = useTranslation('entities')
-  return <LoadingSpinner variant="full-page" text={t('products.loading')} />
 }

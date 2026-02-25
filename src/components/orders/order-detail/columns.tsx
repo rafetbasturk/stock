@@ -155,7 +155,7 @@ export const getColumns = (
         const amount = Number(row.original.unit_price) / 100
         const formatted = new Intl.NumberFormat('tr', {
           style: 'currency',
-          currency: row.original.currency || 'TRY',
+          currency: row.original.currency,
         }).format(amount)
         return <div className="text-right font-medium">{formatted}</div>
       },
@@ -171,22 +171,20 @@ export const getColumns = (
         const amount = (row.original.quantity * row.original.unit_price) / 100
         const formatted = new Intl.NumberFormat('tr', {
           style: 'currency',
-          currency: row.original.currency || 'TRY',
+          currency: row.original.currency,
         }).format(amount)
         return <div className="text-right font-medium">{formatted}</div>
       },
       footer: ({ table }) => {
-        const totalAmount = table
-          .getFilteredRowModel()
-          .rows.reduce(
-            (sum, r) =>
-              sum + (r.original.quantity * r.original.unit_price) / 100,
-            0,
-          )
+        const rows = table.getFilteredRowModel().rows
+        const totalAmount = rows.reduce(
+          (sum, r) => sum + (r.original.quantity * r.original.unit_price) / 100,
+          0,
+        )
+        const currency = rows.length > 0 ? rows[0].original.currency : 'TRY'
         const formatted = new Intl.NumberFormat('tr', {
           style: 'currency',
-          currency:
-            table.getFilteredRowModel().rows[0]?.original.currency || 'TRY',
+          currency,
         }).format(totalAmount)
 
         return <div className="text-right font-bold">{formatted}</div>

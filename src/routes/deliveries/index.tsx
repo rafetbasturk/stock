@@ -6,14 +6,12 @@ import { useTranslation } from 'react-i18next'
 import type { DataTableFilter } from '@/components/datatable/types'
 import type { DeliveryListRow } from '@/types'
 import type { ModalState } from '@/lib/types/types.modal'
-import type {
-  DeliveriesSearch} from '@/lib/types/types.search';
+import type { DeliveriesSearch } from '@/lib/types/types.search'
 import { getColumns } from '@/components/deliveries/columns'
 import { DeliveriesDataTable } from '@/components/deliveries/DeliveriesDataTable'
 import { DeliveryDeleteDialog } from '@/components/deliveries/DeliveryDeleteDialog'
 import { DeliveryForm } from '@/components/deliveries/DeliveryForm'
 import { DeliveryListHeader } from '@/components/deliveries/DeliveryListHeader'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { useDeleteDeliveryMutation } from '@/lib/mutations/deliveries'
 import { useAppTimeZone } from '@/hooks/useAppTimeZone'
 import {
@@ -28,7 +26,8 @@ import {
   deliveriesSortFields,
   normalizeDeliveriesSearch,
 } from '@/lib/types/types.search'
-
+import { ListPageLayout } from '@/components/layout/ListPageLayout'
+import { ListPendingComponent } from '@/components/ListPendingComponent'
 
 export const Route = createFileRoute('/deliveries/')({
   validateSearch: zodValidator(deliveriesSearchSchema),
@@ -36,7 +35,6 @@ export const Route = createFileRoute('/deliveries/')({
   loader: async ({ context }) => {
     // const normalizedDeps = normalizeDeliveriesSearch(deps)
 
-    
     return await Promise.all([
       // context.queryClient.ensureQueryData(deliveriesQuery(normalizedDeps)),
       context.queryClient.prefetchQuery(lastDeliveryNumberQuery),
@@ -46,7 +44,7 @@ export const Route = createFileRoute('/deliveries/')({
     ])
   },
   component: DeliveryList,
-  pendingComponent: DeliveriesPending,
+  pendingComponent: ListPendingComponent,
 })
 
 function DeliveryList() {
@@ -195,9 +193,7 @@ function DeliveryList() {
   )
 
   return (
-    <>
-      <DeliveryListHeader onAdd={openAddModal} />
-
+    <ListPageLayout header={<DeliveryListHeader onAdd={openAddModal} />}>
       <DeliveriesDataTable
         deliveries={deliveries}
         columns={columns}
@@ -237,11 +233,6 @@ function DeliveryList() {
         onClose={closeDeleteDialog}
         onConfirm={confirmDeleteDelivery}
       />
-    </>
+    </ListPageLayout>
   )
-}
-
-function DeliveriesPending() {
-  const { t } = useTranslation('entities')
-  return <LoadingSpinner variant="full-page" text={t('deliveries.loading')} />
 }

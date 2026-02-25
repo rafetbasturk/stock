@@ -36,7 +36,7 @@ export function ProductsDataTable({
   allowedSortBy,
 }: ProductsDataTableProps) {
   return (
-    <div className="mt-6 border rounded-lg shadow-sm">
+    <div className="border rounded-lg shadow-sm">
       <DataTable
         data={products}
         columns={columns}

@@ -65,7 +65,7 @@ export const getColumns = (
         const price = Number(row.getValue('price')) / 100
         const formatted = new Intl.NumberFormat('tr', {
           style: 'currency',
-          currency: row.original.currency || 'TRY',
+          currency: row.original.currency,
         }).format(price)
 
         return <div className="text-right font-medium">{formatted}</div>
