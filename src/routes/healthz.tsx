@@ -6,7 +6,42 @@ export const Route = createFileRoute('/healthz')({
   server: {
     handlers: {
       GET: async () => {
-        const hasDatabaseUrl = Boolean(process.env.DATABASE_URL)
+        const rawDatabaseUrl = process.env.DATABASE_URL
+        const hasDatabaseUrl = Boolean(rawDatabaseUrl)
+        let databaseUrlInfo: {
+          protocol: string | null
+          host: string | null
+          port: string | null
+          database: string | null
+          sslmode: string | null
+          isParsed: boolean
+        } = {
+          protocol: null,
+          host: null,
+          port: null,
+          database: null,
+          sslmode: null,
+          isParsed: false,
+        }
+
+        if (rawDatabaseUrl) {
+          try {
+            const parsed = new URL(rawDatabaseUrl)
+            databaseUrlInfo = {
+              protocol: parsed.protocol.replace(':', ''),
+              host: parsed.hostname,
+              port: parsed.port || null,
+              database: parsed.pathname.replace(/^\//, '') || null,
+              sslmode: parsed.searchParams.get('sslmode'),
+              isParsed: true,
+            }
+          } catch {
+            databaseUrlInfo = {
+              ...databaseUrlInfo,
+              isParsed: false,
+            }
+          }
+        }
 
         try {
           await db.execute(sql`select 1`)
@@ -16,6 +51,7 @@ export const Route = createFileRoute('/healthz')({
               status: 'ok',
               database: 'ok',
               hasDatabaseUrl,
+              databaseUrlInfo,
               timestamp: new Date().toISOString(),
             }),
             {
@@ -46,6 +82,7 @@ export const Route = createFileRoute('/healthz')({
               status: 'error',
               database: 'down',
               hasDatabaseUrl,
+              databaseUrlInfo,
               errorType,
               errorCode,
               timestamp: new Date().toISOString(),
