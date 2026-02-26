@@ -38,7 +38,9 @@ export function OrderProductHistoryTable({ order }: { order: OrderListRow }) {
     ) as Array<DeliveryHistory>
 
     const signedQty = (d: DeliveryHistory) =>
-      d.delivery.kind === 'RETURN' ? -d.delivered_quantity : d.delivered_quantity
+      d.delivery.kind === 'RETURN'
+        ? -d.delivered_quantity
+        : d.delivered_quantity
 
     const delivered = pastDeliveries.reduce((s, d) => s + signedQty(d), 0)
     const remaining = qty - delivered
@@ -212,12 +214,13 @@ export function OrderProductHistoryTable({ order }: { order: OrderListRow }) {
                             className={cn(
                               'font-semibold shrink-0',
                               item.signedQty(d) < 0
-                                ? 'text-red-600 dark:text-red-400'
-                                : 'text-green-600 dark:text-green-400',
+                                ? 'text-green-600 dark:text-green-400'
+                                : 'text-red-600 dark:text-red-400',
                             )}
                           >
-                            {item.signedQty(d) > 0 ? '+' : ''}
-                            {item.signedQty(d)} {t('orders.history.qty_suffix')}
+                            {d.delivery.kind === 'RETURN' ? '+' : '-'}
+                            {d.delivered_quantity}{' '}
+                            {t('orders.history.qty_suffix')}
                           </p>
                         </div>
                       ))}
@@ -317,7 +320,9 @@ export function OrderProductHistoryTable({ order }: { order: OrderListRow }) {
                 <p className="text-[11px] text-muted-foreground">
                   {t('orders.history.columns.ordered')}
                 </p>
-                <p className="text-sm font-semibold text-foreground">{item.qty}</p>
+                <p className="text-sm font-semibold text-foreground">
+                  {item.qty}
+                </p>
               </div>
               <div className="rounded-md border bg-muted/20 py-1.5">
                 <p className="text-[11px] text-muted-foreground">

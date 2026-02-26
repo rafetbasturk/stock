@@ -8,6 +8,7 @@ export const getColumns = (
   lang?: Language,
   timeZone?: string,
 ): Array<ColumnDef<ProductDemandRow>> => {
+  
   return [
     {
       accessorKey: 'customer_code',
@@ -16,14 +17,11 @@ export const getColumns = (
         filterTitle: t('productDemand.columns.customer_code'),
         sortKey: 'customer_code',
       },
-      minSize: 200,
-      size: 260,
+      minSize: 100,
+      size: 150,
       cell: ({ row }) => (
-        <div>
-          <div className="font-medium">{row.original.customer_code}</div>
-          <div className="text-xs text-muted-foreground">
-            {row.original.customer_name}
-          </div>
+        <div className="font-medium">
+          {row.original.customer_name}
         </div>
       ),
     },
@@ -37,7 +35,12 @@ export const getColumns = (
       minSize: 200,
       size: 300,
       cell: ({ row }) => (
-        <div className="font-medium">{row.original.product_code}</div>
+        <div>
+          <div className="font-medium">{row.original.product_code}</div>
+          <div className="text-xs text-muted-foreground">
+            {row.original.product_name}
+          </div>
+        </div>
       ),
     },
     {
