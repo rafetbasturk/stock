@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { Table } from '@tanstack/react-table'
@@ -60,21 +60,23 @@ export default function DataTableControls<TData>({
 }: DataTableControlsProps<TData>) {
   const { t } = useTranslation('table')
   const [searchInput, setSearchInput] = useState(search.q ?? '')
+  const latestSearchQRef = useRef(search.q ?? '')
 
   useEffect(() => {
     setSearchInput(search.q ?? '')
+    latestSearchQRef.current = search.q ?? ''
   }, [search.q])
 
   const debouncedSearch = useMemo(() => {
     return debounce((value: string) => {
-      if (value === search.q) return
+      if (value === latestSearchQRef.current) return
 
       onSearchChange({
         q: value || undefined,
         pageIndex: 0,
       })
     }, 400)
-  }, [onSearchChange, search.q])
+  }, [onSearchChange])
 
   useEffect(() => {
     return () => debouncedSearch.cancel()
@@ -277,6 +279,7 @@ export default function DataTableControls<TData>({
             <Button
               variant="outline"
               onClick={() => {
+                debouncedSearch.cancel()
                 onSearchChange(buildResetPayload(), true)
               }}
             >
@@ -348,6 +351,7 @@ export default function DataTableControls<TData>({
               <Button
                 variant="outline"
                 onClick={() => {
+                  debouncedSearch.cancel()
                   const reset = buildResetPayload()
                   setMobileDraftFilters(reset)
                   onSearchChange(reset, true)

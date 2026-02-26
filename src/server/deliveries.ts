@@ -612,9 +612,25 @@ export const getPaginatedDeliveries = createServerFn()
             ELSE 0
           END
           +
-          similarity(${deliveriesTable.delivery_number}, ${normalizedQ}) * 100
+          CASE
+            WHEN ${deliveriesTable.delivery_number} ILIKE ${`${normalizedQ}%`}
+            THEN 200 ELSE 0
+          END
           +
-          similarity(${deliveriesTable.notes}, ${normalizedQ}) * 10
+          CASE
+            WHEN ${deliveriesTable.delivery_number} ILIKE ${`%${normalizedQ}%`}
+            THEN 80 ELSE 0
+          END
+          +
+          CASE
+            WHEN ${deliveriesTable.notes} ILIKE ${`${normalizedQ}%`}
+            THEN 40 ELSE 0
+          END
+          +
+          CASE
+            WHEN ${deliveriesTable.notes} ILIKE ${`%${normalizedQ}%`}
+            THEN 20 ELSE 0
+          END
         )
       `
       : undefined

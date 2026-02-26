@@ -128,15 +128,40 @@ export const getPaginated = createServerFn()
             ELSE 0
           END
           +
-          similarity(${productsTable.code}, ${normalizedQ}) * 100
+          CASE
+            WHEN ${productsTable.code} ILIKE ${`${normalizedQ}%`} THEN 200
+            ELSE 0
+          END
           +
-          similarity(${productsTable.name}, ${normalizedQ}) * 50
+          CASE
+            WHEN ${productsTable.code} ILIKE ${`%${normalizedQ}%`} THEN 80
+            ELSE 0
+          END
           +
-          similarity(${productsTable.material}, ${normalizedQ}) * 20
+          CASE
+            WHEN ${productsTable.name} ILIKE ${`${normalizedQ}%`} THEN 120
+            ELSE 0
+          END
           +
-          similarity(${productsTable.other_codes}, ${normalizedQ}) * 30
+          CASE
+            WHEN ${productsTable.name} ILIKE ${`%${normalizedQ}%`} THEN 50
+            ELSE 0
+          END
           +
-          similarity(${productsTable.notes}, ${normalizedQ}) * 10
+          CASE
+            WHEN ${productsTable.material} ILIKE ${`%${normalizedQ}%`} THEN 20
+            ELSE 0
+          END
+          +
+          CASE
+            WHEN ${productsTable.other_codes} ILIKE ${`%${normalizedQ}%`}
+            THEN 30 ELSE 0
+          END
+          +
+          CASE
+            WHEN ${productsTable.notes} ILIKE ${`%${normalizedQ}%`} THEN 10
+            ELSE 0
+          END
         )
       `
       : undefined

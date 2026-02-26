@@ -342,9 +342,25 @@ export const getPaginatedOrders = createServerFn()
             THEN 1000 ELSE 0
           END
           +
-          similarity(${ordersTable.order_number}, ${normalizedQ}) * 100
+          CASE
+            WHEN ${ordersTable.order_number} ILIKE ${`${normalizedQ}%`}
+            THEN 200 ELSE 0
+          END
           +
-          similarity(${ordersTable.notes}, ${normalizedQ}) * 10
+          CASE
+            WHEN ${ordersTable.order_number} ILIKE ${`%${normalizedQ}%`}
+            THEN 80 ELSE 0
+          END
+          +
+          CASE
+            WHEN ${ordersTable.notes} ILIKE ${`${normalizedQ}%`}
+            THEN 40 ELSE 0
+          END
+          +
+          CASE
+            WHEN ${ordersTable.notes} ILIKE ${`%${normalizedQ}%`}
+            THEN 20 ELSE 0
+          END
         )
       `
       : undefined
