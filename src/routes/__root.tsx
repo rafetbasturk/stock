@@ -58,12 +58,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     }
 
     const path = location.pathname
-    const AUTH_PAGES = new Set(['/login', '/_auth/login'])
-    const PUBLIC_PATHS = new Set(['/login', '/_auth/login', '/healthz'])
-    const isAuthPage = AUTH_PAGES.has(path)
-    const isPublic = PUBLIC_PATHS.has(path)
+    const isPublic = path === '/login'
 
-    if (isAuthPage && user) {
+    if (isPublic && user) {
       throw redirect({ to: '/' })
     }
 

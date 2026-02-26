@@ -16,20 +16,13 @@ import { customersPaginatedQuery } from '@/lib/queries/customers'
 import {
   customerSortFields,
   customersSearchSchema,
-  normalizeCustomersSearch,
 } from '@/lib/types/types.search'
 import { ListPageLayout } from '@/components/layout/ListPageLayout'
 import { ListPendingComponent } from '@/components/ListPendingComponent'
 
 export const Route = createFileRoute('/customers/')({
   validateSearch: zodValidator(customersSearchSchema),
-  loaderDeps: ({ search }) => normalizeCustomersSearch(search),
-  loader: async ({ context, deps }) => {
-    const normalizedDeps = normalizeCustomersSearch(deps)
-    return await context.queryClient.ensureQueryData(
-      customersPaginatedQuery(normalizedDeps),
-    )
-  },
+  loader: async () => null,
   component: CustomerList,
   pendingComponent: ListPendingComponent,
 })

@@ -9,7 +9,6 @@ import type { OrdersSearch } from '@/lib/types/types.search'
 import type { DataTableFilter } from '@/components/datatable/types'
 import type { ModalState } from '@/lib/types/types.modal'
 import {
-  normalizeOrdersSearch,
   orderSortFields,
   ordersSearchSchema,
 } from '@/lib/types/types.search'
@@ -31,7 +30,6 @@ import { ListPendingComponent } from '@/components/ListPendingComponent'
 
 export const Route = createFileRoute('/orders/')({
   validateSearch: zodValidator(ordersSearchSchema),
-  loaderDeps: ({ search }) => normalizeOrdersSearch(search),
   loader: async ({ context }) => {
     return await Promise.all([
       context.queryClient.prefetchQuery(lastOrderNumberQuery),

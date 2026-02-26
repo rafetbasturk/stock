@@ -12,7 +12,6 @@ import type { ModalState } from '@/lib/types/types.modal'
 import { useDeleteProductMutation } from '@/lib/mutations/products'
 import { getFilterOptions, productsQuery } from '@/lib/queries/products'
 import {
-  normalizeProductsSearch,
   productSortFields,
   productsSearchSchema,
 } from '@/lib/types/types.search'
@@ -28,12 +27,7 @@ import { ListPendingComponent } from '@/components/ListPendingComponent'
 
 export const Route = createFileRoute('/products/')({
   validateSearch: zodValidator(productsSearchSchema),
-  loaderDeps: ({ search }) => normalizeProductsSearch(search),
-  loader: async ({ context, deps }) => {
-    const normalizedDeps = normalizeProductsSearch(deps)
-
-    void context.queryClient.ensureQueryData(productsQuery(normalizedDeps))
-
+  loader: async ({ context }) => {
     return await context.queryClient.prefetchQuery(getFilterOptions())
   },
   component: ProductList,

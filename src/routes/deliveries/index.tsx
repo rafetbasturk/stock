@@ -24,19 +24,14 @@ import { ordersSelectQuery } from '@/lib/queries/orders'
 import {
   deliveriesSearchSchema,
   deliveriesSortFields,
-  normalizeDeliveriesSearch,
 } from '@/lib/types/types.search'
 import { ListPageLayout } from '@/components/layout/ListPageLayout'
 import { ListPendingComponent } from '@/components/ListPendingComponent'
 
 export const Route = createFileRoute('/deliveries/')({
   validateSearch: zodValidator(deliveriesSearchSchema),
-  loaderDeps: ({ search }) => normalizeDeliveriesSearch(search),
   loader: async ({ context }) => {
-    // const normalizedDeps = normalizeDeliveriesSearch(deps)
-
     return await Promise.all([
-      // context.queryClient.ensureQueryData(deliveriesQuery(normalizedDeps)),
       context.queryClient.prefetchQuery(lastDeliveryNumberQuery),
       context.queryClient.prefetchQuery(lastReturnDeliveryNumberQuery),
       context.queryClient.prefetchQuery(getFilterOptions),
