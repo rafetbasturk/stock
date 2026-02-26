@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as ProductsRouteRouteImport } from './routes/products/route'
 import { Route as ProductDemandRouteRouteImport } from './routes/product-demand/route'
 import { Route as OrdersRouteRouteImport } from './routes/orders/route'
@@ -30,6 +31,11 @@ import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as ProductsIdIndexRouteImport } from './routes/products/$id/index'
 import { Route as ProductsIdActivitiesRouteImport } from './routes/products/$id/activities'
 
+const HealthzRoute = HealthzRouteImport.update({
+  id: '/healthz',
+  path: '/healthz',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductsRouteRoute = ProductsRouteRouteImport.update({
   id: '/products',
   path: '/products',
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/orders': typeof OrdersRouteRouteWithChildren
   '/product-demand': typeof ProductDemandRouteRouteWithChildren
   '/products': typeof ProductsRouteRouteWithChildren
+  '/healthz': typeof HealthzRoute
   '/login': typeof AuthLoginRoute
   '/api/seed': typeof ApiSeedRoute
   '/api/test': typeof ApiTestRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/healthz': typeof HealthzRoute
   '/login': typeof AuthLoginRoute
   '/api/seed': typeof ApiSeedRoute
   '/api/test': typeof ApiTestRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/orders': typeof OrdersRouteRouteWithChildren
   '/product-demand': typeof ProductDemandRouteRouteWithChildren
   '/products': typeof ProductsRouteRouteWithChildren
+  '/healthz': typeof HealthzRoute
   '/_auth/login': typeof AuthLoginRoute
   '/api/seed': typeof ApiSeedRoute
   '/api/test': typeof ApiTestRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/product-demand'
     | '/products'
+    | '/healthz'
     | '/login'
     | '/api/seed'
     | '/api/test'
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/healthz'
     | '/login'
     | '/api/seed'
     | '/api/test'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/product-demand'
     | '/products'
+    | '/healthz'
     | '/_auth/login'
     | '/api/seed'
     | '/api/test'
@@ -260,12 +272,20 @@ export interface RootRouteChildren {
   OrdersRouteRoute: typeof OrdersRouteRouteWithChildren
   ProductDemandRouteRoute: typeof ProductDemandRouteRouteWithChildren
   ProductsRouteRoute: typeof ProductsRouteRouteWithChildren
+  HealthzRoute: typeof HealthzRoute
   ApiSeedRoute: typeof ApiSeedRoute
   ApiTestRoute: typeof ApiTestRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/healthz': {
+      id: '/healthz'
+      path: '/healthz'
+      fullPath: '/healthz'
+      preLoaderRoute: typeof HealthzRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/products': {
       id: '/products'
       path: '/products'
@@ -498,6 +518,7 @@ const rootRouteChildren: RootRouteChildren = {
   OrdersRouteRoute: OrdersRouteRouteWithChildren,
   ProductDemandRouteRoute: ProductDemandRouteRouteWithChildren,
   ProductsRouteRoute: ProductsRouteRouteWithChildren,
+  HealthzRoute: HealthzRoute,
   ApiSeedRoute: ApiSeedRoute,
   ApiTestRoute: ApiTestRoute,
 }

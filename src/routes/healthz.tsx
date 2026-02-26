@@ -6,6 +6,8 @@ export const Route = createFileRoute('/healthz')({
   server: {
     handlers: {
       GET: async () => {
+        const hasDatabaseUrl = Boolean(process.env.DATABASE_URL)
+
         try {
           await db.execute(sql`select 1`)
 
@@ -13,6 +15,7 @@ export const Route = createFileRoute('/healthz')({
             JSON.stringify({
               status: 'ok',
               database: 'ok',
+              hasDatabaseUrl,
               timestamp: new Date().toISOString(),
             }),
             {
@@ -23,11 +26,28 @@ export const Route = createFileRoute('/healthz')({
               },
             },
           )
-        } catch {
+        } catch (error: unknown) {
+          const errorType =
+            error instanceof Error
+              ? error.name
+              : typeof error === 'string'
+                ? 'ErrorString'
+                : 'UnknownError'
+          const errorCode =
+            typeof error === 'object' &&
+            error !== null &&
+            'code' in error &&
+            typeof (error as { code?: unknown }).code === 'string'
+              ? (error as { code: string }).code
+              : null
+
           return new Response(
             JSON.stringify({
               status: 'error',
               database: 'down',
+              hasDatabaseUrl,
+              errorType,
+              errorCode,
               timestamp: new Date().toISOString(),
             }),
             {
